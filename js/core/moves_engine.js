@@ -75,7 +75,7 @@ const MovesEngine = {
         let storedText = null;
 
         for (let i = 0; i < hitCount; i++) {
-            if (defender.currentHp <= 0 || attacker.currentHp <= 0) break;
+            if (defender.currentHp <= 0 || (i > 0 && attacker.currentHp <= 0)) break;
 
             const result = Mechanics.calcDamage(attacker, defender, move);
             result.damage = Math.floor(result.damage * weatherMod);

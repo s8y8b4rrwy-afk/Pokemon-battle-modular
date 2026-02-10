@@ -139,17 +139,17 @@ const MOVE_DEX = {
         isUnique: true,
         onHit: async (battle, user, target, weatherMod) => {
             const isPlayer = (user === battle.p);
-            // 1. User faints visually first
+            // 1. User HP drains to 0 first (The "Sacrifice")
             user.currentHp = 0;
             UI.updateHUD(user, isPlayer ? 'player' : 'enemy');
-            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-            sprite.classList.add('anim-faint');
             AudioEngine.playSfx('swoosh');
             await wait(1000);
 
-            // 2. Damage Phase
+            // 2. Damage Phase (handleDamageSequence now allows hits from 0hp attackers on hit 1)
             const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'physical' };
             await battle.handleDamageSequence(user, target, moveData, isPlayer, weatherMod);
+
+            // Note: FaintManager will handle the actual 'fainted!' message and animation after this move ends
             return true;
         }
     },
@@ -157,17 +157,16 @@ const MOVE_DEX = {
         isUnique: true,
         onHit: async (battle, user, target, weatherMod) => {
             const isPlayer = (user === battle.p);
-            // 1. User faints visually first
+            // 1. User HP drains to 0 first
             user.currentHp = 0;
             UI.updateHUD(user, isPlayer ? 'player' : 'enemy');
-            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-            sprite.classList.add('anim-faint');
             AudioEngine.playSfx('swoosh');
             await wait(1000);
 
             // 2. Damage Phase
-            const moveData = { name: 'SELF-DESTRUCT', type: 'normal', power: 200, category: 'physical' };
+            const moveData = { name: 'SELF DESTRUCT', type: 'normal', power: 200, category: 'physical' };
             await battle.handleDamageSequence(user, target, moveData, isPlayer, weatherMod);
+
             return true;
         }
     },
