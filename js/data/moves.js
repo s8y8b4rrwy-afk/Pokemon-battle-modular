@@ -142,8 +142,9 @@ const MOVE_DEX = {
             // 1. User HP drains to 0 first (The "Sacrifice")
             user.currentHp = 0;
             UI.updateHUD(user, isPlayer ? 'player' : 'enemy');
-            AudioEngine.playSfx('swoosh');
-            await wait(1000);
+
+            // 2. Play New Explosion Anim
+            await BattleAnims.triggerExplosionAnim();
 
             // 2. Damage Phase (handleDamageSequence now allows hits from 0hp attackers on hit 1)
             const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'physical' };
@@ -160,8 +161,9 @@ const MOVE_DEX = {
             // 1. User HP drains to 0 first
             user.currentHp = 0;
             UI.updateHUD(user, isPlayer ? 'player' : 'enemy');
-            AudioEngine.playSfx('swoosh');
-            await wait(1000);
+
+            // 2. Play New Explosion Anim
+            await BattleAnims.triggerExplosionAnim();
 
             // 2. Damage Phase
             const moveData = { name: 'SELF DESTRUCT', type: 'normal', power: 200, category: 'physical' };

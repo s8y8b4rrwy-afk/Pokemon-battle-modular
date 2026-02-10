@@ -126,6 +126,19 @@ const AudioEngine = {
                 bSrc.start(now); bSrc.stop(now + 0.2);
                 break;
 
+            case 'explosion':
+                // Deep, long rumble
+                const exSrc = this.ctx.createBufferSource(); exSrc.buffer = this.noiseBuffer; exSrc.loop = true;
+                const exFilter = this.ctx.createBiquadFilter(); exFilter.type = "lowpass";
+                exFilter.frequency.setValueAtTime(300, now); // Low rumble start
+                exFilter.frequency.exponentialRampToValueAtTime(50, now + 1.2); // Fade to deep bass
+                const exGain = this.ctx.createGain();
+                exGain.gain.setValueAtTime(0.6, now); // Loud!
+                exGain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+                exSrc.connect(exFilter); exFilter.connect(exGain); exGain.connect(this.ctx.destination);
+                exSrc.start(now); exSrc.stop(now + 1.3);
+                break;
+
             default: osc.type = 'square'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.1); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); break;
         }
     },

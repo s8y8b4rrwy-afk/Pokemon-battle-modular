@@ -34,6 +34,25 @@ const BattleAnims = {
         }
     },
 
+    async triggerExplosionAnim() {
+        const scene = document.getElementById('scene');
+
+        // 1. Create Flash Overlay
+        const flash = document.createElement('div');
+        flash.className = 'explosion-flash';
+        scene.appendChild(flash);
+
+        // 2. Play Sound & Shake
+        AudioEngine.playSfx('explosion'); // Need to ensure this SFX exists or map to 'rumble'
+        scene.classList.add('fx-explosion');
+
+        await wait(800);
+
+        // 3. Cleanup
+        scene.classList.remove('fx-explosion');
+        flash.remove();
+    },
+
     async performVisualSwap(mon, targetSrc, isDoll, isPlayerOverride = null) {
         const isPlayer = (isPlayerOverride !== null) ? isPlayerOverride : (mon === Battle.p);
         const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
