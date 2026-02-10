@@ -35,6 +35,7 @@ const Game = {
 
     // --- SAVES (Delegated to StorageSystem) ---
     checkSave() {
+        AudioEngine.init();
         if (StorageSystem.exists()) {
             const data = StorageSystem.load();
             UI.hide('start-screen');
@@ -206,6 +207,12 @@ const Game = {
 
     async startNewBattle(isFirst = false) {
         Battle.resetScene();
+
+        // Safety Check: If active slot fainted (e.g. via Destiny Bond), pick next healthy one
+        if (!this.party[this.activeSlot] || this.party[this.activeSlot].currentHp <= 0) {
+            const nextIdx = this.party.findIndex(p => p.currentHp > 0);
+            if (nextIdx !== -1) this.activeSlot = nextIdx;
+        }
 
         // Ghost Fix
         const eSprite = document.getElementById('enemy-sprite');

@@ -28,11 +28,11 @@ const MOVE_DEX = {
     },
 
     // --- SWITCH OUT MOVES ---
-    'U-TURN': {
+    'U TURN': {
         isUnique: true,
         onHit: async (battle, user, target, weatherMod) => {
             // 1. Damage Phase
-            const moveData = { name: 'U-TURN', type: 'bug', power: 70, category: 'physical' };
+            const moveData = { name: 'U TURN', type: 'bug', power: 70, category: 'physical' };
             await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
 
             // 2. Switch Out
@@ -103,6 +103,33 @@ const MOVE_DEX = {
                     m.volatiles.perishCount = 3;
                 }
             });
+            return true;
+        }
+    },
+
+    // --- DESTINY BOND ---
+    'DESTINY BOND': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            await UI.typeText(`${user.name} is trying\nto take its foe with it!`);
+            user.volatiles.destinyBond = true;
+            return true;
+        }
+    },
+
+    // --- HAZARDS ---
+    'SPIKES': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            const side = user === battle.p ? 'enemy' : 'player';
+            const current = battle.sideConditions[side].spikes || 0;
+            if (current >= 3) {
+                await UI.typeText("Spikes can't be\nadded anymore!");
+                return false;
+            }
+            battle.sideConditions[side].spikes = current + 1;
+            AudioEngine.playSfx('clank');
+            await UI.typeText(`Spikes were scattered\naround ${side === 'enemy' ? 'the foe' : 'the player'}'s feet!`);
             return true;
         }
     },
@@ -313,11 +340,9 @@ const MOVE_DEX = {
                 UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
                 await UI.typeText(`${user.name} cut its HP\nto lay a curse!`);
 
-                // Direct Damage Simulation (Since we don't have Curse volatile logic yet)
-                const dmg = Math.floor(target.maxHp / 4);
-                target.currentHp -= dmg;
-                UI.updateHUD(target, user === battle.p ? 'enemy' : 'player');
-                await UI.typeText(`${target.name} was hurt\nby the curse!`);
+                target.volatiles.cursed = true;
+                AudioEngine.playSfx('poison');
+                await UI.typeText(`${target.name} was\ncursed!`);
             } else {
                 await battle.applyStatChanges(user, [{ stat: { name: 'speed' }, change: -1 }, { stat: { name: 'attack' }, change: 1 }, { stat: { name: 'defense' }, change: 1 }], user === battle.p);
             }

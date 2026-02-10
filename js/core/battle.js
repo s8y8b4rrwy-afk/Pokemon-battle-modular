@@ -93,9 +93,11 @@ const Battle = {
         }
     },
 
-    // --- Weather ---
-    weather: { type: 'none', turns: 0 },
-
+    get weather() { return EnvironmentManager.weather; },
+    set weather(v) { EnvironmentManager.weather = v; },
+    get sideConditions() { return EnvironmentManager.sideConditions; },
+    set sideConditions(v) { EnvironmentManager.sideConditions = v; },
+    delayedMoves: [],
     // 1. The New "Nuclear" Reset (Clears everything)
     resetScene() {
         clearInterval(UI.typeInterval);
@@ -129,7 +131,7 @@ const Battle = {
         UI.forceReflow(pSprite);
         UI.forceReflow(eSprite);
 
-        this.weather = { type: 'none', turns: 0 };
+        EnvironmentManager.reset();
         this.delayedMoves = [];
         this.uiLocked = false;
 
@@ -142,17 +144,8 @@ const Battle = {
         this.resetScene();
     },
 
-    async setWeather(type) {
-        this.weather = { type: type, turns: 5 };
-        const overlay = document.getElementById('scene');
-        if (WEATHER_FX[type]) {
-            overlay.style.backgroundColor = WEATHER_FX[type].color;
-            // Await the text so the player sees "It started to rain!" before the turn ends
-            await UI.typeText(WEATHER_FX[type].msg);
-        } else {
-            overlay.style.backgroundColor = "";
-            await UI.typeText("The skies cleared.");
-        }
+    async setWeather(type, turns = 5) {
+        return await EnvironmentManager.setWeather(type, turns);
     },
 
     // --- SETUP ---
@@ -322,236 +315,23 @@ const Battle = {
 
     // 1. Check if Pokemon can move (Sleep, Freeze, Para, Confusion)
     async checkCanMove(mon, isPlayer) {
-        // 0. FLINCH (Volatile - resets immediately)
-        if (mon.volatiles.flinch) {
-            mon.volatiles.flinch = false;
-            await UI.typeText(`${mon.name} flinched!`);
-            return false;
-        }
-
-        // 1. FREEZE
-        if (mon.status === 'frz') {
-            if (Math.random() < 0.2) {
-                mon.status = null;
-                UI.updateHUD(mon, isPlayer ? 'player' : 'enemy');
-                await UI.typeText(`${mon.name} thawed out!`);
-                return true;
-            }
-            await UI.typeText(`${mon.name} is\nfrozen solid!`);
-            return false;
-        }
-
-        // 2. SLEEP
-        if (mon.status === 'slp') {
-            mon.volatiles.sleepTurns = (mon.volatiles.sleepTurns || Math.floor(Math.random() * 3) + 1) - 1;
-            if (mon.volatiles.sleepTurns <= 0) {
-                mon.status = null;
-                UI.updateHUD(mon, isPlayer ? 'player' : 'enemy');
-                await UI.typeText(`${mon.name} woke up!`);
-                return true;
-            }
-            await UI.typeText(`${mon.name} is\nfast asleep!`);
-            return false;
-        }
-
-        // 3. PARALYSIS
-        if (mon.status === 'par' && Math.random() < 0.25) {
-            await UI.typeText(`${mon.name} is paralyzed!\nIt can't move!`);
-            return false;
-        }
-
-        // 4. CONFUSION
-        if (mon.volatiles.confused > 0) {
-            mon.volatiles.confused--;
-            if (mon.volatiles.confused === 0) {
-                UI.updateHUD(mon, isPlayer ? 'player' : 'enemy');
-                await UI.typeText(`${mon.name} snapped\nout of confusion!`);
-                return true;
-            }
-
-            await UI.typeText(`${mon.name} is\nconfused!`);
-
-            // 33% chance to hit self
-            if (Math.random() < 0.33) {
-                await UI.typeText("It hurt itself in\nits confusion!");
-
-                // Standard Gen 2 Confusion Damage Formula (Power 40)
-                const dmg = Math.floor((((2 * mon.level / 5 + 2) * 40 * mon.stats.atk / mon.stats.def) / 50) + 2);
-
-                // USE HELPER: This handles sound, shake, HP update, and HUD flash
-                await this.applyDamage(mon, dmg, 'normal');
-
-                return false;
-            }
-        }
-
-        return true;
+        return await EffectsManager.checkCanMove(this, mon, isPlayer);
     },
 
     // 2. Apply End of Turn Damage (Burn/Poison/Weather effects)
     async processEndTurnEffects(mon, isPlayer) {
-        if (mon.currentHp <= 0) return;
-        const isInvisible = !!mon.volatiles.invulnerable;
-
-        // 1. WEATHER DAMAGE
-        if (this.weather.type === 'sand' || this.weather.type === 'hail') {
-            let takesDamage = true;
-            // Immunity checks
-            if (this.weather.type === 'sand' && (mon.types.includes('rock') || mon.types.includes('ground') || mon.types.includes('steel'))) takesDamage = false;
-            if (this.weather.type === 'hail' && mon.types.includes('ice')) takesDamage = false;
-
-            if (takesDamage) {
-                await wait(400);
-                const msg = this.weather.type === 'sand' ? "is buffeted\nby the sandstorm!" : "is pelted\nby hail!";
-                await UI.typeText(`${mon.name} ${msg}`);
-
-                const dmg = Math.max(1, Math.floor(mon.maxHp / 16));
-                // Use Helper (weather type triggers standard damage sound)
-                await this.applyDamage(mon, dmg, 'normal');
-                if (mon.currentHp <= 0) return;
-            }
-        }
-
-        // 2. STATUS DAMAGE
-        if (mon.status === 'brn' || mon.status === 'psn') {
-            await wait(400);
-
-            // Visual Status Flash (Purple/Red silhouette)
-            if (!isInvisible) {
-                const animClass = mon.status === 'brn' ? 'status-anim-brn' : 'status-anim-psn';
-                const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-                sprite.classList.add(animClass);
-                await wait(600);
-                sprite.classList.remove(animClass);
-            }
-
-            await UI.typeText(`${mon.name} ${STATUS_DATA[mon.status].msg}`);
-
-            const dmg = Math.floor(mon.maxHp / 8);
-            // Use Helper (pass 'burn' or 'poison' to trigger specific logic/sounds if needed)
-            await this.applyDamage(mon, Math.max(1, dmg), mon.status === 'brn' ? 'burn' : 'poison');
-            if (mon.currentHp <= 0) return;
-        }
-
-        // 3. PERISH SONG
-        if (mon.volatiles.perishCount !== undefined) {
-            mon.volatiles.perishCount--;
-            await UI.typeText(`${mon.name}'s perish count\nfell to ${mon.volatiles.perishCount}!`);
-
-            if (mon.volatiles.perishCount <= 0) {
-                delete mon.volatiles.perishCount;
-                await this.applyDamage(mon, mon.maxHp, 'normal'); // Faint
-            }
-        }
+        await EnvironmentManager.processEndTurnWeather(this, mon);
+        await EffectsManager.processEndTurnStatus(this, mon, isPlayer);
     },
 
     // 3. Apply Stat Changes (Buffs/Debuffs)
     async applyStatChanges(target, changes, isPlayer) {
-        const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-
-        // --- SUBSTITUTE IMMUNITY ---
-        // Substitute blocks NEGATIVE stat changes from sources other than self.
-        const hasSub = target.volatiles.substituteHP > 0;
-
-        for (let c of changes) {
-            // If Substitute exists and it's a debuff (change < 0), ignore it.
-            // (Exceptions exist in newer gens like Intimidate, but for moves this is accurate)
-            if (hasSub && c.change < 0) {
-                await UI.typeText(`${target.name} is protected\nby the SUBSTITUTE!`);
-                continue;
-            }
-
-            const stat = c.stat.name.replace('special-attack', 'spa').replace('special-defense', 'spd').replace('attack', 'atk').replace('defense', 'def').replace('speed', 'spe');
-            const change = c.change;
-
-            if (target.stages[stat] === 6 && change > 0) {
-                await UI.typeText(`${target.name}'s ${stat.toUpperCase()}\nwon't go higher!`);
-                continue;
-            }
-            if (target.stages[stat] === -6 && change < 0) {
-                await UI.typeText(`${target.name}'s ${stat.toUpperCase()}\nwon't go lower!`);
-                continue;
-            }
-
-            target.stages[stat] = Math.min(6, Math.max(-6, target.stages[stat] + change));
-
-            const dir = change > 0 ? "rose!" : "fell!";
-            const deg = Math.abs(change) > 1 ? "sharply " : "";
-
-            const animClass = change > 0 ? 'anim-stat-up' : 'anim-stat-down';
-
-            sprite.classList.add(animClass);
-
-            if (change > 0) AudioEngine.playSfx('heal');
-            else AudioEngine.playSfx('damage');
-
-            await wait(800);
-            sprite.classList.remove(animClass);
-
-            await UI.typeText(`${target.name}'s ${stat.toUpperCase()}\n${deg}${dir}`);
-        }
+        return await EffectsManager.applyStatChanges(this, target, changes, isPlayer);
     },
 
     // 4. Apply Status Ailment
     async applyStatus(target, ailment, isPlayerTarget) {
-        // 1. Substitute Block
-        // Substitute blocks status unless it's sound-based (ignored for simplicity) or generated by the user
-        if (target.volatiles.substituteHP > 0 && ailment !== 'confusion') {
-            await UI.typeText("But it failed!");
-            return false;
-        }
-
-        // 2. Handle Volatiles (Confusion)
-        if (ailment === 'confusion') {
-            if (target.volatiles.confused) {
-                await UI.typeText(`${target.name} is\nalready confused!`);
-                return false;
-            }
-            const scene = document.getElementById('scene');
-            scene.classList.add('fx-psychic');
-            await wait(400);
-            scene.classList.remove('fx-psychic');
-
-            target.volatiles.confused = Math.floor(Math.random() * 3) + 2;
-            await UI.typeText(`${target.name} became\nconfused!`);
-            return true;
-        }
-
-        // 3. Handle Major Statuses
-        if (target.status) return false;
-
-        if (['burn', 'poison', 'paralysis', 'freeze', 'sleep'].includes(ailment)) {
-            const map = { 'burn': 'brn', 'poison': 'psn', 'paralysis': 'par', 'freeze': 'frz', 'sleep': 'slp' };
-
-            const sprite = isPlayerTarget ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-
-            let animClass = '';
-            if (ailment === 'burn') animClass = 'status-anim-brn';
-            else if (ailment === 'poison') animClass = 'status-anim-psn';
-            else if (ailment === 'freeze') animClass = 'status-anim-frz';
-            else if (ailment === 'paralysis') animClass = 'status-anim-par';
-            else if (ailment === 'sleep') animClass = 'status-anim-slp';
-
-            if (animClass) {
-                sprite.classList.add(animClass);
-                AudioEngine.playSfx(ailment === 'paralysis' ? 'electric' : 'damage');
-                await wait(600);
-                sprite.classList.remove(animClass);
-            }
-
-            target.status = map[ailment];
-            UI.updateHUD(target, isPlayerTarget ? 'player' : 'enemy');
-
-            let msg = `${target.name} was\n${ailment}ed!`;
-            if (ailment === 'sleep') msg = `${target.name} fell\nasleep!`;
-            if (ailment === 'freeze') msg = `${target.name} was\nfrozen solid!`;
-            if (ailment === 'paralysis') msg = `${target.name} is\nparalyzed!`;
-
-            AudioEngine.playSfx('clank');
-            await UI.typeText(msg);
-            return true;
-        }
-        return false;
+        return await EffectsManager.applyStatus(this, target, ailment, isPlayerTarget);
     },
 
     async processDelayedMoves() {
@@ -731,8 +511,8 @@ const Battle = {
             const result = await this.executeAction(action);
             if (result === 'STOP_BATTLE') return 'STOP_BATTLE';
 
-            if (this.p.currentHp <= 0) { await this.handleFaint(this.p, true); return; }
             if (this.e.currentHp <= 0) { await this.handleFaint(this.e, false); return; }
+            if (this.p.currentHp <= 0) { await this.handleFaint(this.p, true); return; }
         }
 
         // 2. END OF TURN SEQUENCE
@@ -750,16 +530,7 @@ const Battle = {
             if (this.e.currentHp <= 0) { await this.handleFaint(this.e, false); return; }
 
             // C. Weather
-            if (this.weather.type !== 'none') {
-                this.weather.turns--;
-                if (this.weather.turns <= 0) {
-                    await UI.typeText("The weather cleared.");
-                    this.setWeather('none');
-                } else {
-                    const fx = WEATHER_FX[this.weather.type];
-                    if (fx && fx.continue) await UI.typeText(fx.continue);
-                }
-            }
+            await EnvironmentManager.tickWeather();
         }
     },
 
@@ -847,6 +618,9 @@ const Battle = {
         AudioEngine.playSfx('swoosh');
         document.getElementById('player-hud').classList.add('hud-active');
 
+        // Spikes Damage
+        await EnvironmentManager.processEntryHazards(this, newMon, true);
+
         if (newMon.isShiny) { UI.playSparkle('player'); await sleep(1000); }
 
         // --- BATON PASS: LATE SUBSTITUTE ARRIVAL ---
@@ -874,7 +648,7 @@ const Battle = {
         // --- POKEBALLS ---
         if (data.type === 'ball') {
             await UI.typeText(`You threw a\n${data.name}!`);
-            return await this.attemptCatch(itemKey);
+            return await CaptureManager.attemptCatch(this, itemKey);
         }
 
         // --- HEALING ITEMS (Potions) ---
@@ -918,129 +692,15 @@ const Battle = {
 
 
 
-    async attemptCatch(ballKey) {
-        const ballData = ITEMS[ballKey];
 
-        // 1. CHECK BOSS/RAGE DEFLECTION
-        if (this.e.isBoss && ballKey !== 'masterball') {
-            let deflectChance = (this.e.rageLevel || 0) * GAME_BALANCE.RAGE_DEFLECT_CHANCE;
-
-            if (this.e.rageLevel > 0 && Math.random() < deflectChance) {
-                // REMOVED DUPLICATE TEXT HERE
-                AudioEngine.playSfx('throw');
-
-                // Short deflect animation
-                await sleep(500);
-                AudioEngine.playSfx('clank');
-                document.getElementById('enemy-sprite').classList.add('anim-deflect');
-                await sleep(300);
-                document.getElementById('enemy-sprite').classList.remove('anim-deflect');
-
-                await UI.typeText("The BOSS deflected\nthe Ball!");
-                return 'CONTINUE';
-            }
-        }
-
-        // REMOVED DUPLICATE TEXT HERE
-        AudioEngine.playSfx('throw');
-
-        const ball = document.createElement('div'); ball.className = `pokeball-anim ${ballData.css}`;
-        ball.style.animation = "captureThrow 0.6s ease-out forwards";
-        document.getElementById('scene').appendChild(ball);
-
-        await sleep(ANIM.THROW_ANIM);
-
-        const eSprite = document.getElementById('enemy-sprite');
-        eSprite.style.transition = 'transform 0.4s, filter 0.4s';
-        eSprite.style.filter = 'brightness(0) invert(1)';
-        eSprite.style.transform = 'scale(0)';
-
-        UI.spawnSmoke(230, 70);
-        AudioEngine.playSfx('catch_success');
-        ball.style.animation = "captureShake 1.0s ease-in-out infinite";
-
-        const catchRate = ballData.rate * GAME_BALANCE.CATCH_RATE_MODIFIER;
-        let catchProb = ((3 * this.e.maxHp - 2 * this.e.currentHp) / (3 * this.e.maxHp)) * catchRate;
-        if (ballKey === 'pokeball') catchProb *= 0.5;
-        const isCaught = Math.random() < catchProb;
-
-        let shakes = 0;
-        const maxShakes = 3;
-
-        while (shakes < maxShakes) {
-            await sleep(ANIM.CATCH_SHAKE_DELAY);
-            shakes++;
-            AudioEngine.playSfx('catch_click');
-            if (!isCaught && Math.random() > 0.5) break;
-        }
-
-        if (isCaught && shakes === maxShakes) {
-            AudioEngine.playSfx('swoosh');
-            document.getElementById('enemy-hud').classList.remove('hud-active');
-
-            AudioEngine.playSfx('heal');
-
-            ball.style.animation = 'none';
-            ball.style.transform = 'translate(215px, -100px)';
-            ball.classList.add('pokeball-caught');
-
-            Game.state = 'CAUGHT_ANIM';
-            await UI.typeText(`Gotcha! ${this.e.name} was caught!`);
-            document.getElementById('scene').removeChild(ball);
-
-            this.e.rageLevel = 0;
-            this.e.failedCatches = 0;
-            this.e.currentHp = Math.min(this.e.maxHp, this.e.currentHp + Math.floor(this.e.maxHp * 0.2));
-
-            Game.party.push(this.e);
-
-            if (Game.party.length > 6) {
-                Game.state = 'OVERFLOW';
-                await UI.typeText(`Party is full!\nSelect PKMN to release.`);
-                await sleep(ANIM.OVERFLOW_WARNING);
-                Game.openParty(true);
-            }
-            else {
-                await UI.typeText(`${this.e.name} was added\nto the party!`);
-                Game.handleWin(true);
-            }
-            return 'STOP_BATTLE';
-        } else {
-            ball.style.display = 'none';
-            eSprite.style.filter = 'none';
-            eSprite.style.transform = 'scale(1)';
-
-            UI.spawnSmoke(230, 70);
-            AudioEngine.playSfx('ball');
-
-            if (this.e.cry) AudioEngine.playCry(this.e.cry);
-
-            this.e.failedCatches++;
-            let gainedRage = false;
-
-            const rageProb = GAME_BALANCE.RAGE_TRIGGER_CHANCE + (this.e.failedCatches * 0.1);
-
-            if (Math.random() < rageProb) {
-                this.e.rageLevel = Math.min(3, (this.e.rageLevel || 0) + 1);
-                UI.updateHUD(this.e, 'enemy');
-                gainedRage = true;
-            }
-
-            await UI.typeText(`Shoot! It was so close!`);
-            document.getElementById('scene').removeChild(ball);
-
-            if (gainedRage) {
-                await this.triggerRageAnim(this.e.cry);
-                await UI.typeText("It's getting aggressive!");
-            }
-            return 'CONTINUE';
-        }
-    },
 
     async processAttack(attacker, defender, move) {
         const isPlayer = (attacker === this.p);
         const logic = MOVE_LOGIC[move.id] || {};
         const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+
+        // Reset Destiny Bond flag when starting a new move
+        attacker.volatiles.destinyBond = false;
 
         // 1. RECHARGE CHECK
         if (attacker.volatiles.recharging) {
@@ -1220,7 +880,7 @@ const Battle = {
         if (this.weather.type === 'rain' && (move.type === 'water' || move.type === 'fire')) weatherMod = (move.type === 'water' ? 1.5 : 0.5);
 
         // 1. CHECK MOVE_DEX CONDITIONS
-        const special = MOVE_DEX[move.name];
+        const special = MOVE_DEX[move.name.replace(/-/g, ' ').toUpperCase()];
         if (special && special.condition) {
             if (!special.condition(defender)) {
                 await UI.typeText("But it failed!");
@@ -1549,6 +1209,39 @@ const Battle = {
 
         await UI.typeText(`${name}\nfainted!`);
         await sleep(ANIM.FAINT_POST_DELAY);
+
+        // Destiny Bond Check
+        if (mon.volatiles.destinyBond) {
+            const opponent = isPlayer ? this.e : this.p;
+            if (opponent.currentHp > 0) {
+                await UI.typeText(`${mon.name} took\nits foe with it!`);
+
+                // Process opponent faint manually to avoid infinite loop
+                opponent.currentHp = 0;
+                opponent.rageLevel = 0;
+                UI.updateHUD(opponent, isPlayer ? 'enemy' : 'player');
+
+                const oppSprite = isPlayer ? document.getElementById('enemy-sprite') : document.getElementById('player-sprite');
+                const oppHud = document.getElementById(isPlayer ? 'enemy-hud' : 'player-hud');
+
+                if (opponent.cry) AudioEngine.playCry(opponent.cry);
+                await sleep(ANIM.FAINT_PRE_DELAY);
+
+                oppSprite.classList.add('anim-faint');
+                AudioEngine.playSfx('swoosh');
+                setTimeout(() => oppHud.classList.remove('hud-active'), ANIM.HUD_SLIDE_DELAY);
+
+                const oppName = opponent.transformBackup ? opponent.transformBackup.name : opponent.name;
+                this.revertTransform(opponent);
+
+                await UI.typeText(`${oppName}\nfainted!`);
+                await sleep(ANIM.FAINT_POST_DELAY);
+
+                // If both faint, handle it as a win (GS rules: player wins if wild mon faints)
+                Game.handleWin(false);
+                return;
+            }
+        }
 
         const textEl = document.getElementById('text-content');
         textEl.classList.remove('full-width');

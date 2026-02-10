@@ -165,6 +165,9 @@ const Input = {
     },
 
     handleKey(e) {
+        // Prime audio on first interaction
+        AudioEngine.init();
+
         // Global Lock Check (Except for Title Screens)
         if (Battle.uiLocked && !['START', 'CONTINUE', 'NAME'].includes(this.mode)) return;
 

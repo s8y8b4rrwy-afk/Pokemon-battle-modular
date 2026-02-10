@@ -13,7 +13,13 @@ const AudioEngine = {
             for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
             this.noiseBuffer = buf;
         }
-        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.resume();
+    },
+
+    async resume() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            await this.ctx.resume();
+        }
     },
 
     playCry(url) {

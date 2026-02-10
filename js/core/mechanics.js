@@ -16,7 +16,7 @@ const Mechanics = {
         if (typeMod === 0) return { damage: 0, desc: null, eff: 0 };
 
         // 2. SPECIAL MOVE LOGIC (Fixed Damage, OHKO, etc from MOVE_DEX)
-        const special = MOVE_DEX[move.name];
+        const special = MOVE_DEX[move.name.replace(/-/g, ' ').toUpperCase()];
         if (special) {
             if (special.fixedDamage) return { damage: special.fixedDamage, desc: null, eff: 1, isCrit: false };
             if (special.damageCallback) return { damage: special.damageCallback(attacker, defender), desc: null, eff: 1, isCrit: false };
