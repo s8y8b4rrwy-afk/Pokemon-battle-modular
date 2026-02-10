@@ -1,0 +1,1980 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+    --bg-color: #f8f8f8;
+    --screen-bg: #ffffff;
+    --ui-border: #202020;
+    --hp-green: #48c050;
+    --hp-yellow: #d8b030;
+    --hp-red: #c83828;
+    --xp-blue: #40a8c0;
+    --gs-black: #181818;
+    --gs-blue: #283048;
+}
+
+body {
+    background-color: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Press Start 2P', cursive;
+    user-select: none;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+}
+
+#game-boy {
+    width: 320px;
+    height: 288px;
+    background-color: var(--screen-bg);
+    border: 4px solid #888;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    image-rendering: pixelated;
+}
+
+/* --- FIX: HIGHLIGHT PRIORITY --- */
+/* These ensure the cursor override 'gray' or 'red' buttons when selected */
+.move-btn.cancel.focused {
+    background: #202020 !important;
+    color: white !important;
+    border-color: #000 !important;
+}
+
+.confirm-btn.secondary.focused {
+    background: #000 !important;
+    color: white !important;
+}
+
+.confirm-btn.danger.focused {
+    background: #000 !important;
+    color: white !important;
+}
+
+/* Ensure the Cancel button turns black when selected so it's visible */
+.pack-item.cancel-btn.focused {
+    background: #202020 !important;
+    color: white !important;
+    border-color: #000 !important;
+}
+
+/* --- LOADING TEXT ANIMATION --- */
+.blink-text {
+    animation: blinker 0.8s steps(2) infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* --- LCD FILTER --- */
+#lcd-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+    background:
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 2px 100%;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+#lcd-overlay.active {
+    opacity: 1;
+}
+
+/* --- START SCREEN --- */
+#start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gs-black);
+    color: white;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 20px;
+}
+
+.start-title {
+    color: #d8b030;
+    font-size: 16px;
+    line-height: 24px;
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 20px;
+}
+
+.start-btn {
+    background: white;
+    color: black;
+    border: 2px solid #888;
+    padding: 10px;
+    font-size: 8px;
+    font-family: 'Press Start 2P';
+    cursor: pointer;
+}
+
+.start-btn:hover {
+    background: #eee;
+}
+
+.toggle-box {
+    font-size: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox {
+    width: 10px;
+    height: 10px;
+    border: 2px solid white;
+    display: inline-block;
+    position: relative;
+}
+
+.checkbox.checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 6px;
+    height: 6px;
+    background: #d8b030;
+}
+
+/* --- NAME ENTRY SCREEN --- */
+#name-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gs-blue);
+    color: white;
+    z-index: 950;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+}
+
+#name-input {
+    background: white;
+    color: black;
+    border: 2px solid #888;
+    padding: 5px;
+    font-family: 'Press Start 2P';
+    font-size: 12px;
+    text-transform: uppercase;
+    width: 150px;
+    text-align: center;
+    outline: none;
+    margin-bottom: 20px;
+}
+
+/* --- CONTINUE SCREEN --- */
+#continue-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gs-blue);
+    color: white;
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.cont-menu-box {
+    background: #fff;
+    color: black;
+    border: 4px solid #202020;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cont-opt {
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.cont-opt::before {
+    content: ' ';
+    width: 10px;
+    display: inline-block;
+}
+
+.cont-opt.focused::before {
+    content: '▶';
+}
+
+.save-info-box {
+    background: var(--gs-blue);
+    border: 2px solid white;
+    border-radius: 4px;
+    padding: 10px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.save-row {
+    font-size: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.party-preview-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+.mini-icon {
+    width: 32px;
+    height: 24px;
+    image-rendering: pixelated;
+    cursor: pointer;
+}
+
+.mini-icon.fainted {
+    filter: grayscale(100%) brightness(0.7);
+    opacity: 0.8;
+}
+
+.mini-icon:hover {
+    transform: translateY(-2px);
+}
+
+/* --- UTILS --- */
+.hidden {
+    display: none !important;
+}
+
+.btn-bar {
+    background: #ddd;
+    text-align: center;
+    padding: 6px;
+    font-size: 8px;
+    cursor: pointer;
+    border-top: 2px solid #999;
+    margin-top: auto;
+}
+
+.btn-bar:hover,
+.btn-bar.focused {
+    background: #ccc;
+}
+
+/* --- FOCUS / HOVER STATES --- */
+.menu-item:hover,
+.menu-item.focused {
+    background-color: #eee;
+}
+
+.menu-item:hover::before,
+.menu-item.focused::before {
+    opacity: 1;
+}
+
+.move-btn:hover,
+.move-btn.focused {
+    background: #e0e0e0;
+    border-color: #202020;
+}
+
+.party-slot:hover,
+.party-slot.focused {
+    background: #eee;
+    border-color: #000;
+}
+
+.pack-item:hover,
+.pack-item.focused {
+    background: #eee;
+    border: 1px solid #ccc;
+}
+
+.ctx-btn:hover,
+.ctx-btn.focused {
+    background: #eee;
+}
+
+.confirm-btn:hover,
+.confirm-btn.focused {
+    background: #000;
+}
+
+/* --- SELECTION SCREEN --- */
+#selection-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #202020;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.sel-preview-box {
+    height: 110px;
+    margin: 10px 10px 0 10px;
+    background: #fff;
+    border: 4px solid #444;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.preview-sprite {
+    width: 96px;
+    height: 96px;
+    image-rendering: pixelated;
+}
+
+.shiny-mark {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: gold;
+    font-size: 12px;
+    display: none;
+}
+
+.lab-table-area {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #202020;
+    position: relative;
+}
+
+.table-graphic {
+    width: 200px;
+    height: 60px;
+    background: #fff;
+    border: 2px solid #888;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-radius: 4px;
+    position: relative;
+}
+
+.pokeball-select {
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle at 35% 35%, white 10%, red 11%, red 50%, black 51%, black 60%, white 61%);
+    border-radius: 50%;
+    border: 1px solid black;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
+}
+
+.pokeball-select.focused {
+    transform: scale(1.1);
+    box-shadow: 0 0 5px gold;
+}
+
+.sel-cursor {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    transition: left 0.1s steps(1);
+    pointer-events: none;
+}
+
+.sel-cursor::after {
+    content: "▼";
+    color: #d8b030;
+    font-size: 12px;
+    position: absolute;
+    left: 4px;
+    animation: bounceCursor 0.6s infinite;
+}
+
+@keyframes bounceCursor {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+.sel-desc-box {
+    height: 60px;
+    background: white;
+    border-top: 4px solid #888;
+    padding: 8px;
+    font-size: 8px;
+    line-height: 12px;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* --- SUMMARY SCREEN --- */
+#summary-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    z-index: 950;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.sum-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #444;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+
+.sum-body {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.sum-sprite {
+    width: 96px;
+    height: 96px;
+    border: 1px solid #ccc;
+    background: #f8f8f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sum-sprite img {
+    width: 96px;
+    height: 96px;
+    image-rendering: pixelated;
+}
+
+.sum-data {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 8px;
+    justify-content: center;
+}
+
+.sum-stat-bar {
+    width: 100%;
+    height: 6px;
+    background: #ddd;
+    border: 1px solid #000;
+    border-radius: 2px;
+    margin-bottom: 2px;
+    position: relative;
+}
+
+.sum-stat-fill {
+    height: 100%;
+    display: block;
+    transition: width 0.3s;
+}
+
+.sum-divider {
+    width: 100%;
+    height: 2px;
+    background: #444;
+    margin: 4px 0;
+}
+
+.sum-moves {
+    border-top: 2px solid #444;
+    padding-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.move-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dotted #ccc;
+    padding-bottom: 2px;
+}
+
+.move-name {
+    color: #000;
+    text-transform: uppercase;
+    font-size: 6px;
+}
+
+.move-info-grp {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.move-pwr {
+    font-size: 6px;
+    color: #444;
+}
+
+.move-type {
+    color: #666;
+    text-transform: uppercase;
+    font-size: 6px;
+    background: #eee;
+    padding: 1px 3px;
+    border-radius: 2px;
+}
+
+.type-tag {
+    background: #333;
+    color: white;
+    padding: 2px 4px;
+    display: inline-block;
+    margin-right: 4px;
+    border-radius: 2px;
+}
+
+.sum-buttons {
+    margin-top: auto;
+    display: flex;
+    gap: 5px;
+}
+
+.confirm-btn {
+    flex: 1;
+    background: #444;
+    color: white;
+    border: none;
+    padding: 8px;
+    font-family: 'Press Start 2P';
+    font-size: 7px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.confirm-btn:disabled {
+    background: #bbb;
+    color: #eee;
+    pointer-events: none;
+}
+
+.confirm-btn.secondary {
+    background: #888;
+}
+
+.confirm-btn.nav-btn {
+    flex: 0 0 20px;
+}
+
+.confirm-btn.danger {
+    background: #c83828;
+}
+
+/* --- PARTY SCREEN --- */
+#party-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f8f8f8;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+}
+
+.party-header {
+    background: #282828;
+    color: white;
+    padding: 8px;
+    font-size: 10px;
+    border-bottom: 2px solid #a0a0a0;
+}
+
+.party-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.party-slot {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid #ccc;
+    margin-bottom: 4px;
+    padding: 2px;
+    cursor: pointer;
+    height: 40px;
+    position: relative;
+}
+
+.party-slot.fainted {
+    opacity: 0.6;
+    background: #ddd;
+}
+
+.party-slot.fainted .slot-icon {
+    filter: grayscale(100%);
+}
+
+.party-slot.active-mon {
+    border: 2px solid #d8b030;
+    background: #fffbe0;
+}
+
+.party-slot.new-catch {
+    border: 2px dashed #40a8c0;
+    background: #e0f8ff;
+}
+
+.slot-icon {
+    width: 40px;
+    height: 30px;
+    image-rendering: pixelated;
+    margin-right: 5px;
+}
+
+.party-slot:hover .slot-icon,
+.party-slot.focused .slot-icon {
+    animation: jump 0.3s infinite;
+}
+
+.slot-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 8px;
+}
+
+.slot-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.mini-hp-bg {
+    width: 60px;
+    height: 4px;
+    background: #ccc;
+    border: 1px solid #000;
+    border-radius: 2px;
+}
+
+.mini-hp-fill {
+    height: 100%;
+    background: var(--hp-green);
+    width: 100%;
+}
+
+#party-context {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 90px;
+    background: white;
+    border: 2px solid #202020;
+    z-index: 350;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.ctx-btn {
+    padding: 10px;
+    font-size: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    background: white;
+}
+
+.ctx-btn.warn {
+    color: #c83828;
+    font-weight: bold;
+}
+
+/* --- PACK SCREEN --- */
+#pack-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f8f8f8;
+    z-index: 250;
+    display: flex;
+    flex-direction: column;
+}
+
+.pack-header {
+    background: #282828;
+    color: white;
+    padding: 8px;
+    font-size: 10px;
+    border-bottom: 2px solid #a0a0a0;
+}
+
+.pack-body {
+    display: flex;
+    flex-grow: 1;
+    height: 150px;
+}
+
+.pack-graphic {
+    width: 40%;
+    background: #e0e0e0;
+    border-right: 2px solid #a0a0a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bag-icon {
+    width: 64px;
+    height: 64px;
+    image-rendering: pixelated;
+    background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/backpack.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    transition: background-image 0.1s;
+}
+
+.pack-list {
+    width: 60%;
+    background: white;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: 210px;
+}
+
+.pack-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.pack-list::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+.pack-item {
+    font-size: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+}
+
+.pack-item.cancel-btn {
+    justify-content: center;
+    font-weight: bold;
+    background: #eee;
+    border: 1px solid #ccc;
+}
+
+.pack-item.disabled {
+    color: #aaa;
+    pointer-events: none;
+}
+
+.pack-desc-box {
+    height: 60px;
+    background: #282828;
+    color: white;
+    border-top: 4px solid #a0a0a0;
+    padding: 8px;
+    font-size: 8px;
+    line-height: 12px;
+    margin-top: auto;
+}
+
+/* --- BATTLE SCENE --- */
+.scene {
+    height: 200px;
+    position: relative;
+    background: linear-gradient(to bottom, #f8f8f8 0%, #e0e0e0 100%);
+    transform-origin: center center;
+}
+
+/* UPDATED: Added transform and filter to transition for smooth shrinking/growing */
+.sprite {
+    position: absolute;
+    image-rendering: pixelated;
+    z-index: 5;
+    transition: opacity 0.2s, transform 0.4s, filter 0.4s;
+}
+
+/* REVERTED: Original positioning */
+#enemy-sprite {
+    width: 112px;
+    height: 112px;
+    top: 5px;
+    right: 20px;
+}
+
+/* Kept 'bottom center' for player as requested previously */
+#player-sprite {
+    width: 224px;
+    height: 224px;
+    bottom: -40px;
+    left: -30px;
+    transform-origin: bottom center;
+}
+
+
+/* --- HUD SYSTEM --- */
+.hud {
+    position: absolute;
+    background: white;
+    border: 2px solid var(--ui-border);
+    border-radius: 2px;
+    padding: 4px;
+    width: 135px;
+    z-index: 10;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Off-screen positions */
+#enemy-hud {
+    top: 10px;
+    left: 10px;
+    transform: translateX(-250px);
+}
+
+#player-hud {
+    bottom: 25px;
+    right: 10px;
+    transform: translateX(250px);
+}
+
+/* Slide-in Active State */
+#enemy-hud.hud-active,
+#player-hud.hud-active {
+    transform: translateX(0);
+}
+
+/* Substitute Back Sprite (Player side) */
+.sub-back {
+    transform: scaleX(-1);
+    /* Flips the sprite */
+}
+
+/* Animation for Substitute Fading/Breaking */
+@keyframes subBreak {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+        filter: grayscale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+}
+
+.anim-break {
+    animation: subBreak 0.5s ease-out forwards;
+}
+
+/* Level Up Flash Animation */
+@keyframes flashHudBlue {
+    0% {
+        background-color: white;
+        box-shadow: 0 0 0 #40a8c0;
+    }
+
+    50% {
+        background-color: #e0f8ff;
+        box-shadow: 0 0 15px #40a8c0;
+        border-color: #40a8c0;
+    }
+
+    100% {
+        background-color: white;
+        box-shadow: 0 0 0 #40a8c0;
+    }
+}
+
+.hud-flash-blue {
+    animation: flashHudBlue 0.6s ease-in-out;
+}
+
+/* NAME CSS: Wraps text inside box, icon stays at the end */
+.name {
+    font-size: 10px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    display: block;
+    white-space: normal;
+    line-height: 14px;
+    /* Increased from 12px to prevent clipping */
+    overflow: visible;
+    /* Ensures the bottom of the icon isn't cut off */
+}
+
+.level {
+    font-size: 10px;
+    float: right;
+}
+
+.hp-box {
+    display: flex;
+    align-items: center;
+    font-size: 8px;
+    font-weight: bold;
+}
+
+.hp-bar-bg {
+    width: 90px;
+    height: 6px;
+    background: #f0f0f0;
+    border: 1px solid #000;
+    border-radius: 2px;
+    position: relative;
+}
+
+.hp-fill {
+    height: 100%;
+    background-color: var(--hp-green);
+    width: 100%;
+    transition: width 0.5s ease;
+    border-right: 1px solid black;
+}
+
+#player-hp-text {
+    font-size: 10px;
+    text-align: right;
+    margin-top: 4px;
+    letter-spacing: 1px;
+}
+
+.exp-box {
+    display: flex;
+    align-items: center;
+    margin-top: 2px;
+    justify-content: flex-end;
+}
+
+.exp-bar-bg {
+    width: 80px;
+    height: 2px;
+    background: #ccc;
+    border: 1px solid #444;
+    border-radius: 2px;
+    margin-left: 4px;
+}
+
+.exp-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--xp-blue);
+    transition: width 0.5s ease;
+}
+
+.aggro-icon {
+    font-size: 10px;
+    margin-left: 4px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #fff;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.aggro-1 {
+    color: #d8b030;
+}
+
+.aggro-2 {
+    color: #c86028;
+}
+
+.aggro-3 {
+    color: #c83828;
+    animation: pulseAggro 0.5s infinite;
+}
+
+@keyframes pulseAggro {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.3);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+#streak-box {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: white;
+    border: 2px solid #202020;
+    padding: 4px 6px;
+    font-size: 8px;
+    z-index: 50;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+    color: black;
+}
+
+.smoke-particle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: white;
+    border: 0px solid #000;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 25;
+    opacity: 1;
+    box-shadow: inset -0px -0px 0 #ccc;
+    animation: smokePop 0.4s ease-out forwards;
+}
+
+@keyframes smokePop {
+    0% {
+        transform: translate(0, 0) scale(0.5);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(1.5);
+        opacity: 0;
+    }
+}
+
+#dialog-box {
+    height: 88px;
+    background-color: #282828;
+    color: white;
+    border-top: 4px solid #a0a0a0;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    position: relative;
+    z-index: 20;
+}
+
+#text-content {
+    width: 60%;
+    font-size: 12px;
+    line-height: 18px;
+    text-transform: uppercase;
+    white-space: pre-wrap;
+}
+
+#text-content.full-width {
+    width: 292px;
+}
+
+#action-menu {
+    width: 45%;
+    background: white;
+    color: black;
+    border-left: 4px solid #a0a0a0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 5px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    z-index: 20;
+}
+
+#move-menu {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: absolute;
+    background: white;
+    z-index: 25;
+    display: flex;
+}
+
+#move-info {
+    width: 35%;
+    background: #282828;
+    color: white;
+    padding: 8px;
+    font-size: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    border-right: 2px solid #a0a0a0;
+    box-sizing: border-box;
+}
+
+#move-grid {
+    width: 65%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
+    gap: 2px;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.move-btn {
+    background: #fff;
+    border: 2px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 2px;
+    color: #000;
+}
+
+.move-btn.cancel {
+    grid-column: span 2;
+    border-color: #a0a0a0;
+    background: #f0f0f0;
+    color: #444;
+    font-weight: bold;
+}
+
+.menu-item {
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.menu-item::before {
+    content: "▸";
+    opacity: 0;
+    margin-right: 2px;
+}
+
+.menu-item.centered {
+    justify-content: center;
+    padding-left: 0;
+}
+
+/* --- ANIMATIONS --- */
+
+/* --- STATUS ANIMATIONS (Solid Silhouettes) --- */
+/* BRN: Dark Red Silhouette */
+@keyframes spriteFlashRed {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: brightness(0.4) sepia(1) saturate(100) hue-rotate(-50deg);
+    }
+}
+
+/* PAR: Yellow Silhouette */
+@keyframes spriteFlashYellow {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: brightness(0.8) sepia(1) saturate(100) hue-rotate(0deg);
+    }
+}
+
+/* PSN: Purple Silhouette */
+@keyframes spriteFlashPurple {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: brightness(0.5) sepia(1) saturate(100) hue-rotate(240deg);
+    }
+}
+
+/* FRZ/SLP: Cyan/Blue Silhouette */
+@keyframes spriteFlashCyan {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: brightness(0.6) sepia(1) saturate(100) hue-rotate(150deg);
+    }
+}
+
+.status-anim-brn {
+    animation: spriteFlashRed 0.6s steps(4);
+}
+
+.status-anim-par {
+    animation: spriteFlashYellow 0.6s steps(4);
+}
+
+.status-anim-psn {
+    animation: spriteFlashPurple 0.6s steps(4);
+}
+
+.status-anim-frz,
+.status-anim-slp {
+    animation: spriteFlashCyan 0.6s steps(4);
+}
+
+
+/* --- STATUS ANIMATIONS (Sprite Only) --- */
+@keyframes spriteFlashRed {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: sepia(1) saturate(8) hue-rotate(-50deg) brightness(0.8);
+    }
+}
+
+@keyframes spriteFlashYellow {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: sepia(1) saturate(10) hue-rotate(20deg) brightness(1.2);
+    }
+}
+
+@keyframes spriteFlashPurple {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: sepia(1) saturate(5) hue-rotate(220deg) brightness(0.7);
+    }
+}
+
+@keyframes spriteFlashCyan {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: sepia(1) saturate(5) hue-rotate(130deg) brightness(1.2);
+    }
+}
+
+.status-anim-brn {
+    animation: spriteFlashRed 0.6s steps(4);
+}
+
+.status-anim-par {
+    animation: spriteFlashYellow 0.6s steps(4);
+}
+
+.status-anim-psn {
+    animation: spriteFlashPurple 0.6s steps(4);
+}
+
+.status-anim-frz,
+.status-anim-slp {
+    animation: spriteFlashCyan 0.6s steps(4);
+}
+
+@keyframes spawn {
+    0% {
+        transform: scale(0);
+        filter: brightness(0) invert(1);
+        opacity: 0;
+    }
+
+    70% {
+        transform: scale(1);
+        filter: brightness(0) invert(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1) invert(0);
+        opacity: 1;
+    }
+}
+
+.anim-enter {
+    animation: spawn 0.6s ease-out forwards;
+}
+
+@keyframes withdraw {
+    0% {
+        transform: scale(1);
+        filter: brightness(1) invert(0);
+        opacity: 1;
+    }
+
+    30% {
+        transform: scale(1);
+        filter: brightness(0) invert(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        filter: brightness(0) invert(1);
+        opacity: 0;
+    }
+}
+
+.anim-return {
+    animation: withdraw 0.4s ease-in forwards;
+}
+
+.anim-return {
+    animation: withdraw 0.4s ease-in forwards;
+}
+
+.anim-return {
+    animation: withdraw 0.4s ease-in forwards;
+}
+
+@keyframes faint {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+}
+
+.anim-faint {
+    animation: faint 0.6s ease-out forwards;
+}
+
+.anim-faint {
+    animation: faint 0.6s ease-out forwards;
+}
+
+.anim-faint {
+    animation: faint 0.6s ease-out forwards;
+}
+
+@keyframes captureThrow {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    25% {
+        transform: translate(60px, -140px) rotate(180deg);
+    }
+
+    50% {
+        transform: translate(140px, -180px) rotate(360deg);
+    }
+
+    75% {
+        transform: translate(180px, -140px) rotate(540deg);
+    }
+
+    100% {
+        transform: translate(215px, -100px) rotate(720deg);
+    }
+}
+
+@keyframes captureShake {
+
+    0%,
+    100% {
+        transform: translate(215px, -100px) rotate(0deg);
+    }
+
+    25% {
+        transform: translate(215px, -100px) rotate(-15deg);
+    }
+
+    75% {
+        transform: translate(215px, -100px) rotate(15deg);
+    }
+}
+
+.pokeball-anim {
+    position: absolute;
+    bottom: 40px;
+    left: 20px;
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle at 35% 35%, white 10%, red 11%, red 50%, black 51%, black 60%, white 61%);
+    border-radius: 50%;
+    border: 1px solid black;
+    z-index: 50;
+}
+
+.pokeball-anim.great {
+    background: radial-gradient(circle at 35% 35%, white 10%, #3b82c4 11%, #3b82c4 50%, black 51%, black 60%, white 61%);
+}
+
+.pokeball-anim.ultra {
+    background: radial-gradient(circle at 35% 35%, white 10%, #333 11%, #333 50%, gold 51%, gold 60%, white 61%);
+}
+
+.pokeball-anim.master {
+    background: radial-gradient(circle at 35% 35%, white 10%, #7e30cc 11%, #7e30cc 50%, pink 51%, pink 60%, white 61%);
+}
+
+.pokeball-caught {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle at 35% 35%, white 10%, #555 11%, #555 50%, black 51%, black 60%, white 61%);
+    border-radius: 50%;
+    border: 1px solid black;
+    z-index: 40;
+    filter: grayscale(1);
+}
+
+@keyframes deflectAnim {
+    0% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(15px);
+    }
+
+    40% {
+        transform: translateX(-10px);
+    }
+
+    60% {
+        transform: translateX(5px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.anim-deflect {
+    animation: deflectAnim 0.3s ease-out;
+}
+
+@keyframes sparkle {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1) rotate(180deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.shiny-star {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: transparent;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.shiny-star::before {
+    content: "✦";
+    color: gold;
+    font-size: 16px;
+    position: absolute;
+}
+
+@keyframes shake {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    25% {
+        transform: translate(-6px, 0);
+    }
+
+    75% {
+        transform: translate(6px, 0);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes flicker {
+    0% {
+        opacity: 1;
+    }
+
+    25% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    75% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.anim-hit {
+    animation: shake 0.4s, flicker 0.4s;
+}
+
+@keyframes bossIntroSequence {
+    0% {
+        filter: brightness(10);
+        transform: translate(0, 0);
+    }
+
+    10% {
+        filter: brightness(1);
+        transform: translate(-8px, 8px);
+    }
+
+    20% {
+        transform: translate(8px, -8px);
+    }
+
+    30% {
+        transform: translate(-8px, -8px);
+    }
+
+    40% {
+        transform: translate(8px, 8px);
+    }
+
+    50% {
+        transform: translate(-8px, 0);
+    }
+
+    60% {
+        transform: translate(8px, 0);
+    }
+
+    100% {
+        filter: brightness(1);
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes flashPurple {
+    0% {
+        box-shadow: inset 0 0 0 #a040a0;
+    }
+
+    50% {
+        box-shadow: inset 0 0 150px #a040a0;
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 #a040a0;
+    }
+}
+
+.fx-poison {
+    animation: flashPurple 0.5s steps(5);
+}
+
+
+@keyframes statUpAnim {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(1.1, 1.1) translateY(-5px);
+        filter: sepia(1) saturate(3) hue-rotate(-50deg);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+@keyframes statDownAnim {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(0.9, 0.9) translateY(5px);
+        filter: sepia(1) saturate(3) hue-rotate(180deg);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+.anim-stat-up {
+    animation: statUpAnim 0.8s steps(8);
+}
+
+.anim-stat-down {
+    animation: statDownAnim 0.8s steps(8);
+}
+
+
+/* --- RESUME TRANSITION --- */
+@keyframes fadeInScene {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.anim-fade-in {
+    animation: fadeInScene 0.8s ease-out forwards;
+}
+
+/* RAGE ANIMATION: Pure shake, no rotation */
+@keyframes violentShake {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    25% {
+        transform: translate(-10px, 5px);
+    }
+
+    50% {
+        transform: translate(10px, -5px);
+    }
+
+    75% {
+        transform: translate(-10px, -5px);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+.boss-intro {
+    animation: bossIntroSequence 1.0s ease-out forwards;
+}
+
+.anim-violent {
+    animation: violentShake 0.5s ease-in-out;
+}
+
+/* --- FX (UPDATED: Always Retro) --- */
+@keyframes flashRed {
+    0% {
+        box-shadow: inset 0 0 0 red;
+    }
+
+    50% {
+        box-shadow: inset 0 0 150px red;
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 red;
+    }
+}
+
+@keyframes flashBlue {
+    0% {
+        box-shadow: inset 0 0 0 cyan;
+    }
+
+    50% {
+        box-shadow: inset 0 0 150px cyan;
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 cyan;
+    }
+}
+
+@keyframes flashGreen {
+    0% {
+        box-shadow: inset 0 0 0 lime;
+    }
+
+    50% {
+        box-shadow: inset 0 0 150px lime;
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 lime;
+    }
+}
+
+@keyframes flashWhite {
+    0% {
+        filter: brightness(1);
+    }
+
+    20% {
+        filter: brightness(10);
+    }
+
+    40% {
+        filter: brightness(10);
+    }
+
+    60% {
+        filter: brightness(10);
+    }
+
+    100% {
+        filter: brightness(1);
+    }
+}
+
+@keyframes wobble {
+    0% {
+        filter: hue-rotate(0deg);
+        transform: skew(0) rotate(0);
+    }
+
+    25% {
+        transform: skew(10deg) rotate(5deg);
+    }
+
+    75% {
+        transform: skew(-10deg) rotate(-5deg);
+    }
+
+    100% {
+        filter: hue-rotate(0deg);
+        transform: skew(0) rotate(0);
+    }
+}
+
+@keyframes impact {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    20% {
+        transform: translate(-10px, 10px) rotate(5deg);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes brownQuake {
+    0% {
+        transform: translateY(0);
+    }
+
+    25% {
+        transform: translateY(-10px);
+    }
+
+    75% {
+        transform: translateY(10px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Added 'steps(5)' to all these rules to force choppy animation */
+.fx-fire {
+    animation: flashRed 0.5s steps(5);
+}
+
+.fx-water {
+    animation: flashBlue 0.5s steps(5);
+}
+
+.fx-ice {
+    animation: flashBlue 0.5s steps(5);
+}
+
+.fx-grass {
+    animation: flashGreen 0.5s steps(5);
+}
+
+.fx-electric {
+    animation: flashWhite 0.4s steps(4);
+}
+
+.fx-psychic,
+.fx-dragon {
+    animation: wobble 0.6s steps(6);
+}
+
+.fx-ground,
+.fx-rock {
+    animation: brownQuake 0.4s steps(8);
+}
+
+.fx-normal,
+.fx-fighting,
+.fx-flying {
+    animation: impact 0.3s steps(8);
+}
+
+.transformed-sprite {
+    filter: grayscale(0.4) brightness(0.9) contrast(1.1) sepia(0.2) hue-rotate(240deg) !important;
+}
+
+/* --- SMART RETRO MOTION OVERRIDE --- */
+/* When this class is active, FORCE all animations to look stepped/choppy */
+body.retro-motion * {
+    transition-timing-function: steps(10) !important;
+    animation-timing-function: steps(10) !important;
+}
+
+/* Exception: HP/EXP Bars look better with slightly smoother steps */
+body.retro-motion .hp-fill,
+body.retro-motion .exp-fill {
+    transition-timing-function: steps(10) !important;
+}
+
+/* Exception: The LCD Overlay must stay smooth or it flickers badly */
+body.retro-motion #lcd-overlay {
+    transition-timing-function: ease !important;
+}
+
+/* --- CUSTOM SCROLLBARS (Retro Style) --- */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #eee;
+    border-left: 2px solid #202020;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border: 1px solid #202020;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* --- FLIPPED DOLL ANIMATION (was dynamically injected) --- */
+@keyframes shakeFlipped {
+    0% { transform: scaleX(-1) translate(0, 0); }
+    25% { transform: scaleX(-1) translate(6px, 0); }
+    75% { transform: scaleX(-1) translate(-6px, 0); }
+    100% { transform: scaleX(-1) translate(0, 0); }
+}
+
+.anim-hit-flipped { animation: shakeFlipped 0.4s, flicker 0.4s; }
