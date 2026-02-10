@@ -27,6 +27,86 @@ const MOVE_DEX = {
         }
     },
 
+    // --- SWITCH OUT MOVES ---
+    'U-TURN': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            // 1. Damage Phase
+            const moveData = { name: 'U-TURN', type: 'bug', power: 70, category: 'physical' };
+            await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+
+            // 2. Switch Out
+            if (user.currentHp > 0) {
+                await _manualSwitch(battle, user);
+            }
+            return true;
+        }
+    },
+    'VOLT SWITCH': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const moveData = { name: 'VOLT SWITCH', type: 'electric', power: 70, category: 'special' };
+            await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+            if (user.currentHp > 0) {
+                await _manualSwitch(battle, user);
+            }
+            return true;
+        }
+    },
+    'FLIP TURN': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const moveData = { name: 'FLIP TURN', type: 'water', power: 60, category: 'physical' };
+            await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+            if (user.currentHp > 0) {
+                await _manualSwitch(battle, user);
+            }
+            return true;
+        }
+    },
+
+    // --- COUNTER MOVES ---
+    'COUNTER': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            const dmg = user.volatiles.turnDamage || 0;
+            const cat = user.volatiles.turnDamageCategory;
+            if (dmg > 0 && cat === 'physical') {
+                await battle.applyDamage(target, dmg * 2, 'fighting');
+                return true;
+            }
+            await UI.typeText("But it failed!");
+            return false;
+        }
+    },
+    'MIRROR COAT': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            const dmg = user.volatiles.turnDamage || 0;
+            const cat = user.volatiles.turnDamageCategory;
+            if (dmg > 0 && cat === 'special') {
+                await battle.applyDamage(target, dmg * 2, 'psychic');
+                return true;
+            }
+            await UI.typeText("But it failed!");
+            return false;
+        }
+    },
+
+    // --- PERISH SONG ---
+    'PERISH SONG': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            await UI.typeText("All Pokemon hearing\nthe song will faint!");
+            [battle.p, battle.e].forEach(m => {
+                if (m.volatiles.perishCount === undefined) {
+                    m.volatiles.perishCount = 3;
+                }
+            });
+            return true;
+        }
+    },
+
     // --- SUBSTITUTE MECHANIC ---
     'SUBSTITUTE': {
         isUnique: true,
@@ -69,43 +149,11 @@ const MOVE_DEX = {
     'BATON PASS': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            // 1. AI Check
-            if (user !== battle.p) {
-                await UI.typeText("But it failed!");
-                return false;
-            }
-
-            // 2. Valid Party Check
-            const valid = Game.party.filter((p, i) => p.currentHp > 0 && i !== Game.activeSlot);
-            if (valid.length === 0) {
-                await UI.typeText("But there is no one\nto switch to!");
-                return false;
-            }
-
-            await UI.typeText(`${user.name} wants to\nswitch out!`);
-
-            // 3. PAUSE BATTLE - WAIT FOR SELECTION
-            // This prevents the enemy from attacking while the menu is open
-            const selectedIndex = await new Promise(resolve => {
-                battle.userInputPromise = resolve;
-                Game.openParty(true);
-            });
-
-            battle.userInputPromise = null; // Clean up listener
-
-            // 4. RESUME - EXECUTE SWITCH
-            const newMon = Game.party[selectedIndex];
-
-            // Set flag so processSwitch knows to copy stats
             battle.batonPassActive = true;
-
-            // Trigger the switch animation manually
-            await battle.processSwitch(newMon, false);
-
-            // Reset flag
-            battle.batonPassActive = false;
-
-            return true;
+            const success = await _manualSwitch(battle, user);
+            // Redundant: _manualSwitch calls processSwitch which resets it, but good for safety
+            if (!success) battle.batonPassActive = false;
+            return success;
         }
     },
 
@@ -295,6 +343,36 @@ const MOVE_DEX = {
     'DREAM EATER': { condition: (t) => t.status === 'slp' },
     'NIGHTMARE': { condition: (t) => t.status === 'slp' },
     'SNORE': { condition: (t) => true }, // Placeholder for sleep check
+
+    // --- WEATHER MOVES ---
+    'RAIN DANCE': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            await battle.setWeather('rain');
+            return true;
+        }
+    },
+    'SUNNY DAY': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            await battle.setWeather('sun');
+            return true;
+        }
+    },
+    'SANDSTORM': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            await battle.setWeather('sand');
+            return true;
+        }
+    },
+    'HAIL': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            await battle.setWeather('hail');
+            return true;
+        }
+    },
 };
 
 // Logic for Two-Turn and Special Moves
@@ -326,4 +404,35 @@ async function _weatherHeal(battle, user) {
     if (battle.weather.type === 'sun') pct = 0.66;
     else if (battle.weather.type !== 'none') pct = 0.25;
     return _heal(battle, user, pct);
+}
+
+// --- NEW HELPERS ---
+async function _manualSwitch(battle, user) {
+    // 1. AI Check
+    if (user !== battle.p) {
+        // AI doesn't switch out via moves yet in this simple engine
+        return false;
+    }
+
+    // 2. Valid Party Check
+    const valid = Game.party.filter((p, i) => p.currentHp > 0 && i !== Game.activeSlot);
+    if (valid.length === 0) {
+        await UI.typeText("But there is no one\nto switch to!");
+        return false;
+    }
+
+    await UI.typeText(`${user.name} wants to\nswitch out!`);
+
+    // 3. PAUSE BATTLE - WAIT FOR SELECTION
+    const selectedIndex = await new Promise(resolve => {
+        battle.userInputPromise = resolve;
+        Game.openParty(true);
+    });
+
+    battle.userInputPromise = null;
+
+    // 4. RESUME - EXECUTE SWITCH
+    const newMon = Game.party[selectedIndex];
+    await battle.processSwitch(newMon, false);
+    return true;
 }

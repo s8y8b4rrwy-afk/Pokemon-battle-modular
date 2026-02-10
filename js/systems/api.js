@@ -42,8 +42,12 @@ const API = {
 
             // 5. Determine Sprites
             const vCrystal = data.sprites.versions['generation-ii']['crystal'];
-            const front = isShiny ? vCrystal.front_shiny_transparent : vCrystal.front_transparent;
-            const back = isShiny ? vCrystal.back_shiny_transparent : vCrystal.back_transparent;
+            let front = isShiny ? vCrystal.front_shiny_transparent : vCrystal.front_transparent;
+            let back = isShiny ? vCrystal.back_shiny_transparent : vCrystal.back_transparent;
+
+            // Fallback
+            if (!front) front = isShiny ? data.sprites.front_shiny : data.sprites.front_default;
+            if (!back) back = isShiny ? data.sprites.back_shiny : data.sprites.back_default;
 
             const nextLvlExp = Math.pow(level + 1, 3) - Math.pow(level, 3);
             const bst = getStat('hp') + getStat('attack') + getStat('defense') + getStat('special-attack') + getStat('special-defense') + getStat('speed');

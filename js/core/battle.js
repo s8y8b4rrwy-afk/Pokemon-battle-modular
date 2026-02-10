@@ -142,15 +142,16 @@ const Battle = {
         this.resetScene();
     },
 
-    setWeather(type) {
+    async setWeather(type) {
         this.weather = { type: type, turns: 5 };
         const overlay = document.getElementById('scene');
         if (WEATHER_FX[type]) {
             overlay.style.backgroundColor = WEATHER_FX[type].color;
-            UI.typeText(WEATHER_FX[type].msg);
+            // Await the text so the player sees "It started to rain!" before the turn ends
+            await UI.typeText(WEATHER_FX[type].msg);
         } else {
             overlay.style.backgroundColor = "";
-            UI.typeText("The skies cleared.");
+            await UI.typeText("The skies cleared.");
         }
     },
 
@@ -429,6 +430,18 @@ const Battle = {
             const dmg = Math.floor(mon.maxHp / 8);
             // Use Helper (pass 'burn' or 'poison' to trigger specific logic/sounds if needed)
             await this.applyDamage(mon, Math.max(1, dmg), mon.status === 'brn' ? 'burn' : 'poison');
+            if (mon.currentHp <= 0) return;
+        }
+
+        // 3. PERISH SONG
+        if (mon.volatiles.perishCount !== undefined) {
+            mon.volatiles.perishCount--;
+            await UI.typeText(`${mon.name}'s perish count\nfell to ${mon.volatiles.perishCount}!`);
+
+            if (mon.volatiles.perishCount <= 0) {
+                delete mon.volatiles.perishCount;
+                await this.applyDamage(mon, mon.maxHp, 'normal'); // Faint
+            }
         }
     },
 
@@ -703,6 +716,12 @@ const Battle = {
 
     // --- QUEUE EXECUTION ---
     async runQueue(queue) {
+        // 0. RESET TURN DATA
+        [this.p, this.e].forEach(m => {
+            m.volatiles.turnDamage = 0;
+            m.volatiles.turnDamageCategory = null;
+        });
+
         // 1. PROCESS ACTIONS
         for (const action of queue) {
             if (Game.state !== 'BATTLE') return 'STOP_BATTLE';
@@ -1212,7 +1231,14 @@ const Battle = {
         // 2. EXECUTE MAIN LOGIC
         let allowSideEffects = false;
 
-        if (move.category !== 'status') {
+        // Check for Unique Move Logic FIRST (Covers U-turn, Counter, Rest, etc)
+        if (special && special.isUnique) {
+            const result = await special.onHit(this, attacker, defender, weatherMod);
+            if (result === 'IMMUNE') { moveImmune = true; didSomething = false; }
+            else if (result === 'FAIL') { explicitlyFailed = true; didSomething = false; }
+            else { didSomething = !!result; }
+        }
+        else if (move.category !== 'status') {
             // --- DAMAGING MOVES ---
             const result = await this.handleDamageSequence(attacker, defender, move, isPlayer, weatherMod);
             didSomething = result.success;
@@ -1290,6 +1316,11 @@ const Battle = {
 
             if (result.damage > 0) {
                 didSomething = true;
+
+                // Track for Counter / Mirror Coat
+                defender.volatiles.turnDamage = (defender.volatiles.turnDamage || 0) + result.damage;
+                defender.volatiles.turnDamageCategory = move.category;
+
                 await this.resolveSingleHit(attacker, defender, move, result.damage, isPlayer, i === 0, result);
                 hitsLanded++;
             }
@@ -1420,28 +1451,8 @@ const Battle = {
             return 'IMMUNE';
         }
 
-        // 2. CHECK MOVE_DEX (Unique Logic)
-        // Handles specific script logic for Transform, Substitute, Rest, etc.
-        const special = MOVE_DEX[move.name];
-        if (special && special.isUnique) {
-            // Run the custom function. If it returns true, success.
-            // If it returns false (e.g. Yawn when already asleep), return 'FAIL'.
-            return await special.onHit(this, attacker, defender) ? true : 'FAIL';
-        }
-
-        // 3. WEATHER MOVES
-        const wMoves = { 'SUNNY DAY': 'sun', 'RAIN DANCE': 'rain', 'SANDSTORM': 'sand', 'HAIL': 'hail' };
-        if (wMoves[move.name]) {
-            AudioEngine.playSfx('swoosh');
-            await wait(300);
-            this.setWeather(wMoves[move.name]);
-            await wait(1500);
-            return true; // Success (did something)
-        }
-
-        // 4. FALLTHROUGH
+        // 2. FALLTHROUGH
         // If we reach here, it's a standard status move (like Growl or Poison Powder).
-        // Returning false tells the engine: "Go ahead and check handleMoveSideEffects to apply the stats/status."
         return false;
     },
 

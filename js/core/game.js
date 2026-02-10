@@ -228,6 +228,16 @@ const Game = {
                 if (DEBUG.PLAYER.STATUS !== null) p.status = DEBUG.PLAYER.STATUS;
                 if (DEBUG.PLAYER.STAGES !== null) Object.assign(p.stages, DEBUG.PLAYER.STAGES);
                 if (DEBUG.PLAYER.VOLATILES) Object.assign(p.volatiles, DEBUG.PLAYER.VOLATILES);
+
+                // FORCE MOVES FROM DEBUG
+                if (DEBUG.PLAYER.MOVES && Array.isArray(DEBUG.PLAYER.MOVES)) {
+                    // Fetch moves asynchronously but we are in an async function so we can await
+                    const movePromises = DEBUG.PLAYER.MOVES.map(name => API.getMove(name));
+                    // We need to wait for them, but we can't await inside this sync block easily unless we restructure.
+                    // Actually startNewBattle IS async. So we can await.
+                    const fetchedMoves = await Promise.all(movePromises);
+                    p.moves = fetchedMoves.filter(m => m !== null);
+                }
             }
         }
 

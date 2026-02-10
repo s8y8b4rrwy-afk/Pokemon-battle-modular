@@ -48,7 +48,9 @@ const Input = {
                     const prevShiny = document.getElementById('sel-preview-shiny');
                     if (prevImg) {
                         prevImg.src = p.frontSprite;
+                        prevImg.classList.remove('hidden');
                         prevImg.style.display = 'block';
+                        prevShiny.classList.remove('hidden');
                         prevShiny.style.display = p.isShiny ? 'block' : 'none';
                     }
                     UI.typeText(`Will you choose\n${p.name}?`, null, true);

@@ -49,6 +49,15 @@ const Mechanics = {
         if (attacker.types.includes(move.type)) dmg = Math.floor(dmg * 1.5);
         dmg = Math.floor(dmg * typeMod);
 
+        // Weather Modifiers
+        if (Battle.weather.type === 'sun') {
+            if (move.type === 'fire') dmg = Math.floor(dmg * 1.5);
+            if (move.type === 'water') dmg = Math.floor(dmg * 0.5);
+        } else if (Battle.weather.type === 'rain') {
+            if (move.type === 'water') dmg = Math.floor(dmg * 1.5);
+            if (move.type === 'fire') dmg = Math.floor(dmg * 0.5);
+        }
+
         let isCrit = false;
         let critChance = 0.0625;
         if (move.meta && move.meta.crit_rate >= 1) critChance = 0.125;
