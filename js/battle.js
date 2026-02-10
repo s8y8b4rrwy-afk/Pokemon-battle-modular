@@ -1,72 +1,34 @@
 const Battle = {
-    p: null, e: null, textEl: document.getElementById('text-content'), uiLocked: true, typeInterval: null,
+    p: null, e: null, textEl: document.getElementById('text-content'), uiLocked: true,
     participants: new Set(),
     userInputPromise: null,
 
-    // --- HELPER: FORCE REFLOW ---
-    forceReflow(el) { void el.offsetWidth; },
-
-
-
-    // --- NEW HELPERS TO PASTE INSIDE Battle { ... } ---
-
-    // 1. Standardized Visual Hit (Handles sprites, sounds, invisible checks, and sub flipping)
+    // --- DAMAGE / HEAL WRAPPERS ---
     async triggerHitAnim(target, moveType = 'normal') {
         const isPlayer = (target === this.p);
-        const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
         const isInvisible = !!target.volatiles.invulnerable;
 
         // 1. Audio
-        // Map specific status types to sounds, default to damage
         const sfx = (moveType === 'paralysis') ? 'electric' : (['burn', 'poison'].includes(moveType) ? 'damage' : moveType);
-        // If it's a move type (fire/water), play that, otherwise default damage
         if (SFX_LIB[sfx] || ['fire', 'water', 'ice', 'grass', 'electric', 'psychic'].includes(sfx)) AudioEngine.playSfx(sfx);
         else AudioEngine.playSfx('damage');
 
-        // 2. Screen Flash (Type specific)
-        if (['fire', 'water', 'ice', 'grass', 'electric', 'psychic'].includes(moveType)) {
-            const scene = document.getElementById('scene');
-            scene.classList.remove(`fx-${moveType}`);
-            this.forceReflow(scene);
-            scene.classList.add(`fx-${moveType}`);
-            // We don't await the screen flash here, we let it play in parallel with the hit
-            setTimeout(() => scene.classList.remove(`fx-${moveType}`), 600);
-        }
-
-        // 3. Sprite Shake (Skip if Digging/Flying)
-        if (!isInvisible) {
-            // Check if it is a Substitute (Doll) on the player side to flip the shake animation
-            const isFlipped = sprite.classList.contains('sub-back');
-            const hitClass = isFlipped ? 'anim-hit-flipped' : 'anim-hit';
-
-            sprite.classList.remove('anim-hit', 'anim-hit-flipped');
-            this.forceReflow(sprite);
-            sprite.classList.add(hitClass);
-
-            await wait(400); // Wait for shake to finish
-            sprite.classList.remove(hitClass);
-        } else {
-            await wait(200); // Small delay even if invisible
-        }
+        // 2. Delegate Visuals
+        await UIManager.triggerHitAnim(isPlayer, moveType, isInvisible);
     },
 
-    // 2. Standardized Damage Application
     async applyDamage(target, amount, type = 'normal') {
-        // A. Handle Substitute
         if (target.volatiles.substituteHP > 0 && type !== 'recoil' && type !== 'poison' && type !== 'burn') {
             target.volatiles.substituteHP -= amount;
-            await this.triggerHitAnim(target, type); // Hit the doll
+            await this.triggerHitAnim(target, type);
             await this.typeText("The SUBSTITUTE took\ndamage for it!");
 
-            // Check Break
             if (target.volatiles.substituteHP <= 0) {
                 target.volatiles.substituteHP = 0;
                 AudioEngine.playSfx('damage');
-
-                // Poof back logic
                 const isPlayer = (target === this.p);
                 const realSrc = target.volatiles.originalSprite || (isPlayer ? target.backSprite : target.frontSprite);
-                const animPromise = this.performVisualSwap(target, realSrc, false, isPlayer);
+                const animPromise = UIManager.performVisualSwap(isPlayer, realSrc, false);
                 const textPromise = this.typeText("The SUBSTITUTE\nfaded!");
                 target.volatiles.originalSprite = null;
                 await Promise.all([animPromise, textPromise]);
@@ -74,172 +36,34 @@ const Battle = {
             return;
         }
 
-        // B. Handle Real HP
-        await this.triggerHitAnim(target, type); // Visuals
-        target.currentHp -= amount; // Math
-        this.updateHUD(target, target === this.p ? 'player' : 'enemy'); // UI
+        await this.triggerHitAnim(target, type);
+        target.currentHp -= amount;
+        UIManager.updateHUD(target, target === this.p ? 'player' : 'enemy');
     },
 
-
-    // Standardized Healing Logic
     async applyHeal(target, amount, messageOverride = null) {
         if (target.currentHp >= target.maxHp) return false;
-
         const oldHp = target.currentHp;
         target.currentHp = Math.min(target.maxHp, target.currentHp + amount);
         const healedAmt = target.currentHp - oldHp;
 
-        // Visuals
         AudioEngine.playSfx('heal');
-        this.updateHUD(target, target === this.p ? 'player' : 'enemy');
+        UIManager.updateHUD(target, target === this.p ? 'player' : 'enemy');
 
-        // Text
-        // Pass 'false' as messageOverride to skip text (for silent heals)
         if (messageOverride !== false) {
-            const msg = messageOverride || `${target.name} regained\nhealth!`;
-            await this.typeText(msg);
+            await this.typeText(messageOverride || `${target.name} regained\nhealth!`);
         }
-
         return healedAmt;
     },
 
-    // --- VISUALS ---
-    spawnSmoke(x, y) {
-        const count = 12;
-        for (let i = 0; i < count; i++) {
-            const s = document.createElement('div'); s.className = 'smoke-particle';
-            const angle = (i / count) * 2 * Math.PI;
-            const velocity = 40 + Math.random() * 15;
-            const tx = Math.cos(angle) * velocity;
-            const ty = Math.sin(angle) * velocity;
-            s.style.left = x + 'px'; s.style.top = y + 'px';
-            s.style.setProperty('--tx', tx + 'px'); s.style.setProperty('--ty', ty + 'px');
-            document.getElementById('scene').appendChild(s);
-            setTimeout(() => s.remove(), 600);
-        }
-    },
-
-    // --- VISUAL SWAP HELPER (Fixed) ---
-    // --- NEW HELPER: Handles "Poof" Swaps ---
-    async performVisualSwap(mon, targetSrc, isDoll, isPlayerOverride = null) {
-        const isPlayer = (isPlayerOverride !== null) ? isPlayerOverride : (mon === this.p);
-        const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-
-        const x = isPlayer ? 60 : 230;
-        const y = isPlayer ? 150 : 70;
-
-        AudioEngine.playSfx('ball');
-        this.spawnSmoke(x, y);
-
-        sprite.style.opacity = 0;
-        await wait(100);
-
-        sprite.src = targetSrc;
-
-        if (isPlayer && isDoll) sprite.classList.add('sub-back');
-        else sprite.classList.remove('sub-back');
-
-        sprite.style.opacity = 1;
-
-        // Reset animation class
-        sprite.classList.remove('anim-enter');
-        this.forceReflow(sprite);
-        sprite.classList.add('anim-enter');
-
-        // FIX: Remove the animation class after it finishes
-        // This prevents the "Growing" animation from playing again when hit
-        setTimeout(() => {
-            sprite.classList.remove('anim-enter');
-        }, 600);
-
-        await wait(200);
-    },
-
-    async triggerRageAnim(cry) {
-        document.getElementById('scene').classList.add('anim-violent');
-        if (cry) AudioEngine.playCry(cry);
-        AudioEngine.playSfx('rumble');
-        await wait(500);
-        document.getElementById('scene').classList.remove('anim-violent');
-    },
-
-    resetSprite(el) {
-        el.classList.remove('anim-faint', 'anim-enter', 'anim-return', 'anim-hit', 'anim-deflect');
-        el.style.transform = "scale(1)"; el.style.filter = "none";
-        void el.offsetWidth; el.style.opacity = 1;
-    },
-
-    // IN: Battle object
-    updateHUD(mon, side) {
-        // 1. Name & Level
-        const nameEl = document.getElementById(`${side}-name`);
-
-        // Handle Boss Line Breaks
-        if (mon.name.startsWith("BOSS ")) nameEl.innerHTML = mon.name.replace("BOSS ", "BOSS<br>");
-        else nameEl.innerText = mon.name;
-
-        document.getElementById(`${side}-lvl`).innerText = `Lv${mon.level}`;
-
-        // 2. Status Icon (Updates existing span)
-        const statusEl = document.getElementById(`${side}-status-icon`);
-        if (mon.status && STATUS_DATA[mon.status]) {
-            statusEl.innerText = STATUS_DATA[mon.status].name;
-            statusEl.style.color = STATUS_DATA[mon.status].color;
-            statusEl.style.display = "inline-block";
-        } else {
-            statusEl.style.display = "none";
-        }
-
-        // 3. Rage Icon (Updates existing span)
-        const rageEl = document.getElementById(`${side}-rage-icon`);
-        rageEl.className = 'aggro-icon'; // Reset animations to base
-
-        if (mon.rageLevel > 0) {
-            if (mon.rageLevel === 1) { rageEl.innerText = '!'; rageEl.classList.add('aggro-1'); }
-            else if (mon.rageLevel === 2) { rageEl.innerText = '!!'; rageEl.classList.add('aggro-2'); }
-            else if (mon.rageLevel >= 3) { rageEl.innerText = '💢'; rageEl.classList.add('aggro-3'); }
-            rageEl.style.display = "inline-block";
-        } else {
-            rageEl.style.display = "none";
-        }
-
-        // 4. HP Bars
-        const pct = (Math.max(0, mon.currentHp) / mon.maxHp) * 100;
-        const bar = document.getElementById(`${side}-hp-bar`);
-        bar.style.width = Math.max(0, pct) + "%";
-        bar.style.backgroundColor = pct > 50 ? "var(--hp-green)" : pct > 20 ? "var(--hp-yellow)" : "var(--hp-red)";
-
-        if (side === 'player') {
-            document.getElementById('player-hp-text').innerText = `${Math.floor(Math.max(0, mon.currentHp))}/${mon.maxHp}`;
-            const expPct = (mon.exp / mon.nextLvlExp) * 100;
-            document.getElementById('player-exp-bar').style.width = Math.min(100, expPct) + "%";
-        }
-    },
-
-    // --- TEXT ENGINE ---
+    // --- UI WRAPPERS ---
     typeText(text, cb, fast = false) {
-        return new Promise(resolve => {
-            const el = this.textEl;
-            clearInterval(this.typeInterval);
-            el.innerHTML = "";
-            if (document.getElementById('action-menu').classList.contains('hidden')) el.classList.add('full-width');
-            else el.classList.remove('full-width');
-
-            let i = 0;
-            this.typeInterval = setInterval(() => {
-                const char = text.charAt(i);
-                if (char === '\n') el.innerHTML += '<br>'; else el.innerHTML += char;
-                i++;
-                if (i >= text.length) {
-                    clearInterval(this.typeInterval);
-                    setTimeout(() => {
-                        if (cb && typeof cb === 'function') cb();
-                        resolve();
-                    }, 1000);
-                }
-            }, fast ? 10 : 20);
+        return UIManager.typeText(text, 'text-content', fast).then(() => {
+            if (cb) cb();
         });
     },
+
+    updateHUD(mon, side) { UIManager.updateHUD(mon, side); },
 
     revertTransform(mon) {
         if (mon && mon.transformBackup) {
@@ -261,42 +85,26 @@ const Battle = {
 
     // 1. The New "Nuclear" Reset (Clears everything)
     resetScene() {
-        clearInterval(this.typeInterval);
-        this.typeInterval = null;
-
+        UIManager.clearText();
         const pSprite = document.getElementById('player-sprite');
         const eSprite = document.getElementById('enemy-sprite');
         const scene = document.getElementById('scene');
         const textEl = document.getElementById('text-content');
-
         const isTransformed = pSprite.classList.contains('transformed-sprite');
 
-        // Cleanup Classes
-        pSprite.className = 'sprite';
-        eSprite.className = 'sprite';
+        UIManager.resetSprite(pSprite);
+        UIManager.resetSprite(eSprite);
         scene.className = 'scene';
-
-        // FIX: Remove Substitute Flip
-        pSprite.classList.remove('sub-back');
-
         if (isTransformed) pSprite.classList.add('transformed-sprite');
 
-        // Reset Styles
         pSprite.style = "transition: none;";
         eSprite.style = "opacity: 0; transition: none;";
-
         scene.style = "";
-        textEl.innerHTML = "";
         textEl.classList.remove('full-width');
-
-        void pSprite.offsetWidth;
-        void eSprite.offsetWidth;
 
         this.weather = { type: 'none', turns: 0 };
         this.delayedMoves = [];
         this.uiLocked = false;
-
-        // FIX: Clear Input Promise if resetting to avoid stuck menus
         this.userInputPromise = null;
     },
 
@@ -322,35 +130,21 @@ const Battle = {
         this.p = player; this.e = enemy;
         this.participants.clear(); this.participants.add(Game.activeSlot);
 
-        // Only reset delayed moves if we are NOT resuming (playIntro = true usually implies new battle)
         if (playIntro) this.delayedMoves = [];
 
         const pSprite = document.getElementById('player-sprite');
         const eSprite = document.getElementById('enemy-sprite');
 
-        pSprite.style.transition = 'none';
-        eSprite.style.transition = 'none';
-
-        this.resetSprite(eSprite);
-
-        // RESUME FIX: If not playing intro, keep opacity 1
-        if (!playIntro) eSprite.style.opacity = 1;
-        else eSprite.style.opacity = 0;
-
+        UIManager.resetSprite(eSprite);
+        eSprite.style.opacity = playIntro ? 0 : 1;
         pSprite.src = player.backSprite;
+        pSprite.style.opacity = (!playIntro || skipPlayerAnim) ? 1 : 0;
 
-        if (!playIntro || skipPlayerAnim) pSprite.style.opacity = 1; else pSprite.style.opacity = 0;
+        UIManager.hideScreen('player-hud');
+        UIManager.hideScreen('enemy-hud');
 
-        this.forceReflow(pSprite);
-        this.forceReflow(eSprite);
-
-        pSprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
-        eSprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
-
-        if (!skipPlayerAnim) document.getElementById('player-hud').classList.remove('hud-active');
-        document.getElementById('enemy-hud').classList.remove('hud-active');
-
-        this.updateHUD(player, 'player'); this.updateHUD(enemy, 'enemy');
+        UIManager.updateHUD(player, 'player');
+        UIManager.updateHUD(enemy, 'enemy');
 
         const nameEl = document.getElementById('enemy-name');
         if (enemy.isBoss) nameEl.classList.add('boss-name'); else nameEl.classList.remove('boss-name');
@@ -359,39 +153,32 @@ const Battle = {
             document.getElementById(id).onmouseenter = () => { if (!this.uiLocked) { Input.focus = i; Input.updateVisuals(); } };
         });
 
-        // Only run the sequence if it's a new encounter
-        if (playIntro) {
-            this.startEncounterSequence(player, enemy, playIntro, skipPlayerAnim, eSprite);
-        }
+        if (playIntro) this.startEncounterSequence(player, enemy, playIntro, skipPlayerAnim, eSprite);
     },
 
     async startEncounterSequence(player, enemy, playIntro, skipPlayerAnim, eSprite) {
-        this.buildMoveMenu(); clearInterval(this.typeInterval); this.textEl.innerHTML = "";
+        this.buildMoveMenu();
+        UIManager.clearText();
 
         if (playIntro) {
-            // Setup instant invisibility
             eSprite.style.transition = 'none';
             eSprite.style.filter = 'brightness(0)';
-            this.forceReflow(eSprite);
+            UIManager.forceReflow(eSprite);
             eSprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
 
-            await sleep(500); // Hardcoded small buffer for browser render
-
-            // 1. Appear as Silhouette
+            await sleep(500);
             eSprite.style.opacity = 1;
 
             const introText = enemy.isBoss ? `The ${enemy.name}\nappeared!` : `Wild ${enemy.name}\nappeared!`;
             const textAnim = this.typeText(introText);
 
-            // 2. Wait (Controlled by Constant)
             await sleep(ANIM.INTRO_SILHOUETTE);
-
-            // 3. Reveal
             eSprite.style.filter = 'none';
 
             if (enemy.isBoss) {
                 if (enemy.cry) AudioEngine.playCry(enemy.cry);
                 AudioEngine.playSfx('rumble');
+                UIManager.showScreen('scene'); // Actually add class boss-intro
                 document.getElementById('scene').classList.add('boss-intro');
                 await sleep(ANIM.INTRO_BOSS_RUMBLE);
                 document.getElementById('scene').classList.remove('boss-intro');
@@ -400,15 +187,11 @@ const Battle = {
             }
 
             await sleep(ANIM.INTRO_REVEAL_DELAY);
-
-            // 5. Enemy HUD In
             AudioEngine.playSfx('swoosh');
             document.getElementById('enemy-hud').classList.add('hud-active');
 
-            await textAnim; // Ensure text finishes
-
-            if (enemy.isShiny) { this.playSparkle('enemy'); await sleep(1000); }
-
+            await textAnim;
+            if (enemy.isShiny) { UIManager.playSparkle('enemy'); await sleep(1000); }
             await sleep(ANIM.INTRO_PLAYER_WAIT);
 
             if (skipPlayerAnim) {
@@ -417,19 +200,14 @@ const Battle = {
                 this.uiLocked = false; this.uiToMenu();
             } else {
                 await this.typeText(`Go! ${player.name}!`);
-
                 AudioEngine.playSfx('swoosh');
                 await this.triggerPlayerEntry(player);
-
-                // 6. Player HUD In
                 AudioEngine.playSfx('swoosh');
                 document.getElementById('player-hud').classList.add('hud-active');
-
-                if (player.isShiny) { this.playSparkle('player'); await sleep(1200); }
+                if (player.isShiny) { UIManager.playSparkle('player'); await sleep(1200); }
                 this.uiLocked = false; this.uiToMenu();
             }
         } else {
-            // Resume Game
             eSprite.style.filter = 'none';
             eSprite.style.opacity = 1;
             this.uiLocked = false; this.uiToMenu();
@@ -439,23 +217,14 @@ const Battle = {
     async triggerPlayerEntry(mon) {
         AudioEngine.playSfx('ball');
         const sprite = document.getElementById('player-sprite');
-
-        sprite.style.transition = 'none';
-        this.resetSprite(sprite);
+        UIManager.resetSprite(sprite);
         sprite.style.opacity = 0;
-        this.forceReflow(sprite);
-
-        sprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
+        UIManager.forceReflow(sprite);
         sprite.classList.add('anim-enter');
-        this.spawnSmoke(60, 150);
-
+        UIManager.spawnSmoke(60, 150);
         await wait(200);
-
-        // Only play cry if not a doll (Optional polish, but playing cry is usually fine)
         if (mon.cry) AudioEngine.playCry(mon.cry);
-
         await wait(1000);
-
         sprite.classList.remove('anim-enter');
         sprite.style.opacity = 1;
     },
@@ -1087,14 +856,7 @@ const Battle = {
 
 
     getTypeEffectiveness(moveType, targetTypes) {
-        let mod = 1;
-        targetTypes.forEach(t => {
-            // Safe check for the type chart
-            if (TYPE_CHART[moveType] && TYPE_CHART[moveType][t] !== undefined) {
-                mod *= TYPE_CHART[moveType][t];
-            }
-        });
-        return mod;
+        return Mechanics.getTypeEffectiveness(moveType, targetTypes);
     },
 
     async attemptCatch(ballKey) {
@@ -1105,10 +867,7 @@ const Battle = {
             let deflectChance = (this.e.rageLevel || 0) * GAME_BALANCE.RAGE_DEFLECT_CHANCE;
 
             if (this.e.rageLevel > 0 && Math.random() < deflectChance) {
-                // REMOVED DUPLICATE TEXT HERE
                 AudioEngine.playSfx('throw');
-
-                // Short deflect animation
                 await sleep(500);
                 AudioEngine.playSfx('clank');
                 document.getElementById('enemy-sprite').classList.add('anim-deflect');
@@ -1120,7 +879,6 @@ const Battle = {
             }
         }
 
-        // REMOVED DUPLICATE TEXT HERE
         AudioEngine.playSfx('throw');
 
         const ball = document.createElement('div'); ball.className = `pokeball-anim ${ballData.css}`;
@@ -1134,13 +892,11 @@ const Battle = {
         eSprite.style.filter = 'brightness(0) invert(1)';
         eSprite.style.transform = 'scale(0)';
 
-        this.spawnSmoke(230, 70);
+        UIManager.spawnSmoke(230, 70);
         AudioEngine.playSfx('catch_success');
         ball.style.animation = "captureShake 1.0s ease-in-out infinite";
 
-        const catchRate = ballData.rate * GAME_BALANCE.CATCH_RATE_MODIFIER;
-        let catchProb = ((3 * this.e.maxHp - 2 * this.e.currentHp) / (3 * this.e.maxHp)) * catchRate;
-        if (ballKey === 'pokeball') catchProb *= 0.5;
+        const catchProb = Mechanics.calculateCatchProbability(this.e, ballKey);
         const isCaught = Math.random() < catchProb;
 
         let shakes = 0;
@@ -1155,8 +911,7 @@ const Battle = {
 
         if (isCaught && shakes === maxShakes) {
             AudioEngine.playSfx('swoosh');
-            document.getElementById('enemy-hud').classList.remove('hud-active');
-
+            UIManager.hideScreen('enemy-hud');
             AudioEngine.playSfx('heal');
 
             ball.style.animation = 'none';
@@ -1189,7 +944,7 @@ const Battle = {
             eSprite.style.filter = 'none';
             eSprite.style.transform = 'scale(1)';
 
-            this.spawnSmoke(230, 70);
+            UIManager.spawnSmoke(230, 70);
             AudioEngine.playSfx('ball');
 
             if (this.e.cry) AudioEngine.playCry(this.e.cry);
@@ -1201,7 +956,7 @@ const Battle = {
 
             if (Math.random() < rageProb) {
                 this.e.rageLevel = Math.min(3, (this.e.rageLevel || 0) + 1);
-                this.updateHUD(this.e, 'enemy');
+                UIManager.updateHUD(this.e, 'enemy');
                 gainedRage = true;
             }
 
@@ -1209,7 +964,7 @@ const Battle = {
             document.getElementById('scene').removeChild(ball);
 
             if (gainedRage) {
-                await this.triggerRageAnim(this.e.cry);
+                await UIManager.triggerRageAnim(this.e.cry);
                 await this.typeText("It's getting aggressive!");
             }
             return 'CONTINUE';
@@ -1453,9 +1208,6 @@ const Battle = {
     // 2. THE COMBO HANDLER: Manages Multi-hits, Drop RNG, and Attacker Rage
     async handleDamageSequence(attacker, defender, move, isPlayer, weatherMod) {
         let didSomething = false;
-        // Removed "isImmune" variable as it wasn't being used effectively in the return,
-        // but we keep the logic consistent with your previous version.
-
         let hitCount = 1;
 
         if (move.min_hits && move.max_hits) {
@@ -1469,21 +1221,18 @@ const Battle = {
         for (let i = 0; i < hitCount; i++) {
             if (defender.currentHp <= 0 || attacker.currentHp <= 0) break;
 
-            const result = this.calcDamage(attacker, defender, move);
+            const result = Mechanics.calculateDamage(attacker, defender, move);
             result.damage = Math.floor(result.damage * weatherMod);
             if (result.damage > 0) lastHitDamage = result.damage;
 
             if (i === 0) {
-                if (result.desc === 'failed') return { success: false, immune: false };
-
-                // TYPE IMMUNITY CHECK
                 if (result.eff === 0) {
                     await this.typeText("It had no effect!");
                     return { success: false, immune: true };
                 }
 
                 if (result.isCrit) storedText = "A critical hit!";
-                else if (result.desc) storedText = result.desc; // e.g. "It's super effective!"
+                else if (result.desc) storedText = result.desc;
             }
 
             if (result.damage > 0) {
@@ -1494,29 +1243,22 @@ const Battle = {
         }
 
         if (hitsLanded > 1) { await this.typeText(`Hit ${hitsLanded} time(s)!`); await wait(500); }
-
-        // 1. Show Effectiveness / Crit Text FIRST
         if (storedText) await this.typeText(storedText);
 
-        // 2. Check for Loot Drop
         if (hitsLanded > 0 && isPlayer && defender.currentHp > 0) await Game.tryMidBattleDrop(defender);
 
-        // 3. NEW LOCATION: Check Defender Rage (Now happens after text)
         if (hitsLanded > 0 && defender.currentHp > 0 && defender.rageLevel !== undefined && defender.rageLevel < 3) {
             let chance = GAME_BALANCE.RAGE_TRIGGER_CHANCE;
             if ((defender.currentHp / defender.maxHp) < 0.5) chance += 0.25;
 
             if (Math.random() < chance) {
                 defender.rageLevel++;
-                this.updateHUD(defender, isPlayer ? 'enemy' : 'player');
-
-                // Full Animation
-                await this.triggerRageAnim(defender.cry);
+                UIManager.updateHUD(defender, isPlayer ? 'enemy' : 'player');
+                await UIManager.triggerRageAnim(defender.cry);
                 await this.typeText(`${defender.name}'s RAGE\nis building!`);
             }
         }
 
-        // 4. Check Attacker Rage (Multi-hit fury)
         if (didSomething) await this.handleAttackerRage(attacker, defender, move, lastHitDamage, isPlayer);
 
         return { success: didSomething, immune: false };
@@ -1524,41 +1266,33 @@ const Battle = {
 
     // 3. THE BRAWLER: Handles Visuals, Audio, and HP for ONE hit
     async resolveSingleHit(attacker, defender, move, damage, isPlayer, isFirstHit, result) {
-        // 1. Initial Audio Cues (Crit/Super Effective)
         if (isFirstHit) {
             if (result.isCrit) AudioEngine.playSfx('crit');
             else if (result.eff > 1) AudioEngine.playSfx('super_effective');
             else if (result.eff < 1) AudioEngine.playSfx('not_very_effective');
         }
 
-        // 2. Apply the Damage (Handles Sprite Shake, Substitute, HP Update, HUD)
         await this.applyDamage(defender, damage, move.type);
 
-        // 3. Handle Rage Building
         if (defender.currentHp > 0 && defender.rageLevel !== undefined && defender.rageLevel < 3) {
             let chance = GAME_BALANCE.RAGE_TRIGGER_CHANCE;
             if ((defender.currentHp / defender.maxHp) < 0.5) chance += 0.25;
 
             if (Math.random() < chance) {
                 defender.rageLevel++;
-                this.updateHUD(defender, isPlayer ? 'enemy' : 'player');
-                await this.triggerRageAnim(defender.cry);
+                UIManager.updateHUD(defender, isPlayer ? 'enemy' : 'player');
+                await UIManager.triggerRageAnim(defender.cry);
                 await this.typeText(`${defender.name}'s RAGE\nis building!`);
             }
         }
 
-        // 4. Handle Draining / Recoil
         if (move.meta && move.meta.drain) {
             await wait(500);
             const amount = Math.max(1, Math.floor(damage * (Math.abs(move.meta.drain) / 100)));
-
             if (move.meta.drain < 0) {
-                // Recoil
                 await this.typeText(`${attacker.name} is hit\nwith recoil!`);
-                await this.applyDamage(attacker, amount, 'recoil'); // Use helper!
+                await this.applyDamage(attacker, amount, 'recoil');
             } else {
-                // Drain Heal
-                // We pass the custom text as the 3rd argument
                 await this.applyHeal(attacker, amount, `${defender.name} had its\nenergy drained!`);
             }
         }
@@ -1571,7 +1305,6 @@ const Battle = {
         const rage = attacker.rageLevel || 0;
         if (attacker.currentHp <= 0 || rage === 0) return;
 
-        // Determine bonus hits based on Rage Level
         let extraHits = 0;
         if (Math.random() < (rage * GAME_BALANCE.RAGE_MULTIHIT_BASE)) {
             extraHits = (rage === 3 && Math.random() < 0.5) ? 2 : 1;
@@ -1581,25 +1314,19 @@ const Battle = {
             for (let j = 0; j < extraHits; j++) {
                 if (defender.currentHp <= 0 || attacker.currentHp <= 0) break;
 
-                await this.triggerRageAnim(attacker.cry);
+                await UIManager.triggerRageAnim(attacker.cry);
                 let msg = j === 1 ? "ULTRA ANGRY!" : "FULL OF RAGE!";
                 await this.typeText(`${attacker.name} is\n${msg}`);
                 await this.typeText(`${attacker.name} used\n${move.name} again!`);
 
-                // Calculate reduced damage for extra hits
                 const dmgMod = (j === 0) ? 0.8 : 0.5;
                 const extraDmg = Math.max(1, Math.floor(baseDmg * dmgMod));
-
-                // USE HELPER: Handles the hit on the defender
                 await this.applyDamage(defender, extraDmg, move.type);
 
-                // Rage Recoil Check
                 if (Math.random() < GAME_BALANCE.RAGE_RECOIL_CHANCE) {
                     await wait(500);
                     await this.typeText(`${attacker.name} is hit\nwith recoil!`);
                     const recoil = Math.max(1, Math.floor(baseDmg * GAME_BALANCE.RAGE_RECOIL_DMG));
-
-                    // USE HELPER: Handles the recoil on the attacker
                     await this.applyDamage(attacker, recoil, 'recoil');
                 }
             }
@@ -1644,33 +1371,17 @@ const Battle = {
     },
 
     async handleMoveSideEffects(attacker, defender, move, isPlayer, prevActionSuccess) {
-        // 1. SELF-DESTRUCT / EXPLOSION (Priority Check)
-        // FIX: Check 'move.id' (raw API name) to avoid dash/space formatting issues.
-        // 'self-destruct' matches regardless of how we display it in text.
         if (move.id === 'self-destruct' || move.id === 'explosion') {
-            // Explicitly set HP to 0
             attacker.currentHp = 0;
-            this.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
-
+            UIManager.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
             const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-
-            // Force faint animation immediately so visual feedback is instant
             sprite.classList.add('anim-faint');
-
-            // We manually add the faint message here or let handleFaint do it?
-            // handleFaint handles the text/logic. We just update the visual state here.
-            // We can add flavor text though.
-            // (Wait for move text to finish reading in processAttack before this runs)
-
             return true;
         }
 
-        // CRITICAL CHECK: For all other effects, stop if move failed
         if (!prevActionSuccess) return false;
-
         let didSomething = false;
 
-        // 2. Stat Changes
         if (move.stat_changes && move.stat_changes.length > 0) {
             let chance = move.stat_chance === 0 ? 100 : move.stat_chance;
             if (Math.random() * 100 < chance) {
@@ -1887,91 +1598,33 @@ const Battle = {
 
     openPack() {
         if (this.uiLocked) return;
-        // SAVE CURSOR
         this.lastMenuIndex = Input.focus;
-        document.getElementById('pack-screen').classList.remove('hidden');
-        document.querySelector('.bag-icon').style.backgroundImage = "url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/backpack.png')";
-        this.renderPackList();
+        UIManager.showScreen('pack-screen');
+        this.renderPack();
         Input.setMode('BAG');
-    },
-    renderPackList() {
-        const list = document.getElementById('pack-list'); list.innerHTML = "";
-        let idxCounter = 0;
-
-        // Render Items
-        Object.keys(Game.inventory).forEach((key) => {
-            const count = Game.inventory[key];
-            if (count > 0) {
-                const data = ITEMS[key];
-                const div = document.createElement('div'); div.className = 'pack-item';
-                div.innerHTML = `<span>${data.name}</span> <span>x${count}</span>`;
-
-                const showDesc = () => { document.getElementById('pack-desc').innerText = data.desc; if (data.img) { document.querySelector('.bag-icon').style.backgroundImage = `url('${data.img}')`; } };
-                const currentIdx = idxCounter;
-
-                div.onmouseover = () => showDesc();
-                div.onmouseenter = () => { Input.focus = currentIdx; Input.updateVisuals(); showDesc(); };
-                div.onclick = () => {
-                    if (data.type === 'heal' || data.type === 'revive') { Game.selectedItemKey = key; Game.state = 'HEAL'; document.getElementById('pack-screen').classList.add('hidden'); Game.openParty(false); }
-                    else { this.performItem(key); }
-                };
-                list.appendChild(div); idxCounter++;
-            }
-        });
-
-        // Render Cancel Button
-        const cancelBtn = document.createElement('div');
-        cancelBtn.className = 'pack-item cancel-btn';
-        cancelBtn.innerText = "CANCEL";
-
-        // --- FIX: ADD MOUSE TRACKING HERE ---
-        cancelBtn.onmouseenter = () => { Input.focus = idxCounter; Input.updateVisuals(); };
-        // ------------------------------------
-
-        cancelBtn.onmouseover = () => { document.getElementById('pack-desc').innerText = "Close the Pack."; };
-        cancelBtn.onclick = () => { this.uiToMenu(); };
-        list.appendChild(cancelBtn);
     },
 
     buildMoveMenu() {
-        const menu = document.getElementById('move-menu'); menu.innerHTML = '';
-        const infoPanel = document.createElement('div'); infoPanel.id = 'move-info'; infoPanel.innerHTML = '<div>SELECT<br>A MOVE</div>';
-        const grid = document.createElement('div'); grid.id = 'move-grid';
-
-        this.p.moves.forEach((m, i) => {
-            const btn = document.createElement('div');
-            btn.className = 'move-btn';
-            btn.innerText = m.name;
-
-            // NEW: Attach data to the button for the keyboard to find
-            btn.dataset.type = m.type;
-            btn.dataset.power = m.power > 0 ? m.power : '-';
-            btn.dataset.accuracy = m.accuracy || '-';
-
-            btn.onclick = () => this.performTurn(m);
-
-            // Mouse logic (Kept for consistency)
-            const updateInfo = () => { infoPanel.innerHTML = `<div>TYPE/<br>${m.type.toUpperCase()}</div><div>PWR/${m.power > 0 ? m.power : '-'}</div><div>ACC/${m.accuracy || '-'}%</div>`; };
-            btn.onmouseover = updateInfo;
-            btn.onmouseenter = () => { Input.focus = i; Input.updateVisuals(); updateInfo(); };
-
-            grid.appendChild(btn);
+        UIManager.renderMoveMenu(this.p.moves, Input.focus, (idx) => {
+            Input.focus = idx;
+            Input.updateVisuals();
+        }, (idx) => {
+            if (idx === 'back') this.uiToMenu();
+            else this.executeMove(this.p.moves[idx]);
         });
-
-        const backBtn = document.createElement('div');
-        backBtn.className = 'move-btn cancel';
-        backBtn.innerText = 'BACK';
-        backBtn.dataset.action = 'back'; // Mark this as the back button
-        backBtn.onclick = () => this.uiToMenu();
-
-        const idx = this.p.moves.length;
-        backBtn.onmouseenter = () => { Input.focus = idx; Input.updateVisuals(); infoPanel.innerHTML = '<div>RETURN<br>TO MENU</div>'; };
-
-        grid.appendChild(backBtn);
-        menu.appendChild(infoPanel); menu.appendChild(grid);
     },
+
+    renderPack() {
+        UIManager.renderPack(Game.inventory, Input.focus, (idx) => {
+            Input.focus = idx;
+            Input.updateVisuals();
+        }, (key) => {
+            if (key === 'back') this.uiToMenu();
+            else this.useItem(key);
+        });
+    },
+
     switchIn(newMon, wasForced) {
-        // We pass 'wasForced' as the second argument to processSwitch
         if (wasForced) {
             this.processSwitch(newMon, true).then(() => {
                 this.uiLocked = false;
@@ -1982,8 +1635,9 @@ const Battle = {
         }
     },
 
-
-
+    cleanup() {
+        this.p = null; this.e = null; this.participants.clear();
+    }
 };
 
 // Helper for Roar/Whirlwind/Dragon Tail
