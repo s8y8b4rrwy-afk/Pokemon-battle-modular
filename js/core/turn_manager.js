@@ -228,13 +228,23 @@ const TurnManager = {
 
         if (defender.volatiles.protected && move.target !== 'user') {
             await UI.typeText(`${defender.name} protected\nitself!`);
+
+            // Allow Suicide Moves to Execute Side-Effects (Self-Faint) even if blocked
+            if (['EXPLOSION', 'SELF DESTRUCT', 'SELF-DESTRUCT'].includes(move.name)) {
+                attacker.currentHp = 0;
+                UI.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
+                await BattleAnims.triggerExplosionAnim();
+            }
+
             await restoreSub();
             return;
         }
 
         if (await checkInvulnHit() === false) {
-            if (move.name === 'SELF-DESTRUCT' || move.name === 'EXPLOSION') {
-                await MovesEngine.handleMoveSideEffects(battle, attacker, defender, move, isPlayer, false);
+            if (['EXPLOSION', 'SELF DESTRUCT', 'SELF-DESTRUCT'].includes(move.name)) {
+                attacker.currentHp = 0;
+                UI.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
+                await BattleAnims.triggerExplosionAnim();
             }
             await restoreSub();
             return;
