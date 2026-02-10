@@ -1,6 +1,6 @@
 // --- DEBUG SETTINGS REMOVED --
 // See js/data/debug.js for debug configurations.
-const DEBUG = { ENABLED: false }; // Safe fallback if debug.js fails to load, though debug.js should override this.
+// DEBUG is now defined solely in debug.js to avoid redeclaration errors.
 
 // --- GAME BALANCE CONTROLLER ---
 // Tweak difficulty, RNG, and rewards here.
