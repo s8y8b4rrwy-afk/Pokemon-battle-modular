@@ -219,25 +219,36 @@ const Game = {
 
         if (isFirst) {
             // New Game Setup
-            this.party = []; this.inventory = {}; this.wins = 0; this.bossesDefeated = 0;
-            const starterId = DEBUG.ENABLED && DEBUG.PLAYER.ID ? DEBUG.PLAYER.ID : [152, 155, 158][RNG.int(0, 2)];
-            const level = DEBUG.ENABLED && DEBUG.PLAYER.LEVEL ? DEBUG.PLAYER.LEVEL : 5;
+            this.wins = 0; this.bossesDefeated = 0;
 
-            const overrides = {};
-            if (DEBUG.ENABLED) {
-                if (DEBUG.PLAYER.SHINY !== null) overrides.shiny = DEBUG.PLAYER.SHINY;
+            // Only generate starter if party is empty (e.g. skipped selection screen?)
+            if (this.party.length === 0) {
+                const starterId = DEBUG.ENABLED && DEBUG.PLAYER.ID ? DEBUG.PLAYER.ID : [152, 155, 158][RNG.int(0, 2)];
+                const level = DEBUG.ENABLED && DEBUG.PLAYER.LEVEL ? DEBUG.PLAYER.LEVEL : 5;
+
+                const overrides = {};
+                if (DEBUG.ENABLED) {
+                    if (DEBUG.PLAYER.SHINY !== null) overrides.shiny = DEBUG.PLAYER.SHINY;
+                }
+
+                const p = await API.getPokemon(starterId, level, overrides);
+                if (DEBUG.ENABLED && DEBUG.PLAYER.RAGE) p.rageLevel = DEBUG.PLAYER.RAGE;
+
+                this.party.push(p);
             }
-
-            const p = await API.getPokemon(starterId, level, overrides);
-            if (DEBUG.ENABLED && DEBUG.PLAYER.RAGE) p.rageLevel = DEBUG.PLAYER.RAGE;
-
-            this.party.push(p);
             this.activeSlot = 0;
 
             // Generate initial inventory driven by constants/debug
-            const potions = DEBUG.ENABLED && DEBUG.PLAYER.ITEMS && DEBUG.PLAYER.ITEMS.POTION ? DEBUG.PLAYER.ITEMS.POTION : 5;
-            const balls = DEBUG.ENABLED && DEBUG.PLAYER.ITEMS && DEBUG.PLAYER.ITEMS.POKEBALL ? DEBUG.PLAYER.ITEMS.POKEBALL : 10;
+            const potions = DEBUG.ENABLED && DEBUG.INVENTORY && DEBUG.INVENTORY.potion ? DEBUG.INVENTORY.potion : 5;
+            const balls = DEBUG.ENABLED && DEBUG.INVENTORY && DEBUG.INVENTORY.pokeball ? DEBUG.INVENTORY.pokeball : 10;
+
+            // Default Inventory
             this.inventory = { 'potion': potions, 'pokeball': balls, 'superpotion': 0, 'ultraball': 0, 'revive': 0, 'maxrevive': 0, 'elixir': 0 };
+
+            // Full Debug Inventory Override
+            if (DEBUG.ENABLED && DEBUG.INVENTORY) {
+                Object.assign(this.inventory, DEBUG.INVENTORY);
+            }
         } else {
             // Restore Volatiles for existing party
             const p = this.party[this.activeSlot];
