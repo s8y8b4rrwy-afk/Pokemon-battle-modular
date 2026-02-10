@@ -206,7 +206,51 @@ const Game = {
     },
 
     async startNewBattle(isFirst = false) {
+        this.state = 'BATTLE';
         Battle.resetScene();
+
+        // Loading Logic: Only show text if load is slow (>2s)
+        let showLoading = true;
+        const loadTimer = setTimeout(() => {
+            if (showLoading) {
+                UI.typeText("Searching for wild\nPokemon...");
+            }
+        }, 2000);
+
+        if (isFirst) {
+            // New Game Setup
+            this.party = []; this.inventory = {}; this.wins = 0; this.bossesDefeated = 0;
+            const starterId = DEBUG.ENABLED && DEBUG.PLAYER.ID ? DEBUG.PLAYER.ID : [152, 155, 158][RNG.int(0, 2)];
+            const level = DEBUG.ENABLED && DEBUG.PLAYER.LEVEL ? DEBUG.PLAYER.LEVEL : 5;
+
+            const overrides = {};
+            if (DEBUG.ENABLED) {
+                if (DEBUG.PLAYER.SHINY !== null) overrides.shiny = DEBUG.PLAYER.SHINY;
+            }
+
+            const p = await API.getPokemon(starterId, level, overrides);
+            if (DEBUG.ENABLED && DEBUG.PLAYER.RAGE) p.rageLevel = DEBUG.PLAYER.RAGE;
+
+            this.party.push(p);
+            this.activeSlot = 0;
+
+            // Generate initial inventory driven by constants/debug
+            const potions = DEBUG.ENABLED && DEBUG.PLAYER.ITEMS && DEBUG.PLAYER.ITEMS.POTION ? DEBUG.PLAYER.ITEMS.POTION : 5;
+            const balls = DEBUG.ENABLED && DEBUG.PLAYER.ITEMS && DEBUG.PLAYER.ITEMS.POKEBALL ? DEBUG.PLAYER.ITEMS.POKEBALL : 10;
+            this.inventory = { 'potion': potions, 'pokeball': balls, 'superpotion': 0, 'ultraball': 0, 'revive': 0, 'elixir': 0 };
+        } else {
+            // Restore Volatiles for existing party
+            const p = this.party[this.activeSlot];
+            p.volatiles = {};
+            p.stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
+            p.rageLevel = 0;
+            if (DEBUG.ENABLED) {
+                if (DEBUG.PLAYER.RAGE !== null) p.rageLevel = DEBUG.PLAYER.RAGE;
+                if (DEBUG.PLAYER.STATUS !== null) p.status = DEBUG.PLAYER.STATUS;
+                if (DEBUG.PLAYER.STAGES !== null) Object.assign(p.stages, DEBUG.PLAYER.STAGES);
+                if (DEBUG.PLAYER.VOLATILES) Object.assign(p.volatiles, DEBUG.PLAYER.VOLATILES);
+            }
+        }
 
         // Safety Check: If active slot fainted (e.g. via Destiny Bond), pick next healthy one
         if (!this.party[this.activeSlot] || this.party[this.activeSlot].currentHp <= 0) {
@@ -222,22 +266,6 @@ const Game = {
         Battle.uiLocked = true;
         this.enemyMon = null;
 
-        UI.typeText("Searching for wild Pokemon...", null, true);
-
-        // Reset Player Logic
-        if (this.party[this.activeSlot]) {
-            const p = this.party[this.activeSlot];
-            p.volatiles = {};
-            p.stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
-            p.rageLevel = 0;
-            if (DEBUG.ENABLED) {
-                if (DEBUG.PLAYER.RAGE !== null) p.rageLevel = DEBUG.PLAYER.RAGE;
-                if (DEBUG.PLAYER.STATUS !== null) p.status = DEBUG.PLAYER.STATUS;
-                if (DEBUG.PLAYER.STAGES !== null) Object.assign(p.stages, DEBUG.PLAYER.STAGES);
-                if (DEBUG.PLAYER.VOLATILES) Object.assign(p.volatiles, DEBUG.PLAYER.VOLATILES);
-            }
-        }
-
         // GENERATE ENEMY (Delegated to Manager)
         try {
             this.enemyMon = await EncounterManager.generate(this.party, this.wins);
@@ -246,6 +274,14 @@ const Game = {
             // Hard fallback
             this.enemyMon = await API.getPokemon(25, 5, {});
         }
+
+        // Load Complete
+        clearTimeout(loadTimer);
+        showLoading = false;
+
+        // Clear text immediately if it started typing, or ensure it's empty
+        const textEl = document.getElementById('text-content');
+        textEl.innerHTML = "";
 
         // Start Sequence
         const img = new Image();
@@ -344,7 +380,7 @@ const Game = {
 
                 const hasOthers = this.party.some(mon => mon.currentHp > 0);
                 if (hasOthers) {
-                    await UI.typeText(`Choose another!`);
+                    await UI.typeText(`Choose another! \nPokemon!`);
                     const selectedIndex = await new Promise(resolve => {
                         Battle.userInputPromise = resolve;
                         this.openParty(true);
