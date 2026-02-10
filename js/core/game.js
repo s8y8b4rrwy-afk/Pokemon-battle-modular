@@ -327,9 +327,24 @@ const Game = {
         const finalize = async () => {
             // Check if active mon is fainted (Simultaneous faint case)
             if (p.currentHp <= 0) {
+                // Manually trigger faint animation for the player
+                const sprite = document.getElementById('player-sprite');
+                const hud = document.getElementById('player-hud');
+
+                if (p.cry) AudioEngine.playCry(p.cry);
+                await wait(ANIM.FAINT_PRE_DELAY);
+
+                sprite.style.opacity = 1;
+                sprite.classList.add('anim-faint');
+                AudioEngine.playSfx('swoosh');
+                setTimeout(() => hud.classList.remove('hud-active'), ANIM.HUD_SLIDE_DELAY);
+
+                await UI.typeText(`${p.name}\nfainted!`);
+                await wait(ANIM.FAINT_POST_DELAY);
+
                 const hasOthers = this.party.some(mon => mon.currentHp > 0);
                 if (hasOthers) {
-                    await UI.typeText(`${p.name} fainted!\nChoose another!`);
+                    await UI.typeText(`Choose another!`);
                     const selectedIndex = await new Promise(resolve => {
                         Battle.userInputPromise = resolve;
                         this.openParty(true);
@@ -337,8 +352,7 @@ const Game = {
                     Battle.userInputPromise = null;
                     this.activeSlot = selectedIndex;
                 } else {
-                    // Everyone is fainted - this shouldn't happen if handleWin/Loss are synced
-                    // but as a safety, trigger loss if no one is left.
+                    // Everyone is fainted - handle loss sequence
                     await this.handleLoss();
                     return;
                 }

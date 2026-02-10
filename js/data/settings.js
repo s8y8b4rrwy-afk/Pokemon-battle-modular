@@ -16,7 +16,7 @@ const DEBUG = {
     // Force specific Enemy attributes
     ENEMY: {
         ID: null,       // Pokedex Number (e.g. 150 = Mewtwo). Set null for random.
-        LEVEL: null,    // Level (1-100). Set null for auto-scaling.
+        LEVEL: 1, // null,    // Level (1-100). Set null for auto-scaling.
         SHINY: null,    // true = Always Shiny, false = Never Shiny, null = Random.
         IS_BOSS: null,  // true = Boss stats & music.
         RAGE: null,        // Start with Rage (0 = None, 1 = !, 2 = !!, 3 = MAX).
@@ -39,7 +39,7 @@ const DEBUG = {
     // Force specific Player attributes
     PLAYER: {
         ID: null,       // Pokedex Number (e.g. 249 = Lugia).
-        LEVEL: 85, // null,    // Level (1-100).
+        LEVEL: null,    // Level (1-100).
         SHINY: null,    // true/false.
         RAGE: 0,        // Start with Rage (0-3).
 
