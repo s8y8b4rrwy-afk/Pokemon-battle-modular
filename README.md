@@ -165,46 +165,36 @@ pokemon-battle-modular/
 ├── package.json              # Dependencies and build scripts
 │
 ├── src/
-│   ├── index.js             # Main entry point
+│   ├── index.js             # Main entry point (Future-plan)
 │   │
-│   ├── config/              # Configuration & Constants
+│   ├── config/              # Configuration & Constants (Moved to js/data)
 │   │   ├── constants.js     # DEBUG, ENCOUNTER_CONFIG, GAME_BALANCE
 │   │   ├── items.js         # ITEMS dictionary
-│   │   ├── status.js        # STATUS_DATA
-│   │   ├── types.js         # TYPE_CHART
-│   │   ├── animations.js    # ANIM timing constants
-│   │   └── balance.js       # LOOT_SYSTEM, STAGE_MULT, WEATHER_FX
+│   │   ├── settings.js      # User preferences
+│   │   └── types.js         # TYPE_CHART
 │   │
-│   ├── data/                # Game Data
-│   │   ├── move-dex.js      # MOVE_DEX special moves
-│   │   └── move-logic.js    # MOVE_LOGIC behaviors
+│   ├── data/                # Reference Data
+│   │   └── moves.js         # MOVE_DEX and MOVE_LOGIC
 │   │
-│   ├── engine/              # Core Engine Modules
-│   │   ├── audio.js         # AudioEngine module
-│   │   ├── api.js           # API module (PokéAPI)
-│   │   ├── input.js         # Input module
-│   │   ├── storage.js       # StorageSystem module
-│   │   └── encounter.js     # EncounterManager module
+│   ├── engine/              # Procedural & AI (Moved to js/engine & js/systems)
+│   │   ├── ai.js            # Enemy AI Logic
+│   │   ├── encounter.js     # Wild Pokemon Generator
+│   │   └── api.js           # PokeAPI Interface
 │   │
-│   ├── game/                # Game Logic
-│   │   ├── game.js          # Game module (state management)
-│   │   ├── battle.js        # Battle module (combat engine)
-│   │   └── mechanics.js     # Core math (damage, EXP, loot)
+│   ├── game/                # Core Battle Logic (Moved to js/core)
+│   │   ├── game.js          # Main Game Module
+│   │   ├── battle.js        # Battle Manager (Delegates to sub-managers)
+│   │   ├── turn_manager.js  # Turn Orchestration & Sequence
+│   │   ├── moves_engine.js  # Move Execution & Damage Processing
+│   │   └── mechanics.js     # Math (Damage, EXP formulas)
 │   │
-│   ├── ui/                  # UI Components
-│   │   └── ui.js            # Centralized UI & DOM management
+│   ├── ui/                  # UI Components (Moved to js/ui & js/ui/screens)
+│   │   ├── ui.js            # Central DOM management
+│   │   ├── animations.js    # Visual FX triggers
+│   │   └── menus.js         # Battle menus (Fight, Bag, PKMN)
 │   │
-│   └── utils/               # Utility Functions
-│       ├── helpers.js       # wait(), sleep(), RNG
-│       ├── stats.js         # StatCalc
-│       └── animations.js    # Animation helpers
-│
-└── styles/                  # CSS Modules
-    ├── main.css            # Base styles
-    ├── layout.css          # Game Boy shell, screens
-    ├── components.css      # UI components
-    ├── animations.css      # Keyframes
-    └── effects.css         # Type-specific VFX
+│   └── utils/               # Helpers (Moved to js/systems)
+│       └── utils.js         # RNG, wait/sleep helpers
 ```
 
 ### Current State (Original Monolith)

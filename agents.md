@@ -19,7 +19,9 @@ pokemon-battle-modular/
 └── js/
     ├── core/             # Core Game Logic (The Brain)
     │   ├── game.js       # Game State & Flow (Save/Load, Win/Loss)
-    │   ├── battle.js     # Battle Loop & Turn Execution
+    │   ├── battle.js     # Battle Manager (Orchestrator)
+    │   ├── turn_manager.js # Turn Sequences & Action Queue
+    │   ├── moves_engine.js # Move Logic & Damage Phase Execution
     │   └── mechanics.js  # Math & Formulas (Damage, Exp, Catch Rate)
     ├── data/             # Static Data (The Database)
     │   ├── constants.js  # Global Config (ANIM, TYPE_CHART)
