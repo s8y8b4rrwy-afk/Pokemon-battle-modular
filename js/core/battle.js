@@ -448,56 +448,7 @@ const Battle = {
         return await MovesEngine.handleMoveSideEffects(this, attacker, defender, move, isPlayer, prevActionSuccess);
     },
 
-    async handleFaint(mon, isPlayer) {
-        mon.currentHp = 0;
-        mon.rageLevel = 0;
-        const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-        const hud = document.getElementById(isPlayer ? 'player-hud' : 'enemy-hud');
 
-        if (mon.cry) AudioEngine.playCry(mon.cry);
-        await sleep(ANIM.FAINT_PRE_DELAY);
-        sprite.style.opacity = 1;
-        sprite.classList.add('anim-faint');
-        AudioEngine.playSfx('swoosh');
-
-        setTimeout(() => {
-            AudioEngine.playSfx('swoosh');
-            hud.classList.remove('hud-active');
-        }, ANIM.HUD_SLIDE_DELAY);
-
-        const name = mon.transformBackup ? mon.transformBackup.name : mon.name;
-        this.revertTransform(mon);
-        await UI.typeText(`${name}\nfainted!`);
-        await sleep(ANIM.FAINT_POST_DELAY);
-
-        if (mon.volatiles.destinyBond) {
-            const opponent = isPlayer ? this.e : this.p;
-            if (opponent.currentHp > 0) {
-                await UI.typeText(`${mon.name} took\nits foe with it!`);
-                opponent.currentHp = 0;
-                opponent.rageLevel = 0;
-                UI.updateHUD(opponent, isPlayer ? 'enemy' : 'player');
-                const oppSprite = isPlayer ? document.getElementById('enemy-sprite') : document.getElementById('player-sprite');
-                const oppHud = document.getElementById(isPlayer ? 'enemy-hud' : 'player-hud');
-                if (opponent.cry) AudioEngine.playCry(opponent.cry);
-                await sleep(ANIM.FAINT_PRE_DELAY);
-                oppSprite.classList.add('anim-faint');
-                AudioEngine.playSfx('swoosh');
-                setTimeout(() => oppHud.classList.remove('hud-active'), ANIM.HUD_SLIDE_DELAY);
-                const oppName = opponent.transformBackup ? opponent.transformBackup.name : opponent.name;
-                this.revertTransform(opponent);
-                await UI.typeText(`${oppName}\nfainted!`);
-                await sleep(ANIM.FAINT_POST_DELAY);
-                Game.handleWin(false);
-                return;
-            }
-        }
-
-        const textEl = document.getElementById('text-content');
-        textEl.classList.remove('full-width');
-        if (isPlayer) Game.handleLoss();
-        else Game.handleWin(false);
-    },
 
     lastMenuIndex: 0,
 

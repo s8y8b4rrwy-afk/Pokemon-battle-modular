@@ -90,21 +90,21 @@ const TurnManager = {
             const result = await this.executeAction(battle, action);
             if (result === 'STOP_BATTLE') return 'STOP_BATTLE';
 
-            if (battle.e.currentHp <= 0) { await battle.handleFaint(battle.e, false); return; }
-            if (battle.p.currentHp <= 0) { await battle.handleFaint(battle.p, true); return; }
+            // Check for faints after action (Speed-based priority for faints)
+            const sideFainted = await FaintManager.checkFaints(battle, ['enemy', 'player']);
+            if (sideFainted) return 'STOP_BATTLE';
         }
 
         // 2. END OF TURN SEQUENCE
         if (Game.state === 'BATTLE') {
             await this.processDelayedMoves(battle);
-            if (battle.p.currentHp <= 0) { await battle.handleFaint(battle.p, true); return; }
-            if (battle.e.currentHp <= 0) { await battle.handleFaint(battle.e, false); return; }
+            if (await FaintManager.checkFaints(battle, ['player', 'enemy'])) return 'STOP_BATTLE';
 
             await battle.processEndTurnEffects(battle.p, true);
-            if (battle.p.currentHp <= 0) { await battle.handleFaint(battle.p, true); return; }
+            if (await FaintManager.checkFaints(battle, ['player', 'enemy'])) return 'STOP_BATTLE';
 
             await battle.processEndTurnEffects(battle.e, false);
-            if (battle.e.currentHp <= 0) { await battle.handleFaint(battle.e, false); return; }
+            if (await FaintManager.checkFaints(battle, ['enemy', 'player'])) return 'STOP_BATTLE';
 
             await EnvironmentManager.tickWeather();
         }
