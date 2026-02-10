@@ -22,8 +22,8 @@ const Game = {
     checkSave() {
         if (StorageSystem.exists()) {
             const data = StorageSystem.load();
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('continue-screen').classList.remove('hidden');
+            UI.hide('start-screen');
+            UI.show('continue-screen');
             document.getElementById('save-wins').innerText = data.wins || 0;
             document.getElementById('save-bosses').innerText = data.bossesDefeated || 0;
             document.getElementById('save-name').innerText = data.playerName || 'PLAYER';
@@ -38,7 +38,7 @@ const Game = {
             });
             Input.setMode('CONTINUE');
         } else {
-            document.getElementById('start-screen').classList.add('hidden');
+            UI.hide('start-screen');
             this.startNameInput();
         }
     },
@@ -89,8 +89,8 @@ const Game = {
 
     // --- FLOW CONTROL ---
     startNameInput() {
-        document.getElementById('continue-screen').classList.add('hidden');
-        document.getElementById('name-screen').classList.remove('hidden');
+        UI.hide('continue-screen');
+        UI.show('name-screen');
         document.getElementById('name-input').focus();
         Input.setMode('NAME');
     },
@@ -98,7 +98,7 @@ const Game = {
     confirmName() {
         const val = document.getElementById('name-input').value.trim().toUpperCase();
         this.playerName = val || 'GOLD';
-        document.getElementById('name-screen').classList.add('hidden');
+        UI.hide('name-screen');
         this.newGame();
     },
 
@@ -110,10 +110,10 @@ const Game = {
         if (this.load()) {
             if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
 
-            document.getElementById('selection-screen').classList.add('hidden');
-            document.getElementById('scene').classList.remove('hidden');
-            document.getElementById('dialog-box').classList.remove('hidden');
-            document.getElementById('streak-box').classList.remove('hidden');
+            UI.hide('selection-screen');
+            UI.show('scene');
+            UI.show('dialog-box');
+            UI.show('streak-box');
             document.getElementById('streak-box').innerText = `WINS: ${this.wins}`;
 
             // Safety Check: Active slot alive?
@@ -145,7 +145,7 @@ const Game = {
                     document.getElementById('enemy-hud').classList.add('hud-active');
                     document.getElementById('scene').classList.add('anim-fade-in');
                     setTimeout(() => document.getElementById('scene').classList.remove('anim-fade-in'), 1000);
-                    Battle.typeText(`Resumed battle against\n${this.enemyMon.name}!`, () => { Battle.uiLocked = false; Battle.uiToMenu(); });
+                    UI.typeText(`Resumed battle against\n${this.enemyMon.name}!`, () => { Battle.uiLocked = false; Battle.uiToMenu(); });
                 };
                 img.onload = resumeStart;
                 img.onerror = resumeStart;
@@ -169,17 +169,17 @@ const Game = {
         this.party = []; this.wins = 0; this.bossesDefeated = 0;
 
         // Hide All
-        ['scene', 'dialog-box', 'summary-panel', 'streak-box', 'pack-screen', 'party-screen', 'action-menu', 'move-menu', 'selection-screen'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        UI.hideAll(['scene', 'dialog-box', 'summary-panel', 'streak-box', 'pack-screen', 'party-screen', 'action-menu', 'move-menu', 'selection-screen']);
 
-        document.getElementById('start-screen').classList.remove('hidden');
+        UI.show('start-screen');
         Input.setMode('START');
     },
 
     returnToTitle() {
         this.state = 'START';
-        ['scene', 'dialog-box', 'streak-box', 'summary-panel', 'party-screen', 'pack-screen', 'action-menu', 'move-menu'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        UI.hideAll(['scene', 'dialog-box', 'streak-box', 'summary-panel', 'party-screen', 'pack-screen', 'action-menu', 'move-menu']);
         Battle.resetScene();
-        document.getElementById('start-screen').classList.remove('hidden');
+        UI.show('start-screen');
         Input.setMode('START');
     },
 
@@ -200,7 +200,7 @@ const Game = {
         Battle.uiLocked = true;
         this.enemyMon = null;
 
-        Battle.typeText("Searching for wild Pokemon...", null, true);
+        UI.typeText("Searching for wild Pokemon...", null, true);
 
         // Reset Player Logic
         if (this.party[this.activeSlot]) {
@@ -455,7 +455,7 @@ const Game = {
             if (this.activeSlot >= this.party.length) this.activeSlot = this.party.length - 1;
             Battle.animateSwap(releasedMon, this.party[this.activeSlot], () => this.handleWin(true));
         } else {
-            Battle.typeText(`Bye bye, ${releasedMon.name}!`, () => this.handleWin(true));
+            UI.typeText(`Bye bye, ${releasedMon.name}!`, () => this.handleWin(true));
         }
     },
 
@@ -468,9 +468,9 @@ const Game = {
         if (data.type === 'heal') p.currentHp = Math.min(p.maxHp, p.currentHp + data.heal);
 
         this.inventory[this.selectedItemKey]--; AudioEngine.playSfx('heal'); this.renderParty();
-        if (index === this.activeSlot) Battle.updateHUD(p, 'player');
+        if (index === this.activeSlot) UI.updateHUD(p, 'player');
         ['party-screen', 'pack-screen', 'action-menu'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        this.state = 'BATTLE'; Battle.typeText(`Used ${data.name} on ${p.name}!`, () => Battle.endTurnItem());
+        this.state = 'BATTLE'; UI.typeText(`Used ${data.name} on ${p.name}!`, () => Battle.endTurnItem());
     },
 
     partySwitch() {
@@ -494,15 +494,15 @@ const Game = {
 
     // --- EXP & WINS ---
     async distributeExp(amount, targetIndices, isBossReward) {
-        if (isBossReward) { AudioEngine.playSfx('exp'); await Battle.typeText(`The team gained\n${amount} EXP. Points!`); }
+        if (isBossReward) { AudioEngine.playSfx('exp'); await UI.typeText(`The team gained\n${amount} EXP. Points!`); }
         for (const index of targetIndices) {
             const p = this.party[index];
             if (!p || p.currentHp <= 0) continue;
             if (index === this.activeSlot) {
-                if (!isBossReward) await Battle.typeText(`${p.name} gained\n${amount} EXP. Points!`);
+                if (!isBossReward) await UI.typeText(`${p.name} gained\n${amount} EXP. Points!`);
                 await this.gainExpAnim(amount, p);
             } else {
-                if (!isBossReward) await Battle.typeText(`${p.name} gained\n${amount} EXP. Points!`);
+                if (!isBossReward) await UI.typeText(`${p.name} gained\n${amount} EXP. Points!`);
                 p.exp += amount;
                 if (p.exp >= p.nextLvlExp) await this.processLevelUp(p);
             }
@@ -511,7 +511,7 @@ const Game = {
     },
 
     gainExpAnim(amount, p) {
-        p.exp += amount; Battle.updateHUD(p, 'player');
+        p.exp += amount; UI.updateHUD(p, 'player');
         const steps = 20; let i = 0;
         return new Promise(resolve => {
             const loop = setInterval(() => { AudioEngine.playSfx('exp'); i++; if (i >= steps) { clearInterval(loop); check(); } }, 50);
@@ -530,9 +530,9 @@ const Game = {
             if (this.activeSlot === this.party.indexOf(p)) {
                 const hud = document.getElementById('player-hud');
                 hud.classList.remove('hud-flash-blue'); void hud.offsetWidth; hud.classList.add('hud-flash-blue');
-                Battle.updateHUD(p, 'player');
+                UI.updateHUD(p, 'player');
             }
-            await Battle.typeText(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to Level ${p.level}!`);
+            await UI.typeText(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to Level ${p.level}!`);
             resolve();
         });
     },
@@ -541,7 +541,7 @@ const Game = {
         const p = this.party[this.activeSlot];
         const range = GAME_BALANCE.HEAL_WIN_MAX_PCT - GAME_BALANCE.HEAL_WIN_MIN_PCT;
         const healAmt = Math.floor(p.maxHp * (GAME_BALANCE.HEAL_WIN_MIN_PCT + (Math.random() * range)));
-        if (healAmt > 0) { p.currentHp = Math.min(p.maxHp, p.currentHp + healAmt); AudioEngine.playSfx('heal'); Battle.updateHUD(p, 'player'); }
+        if (healAmt > 0) { p.currentHp = Math.min(p.maxHp, p.currentHp + healAmt); AudioEngine.playSfx('heal'); UI.updateHUD(p, 'player'); }
 
         const finalize = () => { this.save(); setTimeout(() => this.startNewBattle(false), 1000); };
 
@@ -551,50 +551,35 @@ const Game = {
                 AudioEngine.playSfx('swoosh'); s.style.filter = "brightness(10)"; await wait(200);
                 Battle.revertTransform(p);
                 s.src = p.backSprite; s.classList.remove('transformed-sprite'); s.style.filter = "none";
-                Battle.updateHUD(p, 'player'); await Battle.typeText(`${p.name} transformed\nback!`);
+                UI.updateHUD(p, 'player'); await UI.typeText(`${p.name} transformed\nback!`);
             }
             finalize();
         };
 
-        const checkRage = () => { if (p.rageLevel > 0) { p.rageLevel = 0; Battle.updateHUD(p, 'player'); Battle.typeText(`${p.name} became\ncalm again!`, checkTransform); } else checkTransform(); };
+        const checkRage = () => { if (p.rageLevel > 0) { p.rageLevel = 0; UI.updateHUD(p, 'player'); UI.typeText(`${p.name} became\ncalm again!`, checkTransform); } else checkTransform(); };
 
         const checkLoot = () => {
             const levelDiff = this.enemyMon.level - p.level;
             let rate = this.enemyMon.isBoss ? LOOT_SYSTEM.DROP_RATE_BOSS : LOOT_SYSTEM.DROP_RATE_WILD;
             if (levelDiff > 0) rate += (levelDiff * 0.05);
             if (RNG.roll(rate)) {
-                const key = this.getLoot(this.enemyMon, levelDiff); this.inventory[key]++; AudioEngine.playSfx('funfair');
-                Battle.typeText(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`, checkRage);
+                const key = Mechanics.getLoot(this.enemyMon, this.wins, levelDiff); this.inventory[key]++; AudioEngine.playSfx('funfair');
+                UI.typeText(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`, checkRage);
             } else checkRage();
         };
 
         if (p.volatiles.substituteHP > 0) {
             if (p.volatiles.originalSprite) document.getElementById('player-sprite').src = p.volatiles.originalSprite;
             p.volatiles.substituteHP = 0; p.volatiles.originalSprite = null;
-            AudioEngine.playSfx('swoosh'); Battle.typeText("The SUBSTITUTE\nfaded away!", checkLoot);
+            AudioEngine.playSfx('swoosh'); UI.typeText("The SUBSTITUTE\nfaded away!", checkLoot);
         } else checkLoot();
-    },
-
-    getLoot(enemy, levelDiff = 0) {
-        if (DEBUG.ENABLED && DEBUG.LOOT.FORCE_ITEM) return DEBUG.LOOT.FORCE_ITEM;
-        const bst = Object.values(enemy.baseStats).reduce((a, b) => a + b, 0);
-        const score = (enemy.level * 1.5) + (bst / 10) + (this.wins * 1.5) + (Math.max(0, levelDiff) * 25);
-
-        let totalWeight = 0;
-        const pool = LOOT_SYSTEM.TABLE.map(item => {
-            let weight = Math.max(0, item.base + (score * item.scaling));
-            totalWeight += weight; return { key: item.key, weight: weight };
-        });
-        let random = Math.random() * totalWeight;
-        for (let item of pool) { if (random < item.weight) return item.key; random -= item.weight; }
-        return 'potion';
     },
 
     async tryMidBattleDrop(enemy) {
         let chance = DEBUG.ENABLED && DEBUG.LOOT.MID_BATTLE_RATE !== null ? DEBUG.LOOT.MID_BATTLE_RATE : LOOT_SYSTEM.DROP_RATE_MID_BATTLE;
         if (RNG.roll(chance)) {
-            const key = this.getLoot(enemy, 0); this.inventory[key]++; AudioEngine.playSfx('catch_success');
-            await Battle.typeText(`Oh! ${enemy.name} dropped\na ${ITEMS[key].name}.`);
+            const key = Mechanics.getLoot(enemy, this.wins, 0); this.inventory[key]++; AudioEngine.playSfx('catch_success');
+            await UI.typeText(`Oh! ${enemy.name} dropped\na ${ITEMS[key].name}.`);
         }
     },
 
@@ -604,10 +589,7 @@ const Game = {
         if (!wasCaught) this.enemyMon.currentHp = 0;
 
         // EXP Calc
-        const b = this.enemyMon.baseExp; const L = this.enemyMon.level; const Lp = this.party[this.activeSlot].level;
-        let gain = Math.floor(((b * L) / 5) * Math.pow((2 * L + 10) / (L + Lp + 10), 2.5)) + 1;
-        if (this.enemyMon.isBoss) gain = Math.floor(gain * 1.5);
-        if (wasCaught) gain = Math.floor(gain * 0.8);
+        let gain = Mechanics.calcExpGain(this.enemyMon, this.party[this.activeSlot], wasCaught);
 
         let targets, amt;
         if (this.enemyMon.isBoss) {
@@ -619,13 +601,13 @@ const Game = {
     },
 
     handleLoss() {
-        document.getElementById('text-content').classList.remove('full-width');
+        UI.textEl.classList.remove('full-width');
         if (this.party.some(p => p.currentHp > 0)) this.openParty(true);
         else {
             Battle.cleanup();
             document.getElementById('game-boy').style.animation = "flashWhite 0.5s";
             AudioEngine.playCry(this.party[this.activeSlot].cry);
-            Battle.typeText(`Player is out of Pokemon...`, () => setTimeout(() => {
+            UI.typeText(`Player is out of Pokemon...`, () => setTimeout(() => {
                 document.getElementById('game-boy').style.animation = "";
                 this.newGame();
             }, 2500));

@@ -15,7 +15,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Generation-II-gold?style=for-the-badge" alt="Gen II">
   <img src="https://img.shields.io/badge/Pokémon-251-red?style=for-the-badge" alt="251 Pokemon">
-  <img src="https://img.shields.io/badge/Status-Modularizing-orange?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/Status-Phase_3_Complete-green?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/Architecture-ES6_Modules-blue?style=for-the-badge" alt="ES6 Modules">
 </p>
 
@@ -188,11 +188,11 @@ pokemon-battle-modular/
 │   │
 │   ├── game/                # Game Logic
 │   │   ├── game.js          # Game module (state management)
-│   │   └── battle.js        # Battle module (combat engine)
+│   │   ├── battle.js        # Battle module (combat engine)
+│   │   └── mechanics.js     # Core math (damage, EXP, loot)
 │   │
 │   ├── ui/                  # UI Components
-│   │   ├── screens/         # Screen-specific logic
-│   │   └── components/      # Reusable UI components
+│   │   └── ui.js            # Centralized UI & DOM management
 │   │
 │   └── utils/               # Utility Functions
 │       ├── helpers.js       # wait(), sleep(), RNG

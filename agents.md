@@ -1,8 +1,8 @@
 # 🗺️ Pokemon G/S Battle Simulator — File Structure Map
 
 > **Architecture:** Modular (HTML + External CSS + External JavaScript)  
-> **Total Lines:** 6,075 (across 9 files)  
-> **Status:** Phase 1 Complete — CSS and self-contained JS modules extracted
+> **Total Lines:** ~4,900 (across 11 files)  
+> **Status:** Phase 3 Complete — UI and Mechanics engines extracted
 
 ---
 
@@ -10,17 +10,21 @@
 
 ```
 pokemon-battle-modular/
-├── Pokemon.html          (2,887 lines) — HTML shell + Game/Battle modules
+├── Pokemon.html          (220 lines)   — Clean HTML shell
 ├── css/
 │   └── styles.css        (1,980 lines) — All styles + animations
 └── js/
-    ├── config.js         (640 lines)   — Constants, data tables, MOVE_DEX
-    ├── utils.js          (32 lines)    — StatCalc, RNG utilities
+    ├── data/             (4 files)     — Moves, Constants, Settings, Items
+    ├── utils.js          (32 lines)    — RNG utilities
     ├── audio.js          (126 lines)   — AudioEngine (Web Audio API)
     ├── api.js            (108 lines)   — API module (PokéAPI fetching)
     ├── storage.js        (32 lines)    — StorageSystem (localStorage)
     ├── input.js          (190 lines)   — Input handler (keyboard navigation)
-    └── encounter.js      (80 lines)    — EncounterManager (enemy generation)
+    ├── encounter.js      (80 lines)    — EncounterManager (enemy generation)
+    ├── ui.js             (118 lines)   — UI module (typeText, HUD, screens)
+    ├── mechanics.js      (103 lines)   — Mechanics module (Damage/EXP formulas)
+    ├── game.js           (616 lines)   — Game module (Progression)
+    └── battle.js         (1,863 lines) — Battle module (Turn execution)
 ```
 
 ---

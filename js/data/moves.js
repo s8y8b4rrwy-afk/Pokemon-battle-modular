@@ -4,16 +4,16 @@ const MOVE_DEX = {
     'METRONOME': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            await battle.typeText("Waggling a finger...");
+            await UI.typeText("Waggling a finger...");
             let rndId = Math.floor(Math.random() * 700) + 1;
             const moveData = await API.getMove(rndId);
 
             if (!moveData || moveData.name === 'METRONOME' || moveData.name === 'STRUGGLE') {
-                await battle.typeText("But it failed!");
+                await UI.typeText("But it failed!");
                 return false;
             }
 
-            await battle.typeText(`${user.name} used\n${moveData.name}!`);
+            await UI.typeText(`${user.name} used\n${moveData.name}!`);
 
             // --- FIX: APPLY LOGIC FLAGS (Recharge, etc) ---
             // This ensures Hyper Beam via Metronome still triggers recharge.
@@ -32,11 +32,11 @@ const MOVE_DEX = {
         isUnique: true,
         onHit: async (battle, user, target) => {
             if (user.volatiles.substituteHP > 0) {
-                await battle.typeText("But it failed!");
+                await UI.typeText("But it failed!");
                 return false;
             }
             if (user.currentHp <= Math.floor(user.maxHp / 4)) {
-                await battle.typeText("Not enough HP!");
+                await UI.typeText("Not enough HP!");
                 return false;
             }
 
@@ -45,7 +45,7 @@ const MOVE_DEX = {
             user.currentHp -= cost;
             user.volatiles.substituteHP = cost + 1;
 
-            battle.updateHUD(user, user === battle.p ? 'player' : 'enemy');
+            UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
 
             // 2. Save Original Sprite
             if (!user.volatiles.originalSprite) user.volatiles.originalSprite = user === battle.p ? user.backSprite : user.frontSprite;
@@ -56,7 +56,7 @@ const MOVE_DEX = {
             // 3. ANIMATION + TEXT SYNC
             // We run them together so the doll appears WHILE the text types
             const animPromise = battle.performVisualSwap(user, dollSrc, true, isPlayer);
-            const textPromise = battle.typeText(`${user.name} made\na SUBSTITUTE!`);
+            const textPromise = UI.typeText(`${user.name} made\na SUBSTITUTE!`);
 
             await Promise.all([animPromise, textPromise]);
 
@@ -71,18 +71,18 @@ const MOVE_DEX = {
         onHit: async (battle, user, target) => {
             // 1. AI Check
             if (user !== battle.p) {
-                await battle.typeText("But it failed!");
+                await UI.typeText("But it failed!");
                 return false;
             }
 
             // 2. Valid Party Check
             const valid = Game.party.filter((p, i) => p.currentHp > 0 && i !== Game.activeSlot);
             if (valid.length === 0) {
-                await battle.typeText("But there is no one\nto switch to!");
+                await UI.typeText("But there is no one\nto switch to!");
                 return false;
             }
 
-            await battle.typeText(`${user.name} wants to\nswitch out!`);
+            await UI.typeText(`${user.name} wants to\nswitch out!`);
 
             // 3. PAUSE BATTLE - WAIT FOR SELECTION
             // This prevents the enemy from attacking while the menu is open
@@ -113,7 +113,7 @@ const MOVE_DEX = {
     'REST': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            if (user.currentHp === user.maxHp) { await battle.typeText("It's already\nfully healthy!"); return false; }
+            if (user.currentHp === user.maxHp) { await UI.typeText("It's already\nfully healthy!"); return false; }
 
             AudioEngine.playSfx('heal');
 
@@ -123,7 +123,7 @@ const MOVE_DEX = {
             user.volatiles.sleepTurns = 2; // Gen 2 style: 2 turns guaranteed sleep
             user.currentHp = user.maxHp;
 
-            battle.updateHUD(user, user === battle.p ? 'player' : 'enemy');
+            UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
 
             // 2. Animation
             const sprite = user === battle.p ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
@@ -131,7 +131,7 @@ const MOVE_DEX = {
             await wait(600);
             sprite.classList.remove('status-anim-slp');
 
-            await battle.typeText(`${user.name} slept and\nbecame healthy!`);
+            await UI.typeText(`${user.name} slept and\nbecame healthy!`);
             return true;
         }
     },
@@ -149,9 +149,9 @@ const MOVE_DEX = {
         isUnique: true,
         onHit: async (battle, user, target) => {
             const exists = battle.delayedMoves.find(m => m.moveData.name === 'FUTURE SIGHT' && m.target === target);
-            if (exists) { await battle.typeText("But it failed!"); return false; }
+            if (exists) { await UI.typeText("But it failed!"); return false; }
 
-            await battle.typeText(`${user.name} foresaw\nan attack!`);
+            await UI.typeText(`${user.name} foresaw\nan attack!`);
             battle.delayedMoves.push({
                 turns: 2, user: user, target: target, isPlayer: (user === battle.p),
                 moveData: { name: 'FUTURE SIGHT', type: 'psychic', power: 120, category: 'special' }
@@ -163,8 +163,8 @@ const MOVE_DEX = {
         isUnique: true,
         onHit: async (battle, user, target) => {
             const exists = battle.delayedMoves.find(m => m.moveData.name === 'DOOM DESIRE' && m.target === target);
-            if (exists) { await battle.typeText("But it failed!"); return false; }
-            await battle.typeText(`${user.name} chose\nDoom Desire!`);
+            if (exists) { await UI.typeText("But it failed!"); return false; }
+            await UI.typeText(`${user.name} chose\nDoom Desire!`);
             battle.delayedMoves.push({
                 turns: 2, user: user, target: target, isPlayer: (user === battle.p),
                 moveData: { name: 'DOOM DESIRE', type: 'steel', power: 140, category: 'special' }
@@ -232,7 +232,7 @@ const MOVE_DEX = {
             sprite.classList.add('transformed-sprite');
             sprite.style.filter = "";
 
-            await battle.typeText(`${user.transformBackup.name} transformed\ninto ${target.name}!`);
+            await UI.typeText(`${user.transformBackup.name} transformed\ninto ${target.name}!`);
             return true;
         }
     },
@@ -242,18 +242,18 @@ const MOVE_DEX = {
             user.stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
             target.stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
             AudioEngine.playSfx('swoosh');
-            await battle.typeText("All stat changes\nwere eliminated!");
+            await UI.typeText("All stat changes\nwere eliminated!");
             return true;
         }
     },
     'BELLY DRUM': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            if (user.currentHp <= user.maxHp / 2 || user.stages.atk >= 6) { await battle.typeText("But it failed!"); return false; }
+            if (user.currentHp <= user.maxHp / 2 || user.stages.atk >= 6) { await UI.typeText("But it failed!"); return false; }
             user.currentHp = Math.floor(user.currentHp - (user.maxHp / 2));
             user.stages.atk = 6;
-            battle.updateHUD(user, user === battle.p ? 'player' : 'enemy');
-            await battle.typeText(`${user.name} cut its HP\nto max ATTACK!`);
+            UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
+            await UI.typeText(`${user.name} cut its HP\nto max ATTACK!`);
             return true;
         }
     },
@@ -262,14 +262,14 @@ const MOVE_DEX = {
         onHit: async (battle, user, target) => {
             if (user.types.includes('ghost')) {
                 user.currentHp = Math.floor(user.currentHp / 2);
-                battle.updateHUD(user, user === battle.p ? 'player' : 'enemy');
-                await battle.typeText(`${user.name} cut its HP\nto lay a curse!`);
+                UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
+                await UI.typeText(`${user.name} cut its HP\nto lay a curse!`);
 
                 // Direct Damage Simulation (Since we don't have Curse volatile logic yet)
                 const dmg = Math.floor(target.maxHp / 4);
                 target.currentHp -= dmg;
-                battle.updateHUD(target, user === battle.p ? 'enemy' : 'player');
-                await battle.typeText(`${target.name} was hurt\nby the curse!`);
+                UI.updateHUD(target, user === battle.p ? 'enemy' : 'player');
+                await UI.typeText(`${target.name} was hurt\nby the curse!`);
             } else {
                 await battle.applyStatChanges(user, [{ stat: { name: 'speed' }, change: -1 }, { stat: { name: 'attack' }, change: 1 }, { stat: { name: 'defense' }, change: 1 }], user === battle.p);
             }
@@ -282,11 +282,11 @@ const MOVE_DEX = {
             const avg = Math.floor((user.currentHp + target.currentHp) / 2);
             user.currentHp = Math.min(user.maxHp, avg);
             target.currentHp = Math.min(target.maxHp, avg);
-            battle.updateHUD(user, 'player');
-            battle.updateHUD(target, 'enemy');
-            battle.updateHUD(user, 'enemy'); // Redundant safety update
-            battle.updateHUD(target, 'player');
-            await battle.typeText("The battlers shared\ntheir pain!");
+            UI.updateHUD(user, 'player');
+            UI.updateHUD(target, 'enemy');
+            UI.updateHUD(user, 'enemy'); // Redundant safety update
+            UI.updateHUD(target, 'player');
+            await UI.typeText("The battlers shared\ntheir pain!");
             return true;
         }
     },
@@ -312,7 +312,7 @@ const MOVE_LOGIC = {
 
 // --- HELPERS for DEX ---
 async function _heal(battle, user, pct) {
-    if (user.currentHp === user.maxHp) { await battle.typeText("It's already\nfully healthy!"); return false; }
+    if (user.currentHp === user.maxHp) { await UI.typeText("It's already\nfully healthy!"); return false; }
 
     const amt = Math.floor(user.maxHp * pct);
     // Use Helper (automatically handles HUD, Sound, and "Regained health" text)

@@ -51,7 +51,7 @@ const Input = {
                         prevImg.style.display = 'block';
                         prevShiny.style.display = p.isShiny ? 'block' : 'none';
                     }
-                    Battle.typeText(`Will you choose\n${p.name}?`, null, true);
+                    UI.typeText(`Will you choose\n${p.name}?`, null, true);
                 }
             }
             return target;

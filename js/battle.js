@@ -1,11 +1,7 @@
 const Battle = {
-    p: null, e: null, textEl: document.getElementById('text-content'), uiLocked: true, typeInterval: null,
+    p: null, e: null, uiLocked: true,
     participants: new Set(),
     userInputPromise: null,
-
-    // --- HELPER: FORCE REFLOW ---
-    forceReflow(el) { void el.offsetWidth; },
-
 
     // 1. Standardized Visual Hit (Handles sprites, sounds, invisible checks, and sub flipping)
     async triggerHitAnim(target, moveType = 'normal') {
@@ -20,11 +16,10 @@ const Battle = {
         if (SFX_LIB[sfx] || ['fire', 'water', 'ice', 'grass', 'electric', 'psychic'].includes(sfx)) AudioEngine.playSfx(sfx);
         else AudioEngine.playSfx('damage');
 
-        // 2. Screen Flash (Type specific)
         if (['fire', 'water', 'ice', 'grass', 'electric', 'psychic'].includes(moveType)) {
             const scene = document.getElementById('scene');
             scene.classList.remove(`fx-${moveType}`);
-            this.forceReflow(scene);
+            UI.forceReflow(scene);
             scene.classList.add(`fx-${moveType}`);
             // We don't await the screen flash here, we let it play in parallel with the hit
             setTimeout(() => scene.classList.remove(`fx-${moveType}`), 600);
@@ -37,7 +32,7 @@ const Battle = {
             const hitClass = isFlipped ? 'anim-hit-flipped' : 'anim-hit';
 
             sprite.classList.remove('anim-hit', 'anim-hit-flipped');
-            this.forceReflow(sprite);
+            UI.forceReflow(sprite);
             sprite.classList.add(hitClass);
 
             await wait(400); // Wait for shake to finish
@@ -53,7 +48,7 @@ const Battle = {
         if (target.volatiles.substituteHP > 0 && type !== 'recoil' && type !== 'poison' && type !== 'burn') {
             target.volatiles.substituteHP -= amount;
             await this.triggerHitAnim(target, type); // Hit the doll
-            await this.typeText("The SUBSTITUTE took\ndamage for it!");
+            await UI.typeText("The SUBSTITUTE took\ndamage for it!");
 
             // Check Break
             if (target.volatiles.substituteHP <= 0) {
@@ -64,7 +59,7 @@ const Battle = {
                 const isPlayer = (target === this.p);
                 const realSrc = target.volatiles.originalSprite || (isPlayer ? target.backSprite : target.frontSprite);
                 const animPromise = this.performVisualSwap(target, realSrc, false, isPlayer);
-                const textPromise = this.typeText("The SUBSTITUTE\nfaded!");
+                const textPromise = UI.typeText("The SUBSTITUTE\nfaded!");
                 target.volatiles.originalSprite = null;
                 await Promise.all([animPromise, textPromise]);
             }
@@ -74,7 +69,7 @@ const Battle = {
         // B. Handle Real HP
         await this.triggerHitAnim(target, type); // Visuals
         target.currentHp -= amount; // Math
-        this.updateHUD(target, target === this.p ? 'player' : 'enemy'); // UI
+        UI.updateHUD(target, target === this.p ? 'player' : 'enemy'); // UI
     },
 
 
@@ -88,33 +83,19 @@ const Battle = {
 
         // Visuals
         AudioEngine.playSfx('heal');
-        this.updateHUD(target, target === this.p ? 'player' : 'enemy');
+        UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
 
         // Text
         // Pass 'false' as messageOverride to skip text (for silent heals)
         if (messageOverride !== false) {
             const msg = messageOverride || `${target.name} regained\nhealth!`;
-            await this.typeText(msg);
+            await UI.typeText(msg);
         }
 
         return healedAmt;
     },
 
-    // --- VISUALS ---
-    spawnSmoke(x, y) {
-        const count = 12;
-        for (let i = 0; i < count; i++) {
-            const s = document.createElement('div'); s.className = 'smoke-particle';
-            const angle = (i / count) * 2 * Math.PI;
-            const velocity = 40 + Math.random() * 15;
-            const tx = Math.cos(angle) * velocity;
-            const ty = Math.sin(angle) * velocity;
-            s.style.left = x + 'px'; s.style.top = y + 'px';
-            s.style.setProperty('--tx', tx + 'px'); s.style.setProperty('--ty', ty + 'px');
-            document.getElementById('scene').appendChild(s);
-            setTimeout(() => s.remove(), 600);
-        }
-    },
+
 
     // --- VISUAL SWAP HELPER (Fixed) ---
     // --- NEW HELPER: Handles "Poof" Swaps ---
@@ -126,7 +107,7 @@ const Battle = {
         const y = isPlayer ? 150 : 70;
 
         AudioEngine.playSfx('ball');
-        this.spawnSmoke(x, y);
+        UI.spawnSmoke(x, y);
 
         sprite.style.opacity = 0;
         await wait(100);
@@ -140,7 +121,7 @@ const Battle = {
 
         // Reset animation class
         sprite.classList.remove('anim-enter');
-        this.forceReflow(sprite);
+        UI.forceReflow(sprite);
         sprite.classList.add('anim-enter');
 
         // FIX: Remove the animation class after it finishes
@@ -160,83 +141,7 @@ const Battle = {
         document.getElementById('scene').classList.remove('anim-violent');
     },
 
-    resetSprite(el) {
-        el.classList.remove('anim-faint', 'anim-enter', 'anim-return', 'anim-hit', 'anim-deflect');
-        el.style.transform = "scale(1)"; el.style.filter = "none";
-        void el.offsetWidth; el.style.opacity = 1;
-    },
 
-    // IN: Battle object
-    updateHUD(mon, side) {
-        // 1. Name & Level
-        const nameEl = document.getElementById(`${side}-name`);
-
-        // Handle Boss Line Breaks
-        if (mon.name.startsWith("BOSS ")) nameEl.innerHTML = mon.name.replace("BOSS ", "BOSS<br>");
-        else nameEl.innerText = mon.name;
-
-        document.getElementById(`${side}-lvl`).innerText = `Lv${mon.level}`;
-
-        // 2. Status Icon (Updates existing span)
-        const statusEl = document.getElementById(`${side}-status-icon`);
-        if (mon.status && STATUS_DATA[mon.status]) {
-            statusEl.innerText = STATUS_DATA[mon.status].name;
-            statusEl.style.color = STATUS_DATA[mon.status].color;
-            statusEl.style.display = "inline-block";
-        } else {
-            statusEl.style.display = "none";
-        }
-
-        // 3. Rage Icon (Updates existing span)
-        const rageEl = document.getElementById(`${side}-rage-icon`);
-        rageEl.className = 'aggro-icon'; // Reset animations to base
-
-        if (mon.rageLevel > 0) {
-            if (mon.rageLevel === 1) { rageEl.innerText = '!'; rageEl.classList.add('aggro-1'); }
-            else if (mon.rageLevel === 2) { rageEl.innerText = '!!'; rageEl.classList.add('aggro-2'); }
-            else if (mon.rageLevel >= 3) { rageEl.innerText = '💢'; rageEl.classList.add('aggro-3'); }
-            rageEl.style.display = "inline-block";
-        } else {
-            rageEl.style.display = "none";
-        }
-
-        // 4. HP Bars
-        const pct = (Math.max(0, mon.currentHp) / mon.maxHp) * 100;
-        const bar = document.getElementById(`${side}-hp-bar`);
-        bar.style.width = Math.max(0, pct) + "%";
-        bar.style.backgroundColor = pct > 50 ? "var(--hp-green)" : pct > 20 ? "var(--hp-yellow)" : "var(--hp-red)";
-
-        if (side === 'player') {
-            document.getElementById('player-hp-text').innerText = `${Math.floor(Math.max(0, mon.currentHp))}/${mon.maxHp}`;
-            const expPct = (mon.exp / mon.nextLvlExp) * 100;
-            document.getElementById('player-exp-bar').style.width = Math.min(100, expPct) + "%";
-        }
-    },
-
-    // --- TEXT ENGINE ---
-    typeText(text, cb, fast = false) {
-        return new Promise(resolve => {
-            const el = this.textEl;
-            clearInterval(this.typeInterval);
-            el.innerHTML = "";
-            if (document.getElementById('action-menu').classList.contains('hidden')) el.classList.add('full-width');
-            else el.classList.remove('full-width');
-
-            let i = 0;
-            this.typeInterval = setInterval(() => {
-                const char = text.charAt(i);
-                if (char === '\n') el.innerHTML += '<br>'; else el.innerHTML += char;
-                i++;
-                if (i >= text.length) {
-                    clearInterval(this.typeInterval);
-                    setTimeout(() => {
-                        if (cb && typeof cb === 'function') cb();
-                        resolve();
-                    }, 1000);
-                }
-            }, fast ? 10 : 20);
-        });
-    },
 
     revertTransform(mon) {
         if (mon && mon.transformBackup) {
@@ -258,8 +163,8 @@ const Battle = {
 
     // 1. The New "Nuclear" Reset (Clears everything)
     resetScene() {
-        clearInterval(this.typeInterval);
-        this.typeInterval = null;
+        clearInterval(UI.typeInterval);
+        UI.typeInterval = null;
 
         const pSprite = document.getElementById('player-sprite');
         const eSprite = document.getElementById('enemy-sprite');
@@ -286,8 +191,8 @@ const Battle = {
         textEl.innerHTML = "";
         textEl.classList.remove('full-width');
 
-        void pSprite.offsetWidth;
-        void eSprite.offsetWidth;
+        UI.forceReflow(pSprite);
+        UI.forceReflow(eSprite);
 
         this.weather = { type: 'none', turns: 0 };
         this.delayedMoves = [];
@@ -307,10 +212,10 @@ const Battle = {
         const overlay = document.getElementById('scene');
         if (WEATHER_FX[type]) {
             overlay.style.backgroundColor = WEATHER_FX[type].color;
-            this.typeText(WEATHER_FX[type].msg);
+            UI.typeText(WEATHER_FX[type].msg);
         } else {
             overlay.style.backgroundColor = "";
-            this.typeText("The skies cleared.");
+            UI.typeText("The skies cleared.");
         }
     },
 
@@ -328,7 +233,7 @@ const Battle = {
         pSprite.style.transition = 'none';
         eSprite.style.transition = 'none';
 
-        this.resetSprite(eSprite);
+        UI.resetSprite(eSprite);
 
         // RESUME FIX: If not playing intro, keep opacity 1
         if (!playIntro) eSprite.style.opacity = 1;
@@ -338,8 +243,8 @@ const Battle = {
 
         if (!playIntro || skipPlayerAnim) pSprite.style.opacity = 1; else pSprite.style.opacity = 0;
 
-        this.forceReflow(pSprite);
-        this.forceReflow(eSprite);
+        UI.forceReflow(pSprite);
+        UI.forceReflow(eSprite);
 
         pSprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
         eSprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
@@ -347,7 +252,7 @@ const Battle = {
         if (!skipPlayerAnim) document.getElementById('player-hud').classList.remove('hud-active');
         document.getElementById('enemy-hud').classList.remove('hud-active');
 
-        this.updateHUD(player, 'player'); this.updateHUD(enemy, 'enemy');
+        UI.updateHUD(player, 'player'); UI.updateHUD(enemy, 'enemy');
 
         const nameEl = document.getElementById('enemy-name');
         if (enemy.isBoss) nameEl.classList.add('boss-name'); else nameEl.classList.remove('boss-name');
@@ -363,13 +268,13 @@ const Battle = {
     },
 
     async startEncounterSequence(player, enemy, playIntro, skipPlayerAnim, eSprite) {
-        this.buildMoveMenu(); clearInterval(this.typeInterval); this.textEl.innerHTML = "";
+        this.buildMoveMenu(); clearInterval(UI.typeInterval); UI.textEl.innerHTML = "";
 
         if (playIntro) {
             // Setup instant invisibility
             eSprite.style.transition = 'none';
             eSprite.style.filter = 'brightness(0)';
-            this.forceReflow(eSprite);
+            UI.forceReflow(eSprite);
             eSprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
 
             await sleep(500); // Hardcoded small buffer for browser render
@@ -378,7 +283,7 @@ const Battle = {
             eSprite.style.opacity = 1;
 
             const introText = enemy.isBoss ? `The ${enemy.name}\nappeared!` : `Wild ${enemy.name}\nappeared!`;
-            const textAnim = this.typeText(introText);
+            const textAnim = UI.typeText(introText);
 
             // 2. Wait (Controlled by Constant)
             await sleep(ANIM.INTRO_SILHOUETTE);
@@ -404,7 +309,7 @@ const Battle = {
 
             await textAnim; // Ensure text finishes
 
-            if (enemy.isShiny) { this.playSparkle('enemy'); await sleep(1000); }
+            if (enemy.isShiny) { UI.playSparkle('enemy'); await sleep(1000); }
 
             await sleep(ANIM.INTRO_PLAYER_WAIT);
 
@@ -413,7 +318,7 @@ const Battle = {
                 document.getElementById('player-hud').classList.add('hud-active');
                 this.uiLocked = false; this.uiToMenu();
             } else {
-                await this.typeText(`Go! ${player.name}!`);
+                await UI.typeText(`Go! ${player.name}!`);
 
                 AudioEngine.playSfx('swoosh');
                 await this.triggerPlayerEntry(player);
@@ -422,7 +327,7 @@ const Battle = {
                 AudioEngine.playSfx('swoosh');
                 document.getElementById('player-hud').classList.add('hud-active');
 
-                if (player.isShiny) { this.playSparkle('player'); await sleep(1200); }
+                if (player.isShiny) { UI.playSparkle('player'); await sleep(1200); }
                 this.uiLocked = false; this.uiToMenu();
             }
         } else {
@@ -438,13 +343,13 @@ const Battle = {
         const sprite = document.getElementById('player-sprite');
 
         sprite.style.transition = 'none';
-        this.resetSprite(sprite);
+        UI.resetSprite(sprite);
         sprite.style.opacity = 0;
-        this.forceReflow(sprite);
+        UI.forceReflow(sprite);
 
         sprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
         sprite.classList.add('anim-enter');
-        this.spawnSmoke(60, 150);
+        UI.spawnSmoke(60, 150);
 
         await wait(200);
 
@@ -489,7 +394,7 @@ const Battle = {
         // 0. FLINCH (Volatile - resets immediately)
         if (mon.volatiles.flinch) {
             mon.volatiles.flinch = false;
-            await this.typeText(`${mon.name} flinched!`);
+            await UI.typeText(`${mon.name} flinched!`);
             return false;
         }
 
@@ -497,11 +402,11 @@ const Battle = {
         if (mon.status === 'frz') {
             if (Math.random() < 0.2) {
                 mon.status = null;
-                this.updateHUD(mon, isPlayer ? 'player' : 'enemy');
-                await this.typeText(`${mon.name} thawed out!`);
+                UI.updateHUD(mon, isPlayer ? 'player' : 'enemy');
+                await UI.typeText(`${mon.name} thawed out!`);
                 return true;
             }
-            await this.typeText(`${mon.name} is\nfrozen solid!`);
+            await UI.typeText(`${mon.name} is\nfrozen solid!`);
             return false;
         }
 
@@ -510,17 +415,17 @@ const Battle = {
             mon.volatiles.sleepTurns = (mon.volatiles.sleepTurns || Math.floor(Math.random() * 3) + 1) - 1;
             if (mon.volatiles.sleepTurns <= 0) {
                 mon.status = null;
-                this.updateHUD(mon, isPlayer ? 'player' : 'enemy');
-                await this.typeText(`${mon.name} woke up!`);
+                UI.updateHUD(mon, isPlayer ? 'player' : 'enemy');
+                await UI.typeText(`${mon.name} woke up!`);
                 return true;
             }
-            await this.typeText(`${mon.name} is\nfast asleep!`);
+            await UI.typeText(`${mon.name} is\nfast asleep!`);
             return false;
         }
 
         // 3. PARALYSIS
         if (mon.status === 'par' && Math.random() < 0.25) {
-            await this.typeText(`${mon.name} is paralyzed!\nIt can't move!`);
+            await UI.typeText(`${mon.name} is paralyzed!\nIt can't move!`);
             return false;
         }
 
@@ -528,16 +433,16 @@ const Battle = {
         if (mon.volatiles.confused > 0) {
             mon.volatiles.confused--;
             if (mon.volatiles.confused === 0) {
-                this.updateHUD(mon, isPlayer ? 'player' : 'enemy');
-                await this.typeText(`${mon.name} snapped\nout of confusion!`);
+                UI.updateHUD(mon, isPlayer ? 'player' : 'enemy');
+                await UI.typeText(`${mon.name} snapped\nout of confusion!`);
                 return true;
             }
 
-            await this.typeText(`${mon.name} is\nconfused!`);
+            await UI.typeText(`${mon.name} is\nconfused!`);
 
             // 33% chance to hit self
             if (Math.random() < 0.33) {
-                await this.typeText("It hurt itself in\nits confusion!");
+                await UI.typeText("It hurt itself in\nits confusion!");
 
                 // Standard Gen 2 Confusion Damage Formula (Power 40)
                 const dmg = Math.floor((((2 * mon.level / 5 + 2) * 40 * mon.stats.atk / mon.stats.def) / 50) + 2);
@@ -567,7 +472,7 @@ const Battle = {
             if (takesDamage) {
                 await wait(400);
                 const msg = this.weather.type === 'sand' ? "is buffeted\nby the sandstorm!" : "is pelted\nby hail!";
-                await this.typeText(`${mon.name} ${msg}`);
+                await UI.typeText(`${mon.name} ${msg}`);
 
                 const dmg = Math.max(1, Math.floor(mon.maxHp / 16));
                 // Use Helper (weather type triggers standard damage sound)
@@ -589,7 +494,7 @@ const Battle = {
                 sprite.classList.remove(animClass);
             }
 
-            await this.typeText(`${mon.name} ${STATUS_DATA[mon.status].msg}`);
+            await UI.typeText(`${mon.name} ${STATUS_DATA[mon.status].msg}`);
 
             const dmg = Math.floor(mon.maxHp / 8);
             // Use Helper (pass 'burn' or 'poison' to trigger specific logic/sounds if needed)
@@ -609,7 +514,7 @@ const Battle = {
             // If Substitute exists and it's a debuff (change < 0), ignore it.
             // (Exceptions exist in newer gens like Intimidate, but for moves this is accurate)
             if (hasSub && c.change < 0) {
-                await this.typeText(`${target.name} is protected\nby the SUBSTITUTE!`);
+                await UI.typeText(`${target.name} is protected\nby the SUBSTITUTE!`);
                 continue;
             }
 
@@ -617,11 +522,11 @@ const Battle = {
             const change = c.change;
 
             if (target.stages[stat] === 6 && change > 0) {
-                await this.typeText(`${target.name}'s ${stat.toUpperCase()}\nwon't go higher!`);
+                await UI.typeText(`${target.name}'s ${stat.toUpperCase()}\nwon't go higher!`);
                 continue;
             }
             if (target.stages[stat] === -6 && change < 0) {
-                await this.typeText(`${target.name}'s ${stat.toUpperCase()}\nwon't go lower!`);
+                await UI.typeText(`${target.name}'s ${stat.toUpperCase()}\nwon't go lower!`);
                 continue;
             }
 
@@ -640,7 +545,7 @@ const Battle = {
             await wait(800);
             sprite.classList.remove(animClass);
 
-            await this.typeText(`${target.name}'s ${stat.toUpperCase()}\n${deg}${dir}`);
+            await UI.typeText(`${target.name}'s ${stat.toUpperCase()}\n${deg}${dir}`);
         }
     },
 
@@ -649,14 +554,14 @@ const Battle = {
         // 1. Substitute Block
         // Substitute blocks status unless it's sound-based (ignored for simplicity) or generated by the user
         if (target.volatiles.substituteHP > 0 && ailment !== 'confusion') {
-            await this.typeText("But it failed!");
+            await UI.typeText("But it failed!");
             return false;
         }
 
         // 2. Handle Volatiles (Confusion)
         if (ailment === 'confusion') {
             if (target.volatiles.confused) {
-                await this.typeText(`${target.name} is\nalready confused!`);
+                await UI.typeText(`${target.name} is\nalready confused!`);
                 return false;
             }
             const scene = document.getElementById('scene');
@@ -665,7 +570,7 @@ const Battle = {
             scene.classList.remove('fx-psychic');
 
             target.volatiles.confused = Math.floor(Math.random() * 3) + 2;
-            await this.typeText(`${target.name} became\nconfused!`);
+            await UI.typeText(`${target.name} became\nconfused!`);
             return true;
         }
 
@@ -692,7 +597,7 @@ const Battle = {
             }
 
             target.status = map[ailment];
-            this.updateHUD(target, isPlayerTarget ? 'player' : 'enemy');
+            UI.updateHUD(target, isPlayerTarget ? 'player' : 'enemy');
 
             let msg = `${target.name} was\n${ailment}ed!`;
             if (ailment === 'sleep') msg = `${target.name} fell\nasleep!`;
@@ -700,7 +605,7 @@ const Battle = {
             if (ailment === 'paralysis') msg = `${target.name} is\nparalyzed!`;
 
             AudioEngine.playSfx('clank');
-            await this.typeText(msg);
+            await UI.typeText(msg);
             return true;
         }
         return false;
@@ -718,7 +623,7 @@ const Battle = {
                 activeMoves.push(item);
             } else {
                 // IT'S TIME!
-                await this.typeText(`${item.user.name} foresaw\nan attack!`);
+                await UI.typeText(`${item.user.name} foresaw\nan attack!`);
 
                 // Execute damage phase
                 // We force the move type to 'typeless' logic for Gen 2 Future Sight if desired, 
@@ -873,7 +778,7 @@ const Battle = {
         AudioEngine.playSfx('run');
 
         // Updated Text
-        await this.typeText("Got away safely!");
+        await UI.typeText("Got away safely!");
 
         // 1. SAVE FIRST (Suspend State)
         Game.save();
@@ -920,11 +825,11 @@ const Battle = {
             if (this.weather.type !== 'none') {
                 this.weather.turns--;
                 if (this.weather.turns <= 0) {
-                    await this.typeText("The weather cleared.");
+                    await UI.typeText("The weather cleared.");
                     this.setWeather('none');
                 } else {
                     const fx = WEATHER_FX[this.weather.type];
-                    if (fx && fx.continue) await this.typeText(fx.continue);
+                    if (fx && fx.continue) await UI.typeText(fx.continue);
                 }
             }
         }
@@ -959,7 +864,7 @@ const Battle = {
             let msg = `Come back,\n${this.p.name}!`;
             if (isBP) msg = `${this.p.name} passed\nthe baton!`;
 
-            await this.typeText(msg);
+            await UI.typeText(msg);
             await sleep(ANIM.TEXT_READ_PAUSE);
 
             AudioEngine.playSfx('swoosh');
@@ -967,13 +872,13 @@ const Battle = {
 
             AudioEngine.playSfx('ball');
             sprite.classList.add('anim-return');
-            this.spawnSmoke(60, 150);
+            UI.spawnSmoke(60, 150);
             await sleep(ANIM.SWITCH_RETURN_ANIM);
         } else {
             sprite.style.transition = 'none';
             sprite.style.opacity = 0;
             sprite.classList.remove('anim-faint');
-            this.forceReflow(sprite);
+            UI.forceReflow(sprite);
         }
 
         sprite.classList.remove('transformed-sprite');
@@ -995,18 +900,18 @@ const Battle = {
         this.p = newMon;
         this.participants.add(Game.activeSlot);
 
-        this.updateHUD(newMon, 'player'); this.buildMoveMenu();
+        UI.updateHUD(newMon, 'player'); this.buildMoveMenu();
 
         // --- HIDE BEFORE SOURCE CHANGE (ANTI-FLICKER) ---
         sprite.style.transition = 'none';
         sprite.style.opacity = 0;
         sprite.classList.remove('anim-return');
-        this.forceReflow(sprite);
+        UI.forceReflow(sprite);
 
         // --- 3. SHOW REAL POKEMON FIRST ---
         sprite.src = newMon.backSprite;
 
-        await this.typeText(`Go! ${newMon.name}!`);
+        await UI.typeText(`Go! ${newMon.name}!`);
 
         AudioEngine.playSfx('swoosh');
         await this.triggerPlayerEntry(newMon);
@@ -1014,7 +919,7 @@ const Battle = {
         AudioEngine.playSfx('swoosh');
         document.getElementById('player-hud').classList.add('hud-active');
 
-        if (newMon.isShiny) { this.playSparkle('player'); await sleep(1000); }
+        if (newMon.isShiny) { UI.playSparkle('player'); await sleep(1000); }
 
         // --- BATON PASS: LATE SUBSTITUTE ARRIVAL ---
         if (newMon.volatiles.substituteHP > 0) {
@@ -1032,7 +937,7 @@ const Battle = {
             Game.inventory[itemKey]--;
         } else {
             // Safety catch if UI didn't block it
-            await this.typeText("You don't have any!");
+            await UI.typeText("You don't have any!");
             return 'CONTINUE';
         }
 
@@ -1040,41 +945,41 @@ const Battle = {
 
         // --- POKEBALLS ---
         if (data.type === 'ball') {
-            await this.typeText(`You threw a\n${data.name}!`);
+            await UI.typeText(`You threw a\n${data.name}!`);
             return await this.attemptCatch(itemKey);
         }
 
         // --- HEALING ITEMS (Potions) ---
         else if (data.type === 'heal') {
-            await this.typeText(`You used a\n${data.name}!`);
+            await UI.typeText(`You used a\n${data.name}!`);
             await this.applyHeal(this.p, data.heal);
         }
 
         // --- STATUS HEALS (Future Proofing for Full Heals/Antidotes) ---
         // You can add { type: 'status_heal', condition: 'psn' } to your ITEMS list later
         else if (data.type === 'status_heal') {
-            await this.typeText(`You used a\n${data.name}!`);
+            await UI.typeText(`You used a\n${data.name}!`);
             if (this.p.status === data.condition || data.condition === 'all') {
                 this.p.status = null;
-                this.updateHUD(this.p, 'player');
+                UI.updateHUD(this.p, 'player');
                 AudioEngine.playSfx('heal');
-                await this.typeText(`${this.p.name} was\ncured!`);
+                await UI.typeText(`${this.p.name} was\ncured!`);
             } else {
-                await this.typeText("It had no effect.");
+                await UI.typeText("It had no effect.");
             }
         }
 
         // --- BATTLE STAT BOOSTERS (Future Proofing for X Attack, etc) ---
         // You can add { type: 'buff', stat: 'atk', val: 1 } to your ITEMS list later
         else if (data.type === 'buff') {
-            await this.typeText(`You used an\n${data.name}!`);
+            await UI.typeText(`You used an\n${data.name}!`);
             await this.applyStatChanges(this.p, [{ stat: { name: data.stat }, change: data.val }], true);
         }
 
         // --- REVIVES (Fails on active Pokemon) ---
         else if (data.type === 'revive') {
-            await this.typeText(`You used a\n${data.name}!`);
-            await this.typeText("But it failed!");
+            await UI.typeText(`You used a\n${data.name}!`);
+            await UI.typeText("But it failed!");
             // Optional: Refund item if failed
             Game.inventory[itemKey]++;
         }
@@ -1083,16 +988,7 @@ const Battle = {
     },
 
 
-    getTypeEffectiveness(moveType, targetTypes) {
-        let mod = 1;
-        targetTypes.forEach(t => {
-            // Safe check for the type chart
-            if (TYPE_CHART[moveType] && TYPE_CHART[moveType][t] !== undefined) {
-                mod *= TYPE_CHART[moveType][t];
-            }
-        });
-        return mod;
-    },
+
 
     async attemptCatch(ballKey) {
         const ballData = ITEMS[ballKey];
@@ -1112,7 +1008,7 @@ const Battle = {
                 await sleep(300);
                 document.getElementById('enemy-sprite').classList.remove('anim-deflect');
 
-                await this.typeText("The BOSS deflected\nthe Ball!");
+                await UI.typeText("The BOSS deflected\nthe Ball!");
                 return 'CONTINUE';
             }
         }
@@ -1131,7 +1027,7 @@ const Battle = {
         eSprite.style.filter = 'brightness(0) invert(1)';
         eSprite.style.transform = 'scale(0)';
 
-        this.spawnSmoke(230, 70);
+        UI.spawnSmoke(230, 70);
         AudioEngine.playSfx('catch_success');
         ball.style.animation = "captureShake 1.0s ease-in-out infinite";
 
@@ -1161,7 +1057,7 @@ const Battle = {
             ball.classList.add('pokeball-caught');
 
             Game.state = 'CAUGHT_ANIM';
-            await this.typeText(`Gotcha! ${this.e.name} was caught!`);
+            await UI.typeText(`Gotcha! ${this.e.name} was caught!`);
             document.getElementById('scene').removeChild(ball);
 
             this.e.rageLevel = 0;
@@ -1172,12 +1068,12 @@ const Battle = {
 
             if (Game.party.length > 6) {
                 Game.state = 'OVERFLOW';
-                await this.typeText(`Party is full!\nSelect PKMN to release.`);
+                await UI.typeText(`Party is full!\nSelect PKMN to release.`);
                 await sleep(ANIM.OVERFLOW_WARNING);
                 Game.openParty(true);
             }
             else {
-                await this.typeText(`${this.e.name} was added\nto the party!`);
+                await UI.typeText(`${this.e.name} was added\nto the party!`);
                 Game.handleWin(true);
             }
             return 'STOP_BATTLE';
@@ -1186,7 +1082,7 @@ const Battle = {
             eSprite.style.filter = 'none';
             eSprite.style.transform = 'scale(1)';
 
-            this.spawnSmoke(230, 70);
+            UI.spawnSmoke(230, 70);
             AudioEngine.playSfx('ball');
 
             if (this.e.cry) AudioEngine.playCry(this.e.cry);
@@ -1198,16 +1094,16 @@ const Battle = {
 
             if (Math.random() < rageProb) {
                 this.e.rageLevel = Math.min(3, (this.e.rageLevel || 0) + 1);
-                this.updateHUD(this.e, 'enemy');
+                UI.updateHUD(this.e, 'enemy');
                 gainedRage = true;
             }
 
-            await this.typeText(`Shoot! It was so close!`);
+            await UI.typeText(`Shoot! It was so close!`);
             document.getElementById('scene').removeChild(ball);
 
             if (gainedRage) {
                 await this.triggerRageAnim(this.e.cry);
-                await this.typeText("It's getting aggressive!");
+                await UI.typeText("It's getting aggressive!");
             }
             return 'CONTINUE';
         }
@@ -1221,7 +1117,7 @@ const Battle = {
         // 1. RECHARGE CHECK
         if (attacker.volatiles.recharging) {
             attacker.volatiles.recharging = false;
-            await this.typeText(`${attacker.name} must\nrecharge!`);
+            await UI.typeText(`${attacker.name} must\nrecharge!`);
             return;
         }
 
@@ -1233,7 +1129,7 @@ const Battle = {
                 attacker.volatiles.queuedMove = null;
                 attacker.volatiles.invulnerable = null;
                 sprite.style.opacity = 1;
-                if (logic.invuln) await this.typeText(`${attacker.name} crashed\ndown!`);
+                if (logic.invuln) await UI.typeText(`${attacker.name} crashed\ndown!`);
             }
             return;
         }
@@ -1255,7 +1151,7 @@ const Battle = {
         // -------------------------------------------
 
         // 4. STANDARD MOVE TEXT
-        await this.typeText(`${attacker.name} used\n${move.name}!`);
+        await UI.typeText(`${attacker.name} used\n${move.name}!`);
 
         const checkInvulnHit = async () => {
             if (move.target === 'user' || move.target === 'users-field') return true;
@@ -1266,7 +1162,7 @@ const Battle = {
                 if (inv === 'flying' && (move.name === 'THUNDER' || move.name === 'GUST' || move.name === 'TWISTER' || move.name === 'SKY UPPERCUT')) hits = true;
                 if (inv === 'diving' && (move.name === 'SURF' || move.name === 'WHIRLPOOL')) hits = true;
                 if (!hits) {
-                    await this.typeText(`${defender.name} avoided\nthe attack!`);
+                    await UI.typeText(`${defender.name} avoided\nthe attack!`);
                     return false;
                 }
             }
@@ -1295,7 +1191,7 @@ const Battle = {
             if (await checkInvulnHit() === false) { await restoreSub(); return; }
 
             if (defender.volatiles.protected && move.target !== 'user') {
-                await this.typeText(`${defender.name} protected\nitself!`);
+                await UI.typeText(`${defender.name} protected\nitself!`);
                 await restoreSub();
                 return;
             }
@@ -1308,11 +1204,11 @@ const Battle = {
         // 6. START NEW MOVE (Logic)
         if (logic.type === 'protect') {
             if (attacker.volatiles.protected) {
-                await this.typeText("But it failed!");
+                await UI.typeText("But it failed!");
                 attacker.volatiles.protected = false;
             } else {
                 attacker.volatiles.protected = true;
-                await this.typeText(`${attacker.name} protected\nitself!`);
+                await UI.typeText(`${attacker.name} protected\nitself!`);
                 AudioEngine.playSfx('clank');
             }
             await restoreSub();
@@ -1330,7 +1226,7 @@ const Battle = {
                 await wait(400);
                 if (logic.hide) { AudioEngine.playSfx('swoosh'); sprite.style.opacity = 0; await wait(250); }
 
-                await this.typeText(`${attacker.name}\n${logic.msg}`);
+                await UI.typeText(`${attacker.name}\n${logic.msg}`);
                 if (logic.buff) await this.applyStatChanges(attacker, [{ stat: { name: logic.buff.stat }, change: logic.buff.val }], isPlayer);
                 await restoreSub();
                 return;
@@ -1339,7 +1235,7 @@ const Battle = {
 
         // 7. DEFENDER PROTECT
         if (defender.volatiles.protected && move.target !== 'user') {
-            await this.typeText(`${defender.name} protected\nitself!`);
+            await UI.typeText(`${defender.name} protected\nitself!`);
             await restoreSub();
             return;
         }
@@ -1360,13 +1256,13 @@ const Battle = {
 
         if (move.target !== 'user' && acc !== null && move.accuracy !== 0 && Math.random() * 100 > acc) {
             AudioEngine.playSfx('miss');
-            await this.typeText(`${attacker.name}'s attack\nmissed!`);
+            await UI.typeText(`${attacker.name}'s attack\nmissed!`);
 
             if (Math.random() < GAME_BALANCE.RAGE_TRIGGER_CHANCE) {
                 attacker.rageLevel = Math.min(3, (attacker.rageLevel || 0) + 1);
-                this.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
+                UI.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
                 await this.triggerRageAnim(attacker.cry);
-                await this.typeText(`${attacker.name}'s RAGE\nis building!`);
+                await UI.typeText(`${attacker.name}'s RAGE\nis building!`);
             }
             if (move.name === 'SELF-DESTRUCT' || move.name === 'EXPLOSION') await this.handleMoveSideEffects(attacker, defender, move, isPlayer, false);
 
@@ -1399,7 +1295,7 @@ const Battle = {
         const special = MOVE_DEX[move.name];
         if (special && special.condition) {
             if (!special.condition(defender)) {
-                await this.typeText("But it failed!");
+                await UI.typeText("But it failed!");
                 return;
             }
         }
@@ -1443,7 +1339,7 @@ const Battle = {
         // 4. FAILURE MESSAGE
         // If nothing happened, and it wasn't immune (already printed "No effect"), print "But it failed!"
         if (!didSomething && !moveImmune && !explicitlyFailed) {
-            await this.typeText("But it failed!");
+            await UI.typeText("But it failed!");
         }
     },
 
@@ -1466,7 +1362,7 @@ const Battle = {
         for (let i = 0; i < hitCount; i++) {
             if (defender.currentHp <= 0 || attacker.currentHp <= 0) break;
 
-            const result = this.calcDamage(attacker, defender, move);
+            const result = Mechanics.calcDamage(attacker, defender, move);
             result.damage = Math.floor(result.damage * weatherMod);
             if (result.damage > 0) lastHitDamage = result.damage;
 
@@ -1475,7 +1371,7 @@ const Battle = {
 
                 // TYPE IMMUNITY CHECK
                 if (result.eff === 0) {
-                    await this.typeText("It had no effect!");
+                    await UI.typeText("It had no effect!");
                     return { success: false, immune: true };
                 }
 
@@ -1490,10 +1386,10 @@ const Battle = {
             }
         }
 
-        if (hitsLanded > 1) { await this.typeText(`Hit ${hitsLanded} time(s)!`); await wait(500); }
+        if (hitsLanded > 1) { await UI.typeText(`Hit ${hitsLanded} time(s)!`); await wait(500); }
 
         // 1. Show Effectiveness / Crit Text FIRST
-        if (storedText) await this.typeText(storedText);
+        if (storedText) await UI.typeText(storedText);
 
         // 2. Check for Loot Drop
         if (hitsLanded > 0 && isPlayer && defender.currentHp > 0) await Game.tryMidBattleDrop(defender);
@@ -1505,11 +1401,11 @@ const Battle = {
 
             if (Math.random() < chance) {
                 defender.rageLevel++;
-                this.updateHUD(defender, isPlayer ? 'enemy' : 'player');
+                UI.updateHUD(defender, isPlayer ? 'enemy' : 'player');
 
                 // Full Animation
                 await this.triggerRageAnim(defender.cry);
-                await this.typeText(`${defender.name}'s RAGE\nis building!`);
+                await UI.typeText(`${defender.name}'s RAGE\nis building!`);
             }
         }
 
@@ -1538,9 +1434,9 @@ const Battle = {
 
             if (Math.random() < chance) {
                 defender.rageLevel++;
-                this.updateHUD(defender, isPlayer ? 'enemy' : 'player');
+                UI.updateHUD(defender, isPlayer ? 'enemy' : 'player');
                 await this.triggerRageAnim(defender.cry);
-                await this.typeText(`${defender.name}'s RAGE\nis building!`);
+                await UI.typeText(`${defender.name}'s RAGE\nis building!`);
             }
         }
 
@@ -1551,7 +1447,7 @@ const Battle = {
 
             if (move.meta.drain < 0) {
                 // Recoil
-                await this.typeText(`${attacker.name} is hit\nwith recoil!`);
+                await UI.typeText(`${attacker.name} is hit\nwith recoil!`);
                 await this.applyDamage(attacker, amount, 'recoil'); // Use helper!
             } else {
                 // Drain Heal
@@ -1580,8 +1476,8 @@ const Battle = {
 
                 await this.triggerRageAnim(attacker.cry);
                 let msg = j === 1 ? "ULTRA ANGRY!" : "FULL OF RAGE!";
-                await this.typeText(`${attacker.name} is\n${msg}`);
-                await this.typeText(`${attacker.name} used\n${move.name} again!`);
+                await UI.typeText(`${attacker.name} is\n${msg}`);
+                await UI.typeText(`${attacker.name} used\n${move.name} again!`);
 
                 // Calculate reduced damage for extra hits
                 const dmgMod = (j === 0) ? 0.8 : 0.5;
@@ -1593,7 +1489,7 @@ const Battle = {
                 // Rage Recoil Check
                 if (Math.random() < GAME_BALANCE.RAGE_RECOIL_CHANCE) {
                     await wait(500);
-                    await this.typeText(`${attacker.name} is hit\nwith recoil!`);
+                    await UI.typeText(`${attacker.name} is hit\nwith recoil!`);
                     const recoil = Math.max(1, Math.floor(baseDmg * GAME_BALANCE.RAGE_RECOIL_DMG));
 
                     // USE HELPER: Handles the recoil on the attacker
@@ -1608,10 +1504,10 @@ const Battle = {
     async handleStatusMove(attacker, defender, move) {
         // 1. TYPE IMMUNITY CHECK (Use new Helper)
         // Example: Thunder Wave (Electric) vs Ground type = 0 effectiveness
-        const typeMod = this.getTypeEffectiveness(move.type, defender.types);
+        const typeMod = Mechanics.getTypeEffectiveness(move.type, defender.types);
 
         if (typeMod === 0) {
-            await this.typeText("It had no effect!");
+            await UI.typeText("It had no effect!");
             return 'IMMUNE';
         }
 
@@ -1647,7 +1543,7 @@ const Battle = {
         if (move.id === 'self-destruct' || move.id === 'explosion') {
             // Explicitly set HP to 0
             attacker.currentHp = 0;
-            this.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
+            UI.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
 
             const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
 
@@ -1731,7 +1627,7 @@ const Battle = {
         // NOTE: We removed the line `sprite.classList.remove('transformed-sprite')`
         // The sprite now stays gray while fainting.
 
-        await this.typeText(`${name}\nfainted!`);
+        await UI.typeText(`${name}\nfainted!`);
         await sleep(ANIM.FAINT_POST_DELAY);
 
         const textEl = document.getElementById('text-content');
@@ -1742,76 +1638,7 @@ const Battle = {
     },
 
 
-    calcDamage(attacker, defender, move) {
-        // 1. TYPE EFFECTIVENESS (Use new Helper)
-        const typeMod = this.getTypeEffectiveness(move.type, defender.types);
-        if (typeMod === 0) return { damage: 0, desc: null, eff: 0 };
 
-        // 2. SPECIAL MOVE LOGIC (Fixed Damage, OHKO, etc from MOVE_DEX)
-        const special = MOVE_DEX[move.name];
-        if (special) {
-            if (special.fixedDamage) return { damage: special.fixedDamage, desc: null, eff: 1, isCrit: false };
-            if (special.damageCallback) return { damage: special.damageCallback(attacker, defender), desc: null, eff: 1, isCrit: false };
-            if (special.ohko) {
-                if (defender.level > attacker.level) return { damage: 0, desc: "failed", eff: 0 };
-                return { damage: defender.currentHp, desc: "It's a One-Hit KO!", eff: 1, isCrit: false };
-            }
-        }
-
-        // 3. BASE POWER CHECK
-        if (!move.power) return { damage: 0, desc: "failed", eff: typeMod };
-
-        // 4. STAT CALCULATION (Attacker vs Defender)
-        const isSpecial = move.category === 'special';
-
-        // Select correct stats
-        let A = isSpecial ? attacker.stats.spa : attacker.stats.atk;
-        let D = isSpecial ? defender.stats.spd : defender.stats.def;
-
-        // Select correct stages
-        const atkStage = isSpecial ? attacker.stages.spa : attacker.stages.atk;
-        const defStage = isSpecial ? defender.stages.spd : defender.stages.def;
-
-        // Apply Stage Multipliers
-        A = Math.floor(A * STAGE_MULT[atkStage]);
-        D = Math.floor(D * STAGE_MULT[defStage]);
-
-        // Burn Check (Halves physical attack)
-        if (attacker.status === 'brn' && !isSpecial) A = Math.floor(A * 0.5);
-
-        // 5. THE DAMAGE FORMULA (Gen 2 Approximation)
-        let dmg = Math.floor(Math.floor(Math.floor(2 * attacker.level / 5 + 2) * move.power * A / D) / 50) + 2;
-
-        // 6. MODIFIERS
-        // STAB
-        if (attacker.types.includes(move.type)) dmg = Math.floor(dmg * 1.5);
-
-        // Type Effectiveness
-        dmg = Math.floor(dmg * typeMod);
-
-        // Critical Hit
-        let isCrit = false;
-        let critChance = 0.0625; // 1/16
-        if (move.meta && move.meta.crit_rate >= 1) critChance = 0.125;
-        if (move.meta && move.meta.crit_rate >= 2) critChance = 0.50;
-        if (attacker.isBoss) critChance = Math.max(critChance, GAME_BALANCE.CRIT_CHANCE_BOSS);
-
-        if (Math.random() < critChance) { isCrit = true; dmg *= 2; }
-
-        // Random Variance (0.85 to 1.0)
-        const variance = GAME_BALANCE.DAMAGE_VARIANCE_MIN + Math.random() * (GAME_BALANCE.DAMAGE_VARIANCE_MAX - GAME_BALANCE.DAMAGE_VARIANCE_MIN);
-        dmg = Math.floor(dmg * variance);
-
-        // Ensure at least 1 dmg if effective
-        if (typeMod > 0 && dmg < 1) dmg = 1;
-
-        // 7. BUILD RESULT
-        let msg = null;
-        if (typeMod > 1) msg = "It's super\neffective!";
-        else if (typeMod < 1) msg = "It's not very\neffective...";
-
-        return { damage: dmg, desc: msg, eff: typeMod, isCrit: isCrit };
-    },
 
     // --- UTILS ---
     lastMenuIndex: 0,
@@ -1832,7 +1659,7 @@ const Battle = {
 
         document.getElementById('action-menu').classList.add('hidden');
         document.getElementById('move-menu').classList.remove('hidden');
-        this.textEl.innerHTML = "Select a move.";
+        UI.textEl.innerHTML = "Select a move.";
 
         Input.setMode('MOVES');
 
@@ -1865,20 +1692,20 @@ const Battle = {
         document.getElementById('pack-screen').classList.add('hidden');
         document.getElementById('party-screen').classList.add('hidden');
         document.getElementById('action-menu').classList.remove('hidden');
-        this.textEl.innerHTML = `What will<br>${this.p.name} do?`;
+        UI.textEl.innerHTML = `What will<br>${this.p.name} do?`;
 
         // Restore cursor position
         Input.setMode('BATTLE', this.lastMenuIndex);
     },
 
     askRun() {
-        if (this.e.isBoss) { this.typeText("Can't escape a BOSS!"); setTimeout(() => this.uiToMenu(), 1000); return; }
+        if (this.e.isBoss) { UI.typeText("Can't escape a BOSS!"); setTimeout(() => this.uiToMenu(), 1000); return; }
         // SAVE CURSOR
         this.lastMenuIndex = Input.focus;
         const menu = document.getElementById('action-menu');
         // Added onmouseenter to these generated buttons so they highlight with mouse
         menu.innerHTML = `<div class="menu-item centered" id="run-yes" onclick="Battle.performRun()" onmouseenter="Input.focus=0;Input.updateVisuals()">YES</div><div class="menu-item centered" id="run-no" onclick="Battle.uiToMenu()" onmouseenter="Input.focus=1;Input.updateVisuals()">NO</div>`;
-        this.textEl.innerHTML = "Give up and\nrestart?";
+        UI.textEl.innerHTML = "Give up and\nrestart?";
         Input.setMode('CONFIRM_RUN');
     },
 
@@ -1986,13 +1813,13 @@ const Battle = {
 // Helper for Roar/Whirlwind/Dragon Tail
 async function _forceSwitchOrRun(battle, user, target) {
     if (target.isBoss) {
-        await battle.typeText("But it failed!");
+        await UI.typeText("But it failed!");
         return false;
     }
 
     // CASE 1: Player used Roar -> End Battle, Find New Enemy
     if (user === battle.p) {
-        await battle.typeText(`${target.name} fled\nin fear!`);
+        await UI.typeText(`${target.name} fled\nin fear!`);
         AudioEngine.playSfx('run');
 
         // Visual fade out of enemy
@@ -2015,7 +1842,7 @@ async function _forceSwitchOrRun(battle, user, target) {
             .map(item => item.index);
 
         if (validIndices.length === 0) {
-            await battle.typeText("But it failed!");
+            await UI.typeText("But it failed!");
             return false;
         }
 
@@ -2023,7 +1850,7 @@ async function _forceSwitchOrRun(battle, user, target) {
         const rndIndex = validIndices[Math.floor(Math.random() * validIndices.length)];
         const newMon = Game.party[rndIndex];
 
-        await battle.typeText(`${target.name} was\ndragged out!`);
+        await UI.typeText(`${target.name} was\ndragged out!`);
 
         // Update Game State Active Slot
         Game.activeSlot = rndIndex;
