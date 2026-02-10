@@ -1943,6 +1943,55 @@
 
     <script>
 
+
+        // --- DEBUG SETTINGS ------------------------
+        // Change ENABLED to false to turn off all debug features instantly.
+        const DEBUG = {
+            ENABLED: false,
+
+            INVENTORY: {
+                masterball: 50,
+                maxpotion: 10,
+                potion: 10,
+                superpotion: 10,
+                ultraball: 40,
+                pokeball: 20
+            },
+
+            ENEMY: {
+                ID: null,       // e.g., 150
+                LEVEL: null,      // e.g., 50
+                SHINY: null,    // true/false
+                IS_BOSS: null,  // true/false
+                RAGE: 3,        // 0-3
+
+                //Debug Status & Buffs
+                STATUS: 'psn',   // 'brn', 'par', 'slp', 'frz', 'psn'
+                STAGES: null    // e.g. { atk: 6, def: -2 }
+            },
+
+            PLAYER: {
+                ID: null,       // e.g., 249
+                LEVEL: null,
+                SHINY: null,
+                RAGE: 3,
+
+                //Debug Status & Buffs (Applied at start of battle)
+                STATUS: null,   // 'brn', 'par', 'slp', 'frz', 'psn'
+                STAGES: null,    // e.g. { atk: 6, spa: 2 }
+
+                // NEW: Force specific moves (use lowercase, dash-separated names)
+                // e.g. ['fly', 'dig', 'solar-beam', 'protect']
+                MOVES: ['fly', 'sunny-day', 'bullet-seed', 'tackle']
+            },
+
+            LOOT: {
+                WIN_RATE: null,
+                MID_BATTLE_RATE: null,
+                FORCE_ITEM: null
+            }
+        };
+
         // --- HELPER ---
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -2094,53 +2143,7 @@
         // Usage: await sleep(ANIM.CRY_DURATION);
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-        // --- DEBUG SETTINGS ------------------------
-        // Change ENABLED to false to turn off all debug features instantly.
-        const DEBUG = {
-            ENABLED: true,
 
-            INVENTORY: {
-                masterball: 50,
-                maxpotion: 10,
-                potion: 10,
-                superpotion: 10,
-                ultraball: 40,
-                pokeball: 20
-            },
-
-            ENEMY: {
-                ID: null,       // e.g., 150
-                LEVEL: null,      // e.g., 50
-                SHINY: null,    // true/false
-                IS_BOSS: null,  // true/false
-                RAGE: 3,        // 0-3
-
-                //Debug Status & Buffs
-                STATUS: 'psn',   // 'brn', 'par', 'slp', 'frz', 'psn'
-                STAGES: null    // e.g. { atk: 6, def: -2 }
-            },
-
-            PLAYER: {
-                ID: null,       // e.g., 249
-                LEVEL: null,
-                SHINY: null,
-                RAGE: 3,
-
-                //Debug Status & Buffs (Applied at start of battle)
-                STATUS: null,   // 'brn', 'par', 'slp', 'frz', 'psn'
-                STAGES: null,    // e.g. { atk: 6, spa: 2 }
-
-                // NEW: Force specific moves (use lowercase, dash-separated names)
-                // e.g. ['fly', 'dig', 'solar-beam', 'protect']
-                MOVES: ['fly', 'sunny-day', 'solar-beam', 'tackle']
-            },
-
-            LOOT: {
-                WIN_RATE: null,
-                MID_BATTLE_RATE: null,
-                FORCE_ITEM: null
-            }
-        };
 
         const STATUS_DATA = {
             par: { name: "PAR", color: "#d8b030", msg: "is paralyzed!\nIt can't move!" },
@@ -2298,6 +2301,7 @@
         const API = {
             base: 'https://pokeapi.co/api/v2',
             // IN: API object
+            // IN: API object
             async getPokemon(id, level, overrides = {}) {
                 try {
                     const res = await fetch(`${this.base}/pokemon/${id}`); const data = await res.json();
@@ -2313,7 +2317,6 @@
                     let availableMoves = data.moves.map(m => m.move.name).sort(() => 0.5 - Math.random());
                     let selectedMoveNames = availableMoves.slice(0, 4);
 
-                    // Apply Debug Move Overrides
                     if (overrides.moves && Array.isArray(overrides.moves)) {
                         selectedMoveNames = overrides.moves;
                     }
@@ -2328,7 +2331,7 @@
 
                             moves.push({
                                 name: mData.name.replace('-', ' ').toUpperCase(),
-                                id: mData.name, // Store ID for logic checks (fly, dig, etc)
+                                id: mData.name,
                                 type: mData.type.name,
                                 power: mData.power || 0,
                                 accuracy: mData.accuracy || 100,
@@ -2337,7 +2340,10 @@
                                 meta: mData.meta || {},
                                 stat_changes: mData.stat_changes || [],
                                 target: mData.target.name,
-                                stat_chance: mData.meta ? mData.meta.stat_chance : 0
+                                stat_chance: mData.meta ? mData.meta.stat_chance : 0,
+                                // NEW: Fetch Multi-Hit Data
+                                min_hits: mData.meta ? mData.meta.min_hits : null,
+                                max_hits: mData.meta ? mData.meta.max_hits : null
                             });
                         } catch (err) { console.error("Move fetch failed:", name); }
                     }
@@ -2348,11 +2354,9 @@
                     const bst = getStat('hp') + getStat('attack') + getStat('defense') + getStat('special-attack') + getStat('special-defense') + getStat('speed');
                     const highTier = bst > 480;
 
-                    // Initialize Defaults
                     let initStatus = null;
                     let initStages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
 
-                    // Apply Debug Overrides
                     if (overrides.status) initStatus = overrides.status;
                     if (overrides.stages) Object.assign(initStages, overrides.stages);
 
@@ -2361,11 +2365,7 @@
                         maxHp: stats.hp, currentHp: stats.hp, stats: stats,
                         baseStats: { hp: getStat('hp'), atk: getStat('attack'), def: getStat('defense'), spa: getStat('special-attack'), spd: getStat('special-defense'), spe: getStat('speed') },
                         exp: 0, nextLvlExp: nextLvlExp, baseExp: baseExp,
-
-                        status: initStatus,
-                        volatiles: {}, // Stores complex states like 'charging', 'protected', 'confused'
-                        stages: initStages,
-
+                        status: initStatus, volatiles: {}, stages: initStages,
                         types: data.types.map(t => t.type.name), moves: moves, isShiny: isShiny,
                         frontSprite: isShiny ? vCrystal.front_shiny_transparent : vCrystal.front_transparent,
                         backSprite: isShiny ? vCrystal.back_shiny_transparent : vCrystal.back_transparent,
@@ -4465,47 +4465,103 @@
             async executeDamagePhase(attacker, defender, move, isPlayer) {
                 let didSomething = false;
 
+                // Weather Modifiers
                 let weatherMod = 1;
                 if (this.weather.type === 'sun' && (move.type === 'fire' || move.type === 'water')) weatherMod = (move.type === 'fire' ? 1.5 : 0.5);
                 if (this.weather.type === 'rain' && (move.type === 'water' || move.type === 'fire')) weatherMod = (move.type === 'water' ? 1.5 : 0.5);
 
                 // 1. DAMAGE LOGIC
                 if (move.category !== 'status') {
-                    const result = this.calcDamage(attacker, defender, move);
-                    result.damage = Math.floor(result.damage * weatherMod);
 
-                    if (result.desc === 'failed') { await this.typeText("But it failed!"); return; }
-                    if (result.eff === 0) { await this.typeText("It had no effect!"); return; }
+                    let hitCount = 1;
+                    if (move.min_hits && move.max_hits) {
+                        hitCount = Math.floor(Math.random() * (move.max_hits - move.min_hits + 1)) + move.min_hits;
+                    } else if (move.min_hits) {
+                        hitCount = move.min_hits;
+                    }
 
-                    AudioEngine.playSfx(move.type);
-                    const scene = document.getElementById('scene');
-                    scene.classList.remove(`fx-${move.type}`);
-                    this.forceReflow(scene);
-                    scene.classList.add(`fx-${move.type}`);
+                    let hitsLanded = 0;
+                    let lastHitDamage = 0;
 
-                    const targetSprite = isPlayer ? document.getElementById('enemy-sprite') : document.getElementById('player-sprite');
-                    const attackerSprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+                    // NEW: Variables to store text for later
+                    let storedCritText = null;
+                    let storedEffText = null;
 
-                    await wait(500);
-                    scene.classList.remove(`fx-${move.type}`);
+                    // --- MULTI-HIT LOOP ---
+                    for (let i = 0; i < hitCount; i++) {
+                        if (defender.currentHp <= 0) break;
 
-                    if (result.damage > 0) {
-                        didSomething = true;
-                        targetSprite.classList.add('anim-hit');
-                        if (result.isCrit) AudioEngine.playSfx('crit');
-                        else if (result.eff > 1) AudioEngine.playSfx('super_effective');
-                        else if (result.eff < 1) AudioEngine.playSfx('not_very_effective');
-                        else AudioEngine.playSfx('damage');
+                        const result = this.calcDamage(attacker, defender, move);
+                        result.damage = Math.floor(result.damage * weatherMod);
 
-                        await wait(400);
-                        targetSprite.classList.remove('anim-hit');
-                        defender.currentHp -= result.damage;
-                        this.updateHUD(defender, isPlayer ? 'enemy' : 'player');
+                        if (result.damage > 0) lastHitDamage = result.damage;
 
-                        if (result.isCrit) await this.typeText("A critical hit!");
-                        if (result.desc) await this.typeText(result.desc);
+                        // Handle immediate failures (Miss/Immune) immediately
+                        if (i === 0) {
+                            if (result.desc === 'failed') { await this.typeText("But it failed!"); return; }
+                            if (result.eff === 0) { await this.typeText("It had no effect!"); return; }
 
-                        // --- RAGE MULTI-HIT LOGIC ---
+                            // NEW: Store the descriptive text instead of showing it now
+                            if (result.isCrit) storedCritText = "A critical hit!";
+                            if (result.desc) storedEffText = result.desc; // e.g. "It's super effective!"
+                        }
+
+                        // FX Setup
+                        AudioEngine.playSfx(move.type);
+                        const scene = document.getElementById('scene');
+                        scene.classList.remove(`fx-${move.type}`);
+                        this.forceReflow(scene);
+                        scene.classList.add(`fx-${move.type}`);
+
+                        const targetSprite = isPlayer ? document.getElementById('enemy-sprite') : document.getElementById('player-sprite');
+
+                        // Wait for Element FX
+                        await wait(600);
+                        scene.classList.remove(`fx-${move.type}`);
+
+                        if (result.damage > 0) {
+                            didSomething = true;
+
+                            // Hit Animation (Force Reflow)
+                            targetSprite.classList.remove('anim-hit');
+                            this.forceReflow(targetSprite);
+                            targetSprite.classList.add('anim-hit');
+
+                            // Sound
+                            if (i === 0) {
+                                if (result.isCrit) AudioEngine.playSfx('crit');
+                                else if (result.eff > 1) AudioEngine.playSfx('super_effective');
+                                else if (result.eff < 1) AudioEngine.playSfx('not_very_effective');
+                                else AudioEngine.playSfx('damage');
+                            } else {
+                                AudioEngine.playSfx('damage');
+                            }
+
+                            await wait(400);
+                            targetSprite.classList.remove('anim-hit');
+
+                            defender.currentHp -= result.damage;
+                            this.updateHUD(defender, isPlayer ? 'enemy' : 'player');
+
+                            // CHANGED: No text typing here anymore!
+
+                            hitsLanded++;
+                        }
+                    }
+
+                    // --- SUMMARY TEXT ---
+                    if (hitsLanded > 1) {
+                        await this.typeText(`Hit ${hitsLanded} time(s)!`);
+                        await wait(500);
+                    }
+
+                    // NEW: Display stored Effectiveness/Crit text HERE
+                    if (storedCritText) await this.typeText(storedCritText);
+                    if (storedEffText) await this.typeText(storedEffText);
+
+
+                    // --- RAGE EXTRA HITS LOGIC ---
+                    if (didSomething) {
                         const rage = attacker.rageLevel || 0;
                         let extraHits = 0;
                         if (rage > 0 && Math.random() < (rage * GAME_BALANCE.RAGE_MULTIHIT_BASE)) {
@@ -4513,47 +4569,58 @@
                         }
 
                         if (defender.currentHp > 0 && extraHits > 0) {
-                            for (let i = 0; i < extraHits; i++) {
+                            const targetSprite = isPlayer ? document.getElementById('enemy-sprite') : document.getElementById('player-sprite');
+                            const attackerSprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+
+                            for (let j = 0; j < extraHits; j++) {
                                 if (defender.currentHp <= 0) break;
 
                                 await this.triggerRageAnim(attacker.cry);
-                                let msg = i === 1 ? "ULTRA ANGRY!" : "FULL OF RAGE!";
+                                let msg = j === 1 ? "ULTRA ANGRY!" : "FULL OF RAGE!";
                                 await this.typeText(`${attacker.name} is\n${msg}`);
 
                                 await this.typeText(`${attacker.name} used\n${move.name} again!`);
 
+                                // Rage Hit Animation (Force Reflow)
+                                targetSprite.classList.remove('anim-hit');
+                                this.forceReflow(targetSprite);
                                 targetSprite.classList.add('anim-hit');
+
                                 AudioEngine.playSfx('damage');
                                 await wait(300);
                                 targetSprite.classList.remove('anim-hit');
 
-                                // Scale Extra Damage (0.8x, 0.5x)
-                                const damageMod = (i === 0) ? 0.8 : 0.5;
-                                const extraDmg = Math.max(1, Math.floor(result.damage * damageMod));
+                                // Calculate Rage Damage
+                                const damageMod = (j === 0) ? 0.8 : 0.5;
+                                const extraDmg = Math.max(1, Math.floor(lastHitDamage * damageMod));
+
                                 defender.currentHp -= extraDmg;
                                 this.updateHUD(defender, isPlayer ? 'enemy' : 'player');
 
-                                // Rage Recoil (Calculated on ORIGINAL damage)
+                                // Recoil Logic
                                 if (Math.random() < GAME_BALANCE.RAGE_RECOIL_CHANCE) {
                                     await wait(200);
-
-                                    const recoilDmg = Math.max(1, Math.floor(result.damage * GAME_BALANCE.RAGE_RECOIL_DMG));
-
+                                    const recoilDmg = Math.max(1, Math.floor(lastHitDamage * GAME_BALANCE.RAGE_RECOIL_DMG));
                                     attacker.currentHp -= recoilDmg;
                                     this.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
 
+                                    attackerSprite.classList.remove('anim-hit');
+                                    this.forceReflow(attackerSprite);
                                     attackerSprite.classList.add('anim-hit');
+
                                     AudioEngine.playSfx('damage');
                                     await wait(200);
                                     attackerSprite.classList.remove('anim-hit');
+
                                     await this.typeText(`${attacker.name} is hit\nwith recoil!`);
                                     if (attacker.currentHp <= 0) break;
                                 }
                             }
                         }
                     }
+
                 } else {
-                    // Status/Weather Move Animation
+                    // STATUS/WEATHER MOVES
                     AudioEngine.playSfx('swoosh');
                     await wait(300);
 
@@ -4562,10 +4629,7 @@
                         if (move.name === 'SUNNY DAY') this.setWeather('sun');
                         if (move.name === 'RAIN DANCE') this.setWeather('rain');
                         if (move.name === 'SANDSTORM') this.setWeather('sand');
-
-                        // --- FIX: Wait for weather text to be readable ---
                         await wait(1500);
-                        // ------------------------------------------------
                     }
                 }
 
