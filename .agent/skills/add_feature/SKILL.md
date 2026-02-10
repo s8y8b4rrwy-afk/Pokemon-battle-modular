@@ -17,9 +17,9 @@ A systematic guide to adding new content to the Pokemon Battle Modular system, e
 ## Steps
 
 ### 1. Identify the Type of Feature
-- **Move**: You will need to edit `js/data/moves.js` and potentially `js/core/mechanics.js` or `js/core/battle.js`.
-- **Item**: You will need to edit `js/data/items.js` and potentially `js/core/game.js` (for usage) or `js/core/battle.js` (for battle effects).
-- **Pokemon**: Usually handled by API, but if hardcoded, check `js/engine/encounter.js` or `js/data/constants.js`.
+- **Move**: You will need to edit `js/data/moves.js` and potentially `js/core/moves_engine.js` (for effects) or `js/core/turn_manager.js` (for flow).
+- **Item**: You will need to edit `js/data/items.js` and potentially `js/core/game.js` (for usage) or `js/core/capture.js` (for pokeballs).
+- **Pokemon**: Usually handled by API, but if hardcoded, check `js/engine/encounter.js`.
 - **UI Screen**: Create a new file in `js/screens/`.
 
 ### 2. Update Data Definitions
@@ -46,12 +46,12 @@ A systematic guide to adding new content to the Pokemon Battle Modular system, e
 
 ### 3. Implement Logic (If Needed)
 - **Moves with Special Effects**:
-  - Check `js/core/mechanics.js` for damage calculation tweaks or status application formulas.
-  - Check `js/core/battle.js` inside `executeMove` if it changes turn flow (e.g., charge turns, multi-hit, recoil).
-  - Search for `switch(move.effect)` or similar patterns in `battle.js`.
+  - Check `js/core/mechanics.js` for damage calculation tweaks (Type modifiers, extra multipliers).
+  - Check `js/core/moves_engine.js` for the primary logic in `executeMove` or `handleMoveSideEffects`.
+  - Check `js/core/turn_manager.js` if the move changes the action queue (Multi-turn moves, forcing swaps, priority manipulation).
 - **Items**:
-  - Check `useItem` in `js/core/game.js` for field usage (Healing potions, etc).
-  - Check usage logic in `js/core/battle.js` if usable in battle (X Items, Balls).
+  - Check `useItem` in `js/core/game.js` for field usage and general battle consumption.
+  - Check `js/core/capture.js` for PokéBall-specific catch logic.
 
 ### 4. Register in HTML (If New File Created)
 - If you created a new file (e.g., `js/screens/fishing.js`), you **MUST** add `<script src="js/screens/fishing.js"></script>` to `Pokemon.html`.
