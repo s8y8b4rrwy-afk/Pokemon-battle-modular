@@ -30,3 +30,8 @@ const RNG = {
     // Returns a random item from an array
     pick: (array) => array[Math.floor(Math.random() * array.length)]
 };
+
+// --- GLOBAL HELPERS ---
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
