@@ -73,7 +73,7 @@ const API = {
                 frontSprite: front,
                 backSprite: back,
                 icon: data.sprites.versions['generation-vii']['icons'].front_default,
-                cry: data.cries.latest,
+                cry: data.cries ? data.cries.latest : null,
                 isBoss: false,
                 failedCatches: 0,
                 rageLevel: 0,

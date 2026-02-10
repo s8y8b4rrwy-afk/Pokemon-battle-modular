@@ -266,13 +266,13 @@ const MOVE_DEX = {
     'ROAR': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            return await _forceSwitchOrRun(battle, user, target);
+            return await MovesEngine.forceSwitchOrRun(battle, user, target);
         }
     },
     'WHIRLWIND': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            return await _forceSwitchOrRun(battle, user, target);
+            return await MovesEngine.forceSwitchOrRun(battle, user, target);
         }
     },
 
