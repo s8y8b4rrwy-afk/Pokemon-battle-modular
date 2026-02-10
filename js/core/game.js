@@ -351,6 +351,9 @@ const Game = {
                     });
                     Battle.userInputPromise = null;
                     this.activeSlot = selectedIndex;
+
+                    // Trigger switch animation for the new mon
+                    await Battle.processSwitch(this.party[selectedIndex], true);
                 } else {
                     // Everyone is fainted - handle loss sequence
                     await this.handleLoss();
@@ -442,7 +445,7 @@ const Game = {
         if (this.party.some(p => p.currentHp > 0)) {
             PartyScreen.open(true);
         } else {
-            document.getElementById('game-boy').style.animation = "flashWhite 0.5s";
+            // document.getElementById('game-boy').style.animation = "flashWhite 0.5s";
 
             await UI.typeText(`${this.playerName} is out of\nuseable Pokemon!`);
             await wait(1000);
