@@ -17,6 +17,7 @@ const Battle = {
     triggerHitAnim(...args) { return BattleAnims.triggerHitAnim(...args); },
     performVisualSwap(...args) { return BattleAnims.performVisualSwap(...args); },
     triggerRageAnim(...args) { return BattleAnims.triggerRageAnim(...args); },
+    animateSwap(...args) { return BattleAnims.animateSwap(...args); },
 
     // 1. Standardized Damage Application
     async applyDamage(target, amount, type = 'normal') {
@@ -300,12 +301,7 @@ const Battle = {
         this.uiLocked = true;
         document.getElementById('action-menu').classList.add('hidden');
 
-        let eMove;
-        if (this.e.moves && this.e.moves.length > 0) {
-            eMove = this.e.moves[Math.floor(Math.random() * this.e.moves.length)];
-        } else {
-            eMove = { name: "STRUGGLE", type: "normal", power: 50, accuracy: 100, priority: 0 };
-        }
+        const eMove = BattleAI.chooseMove(this.e, this.p);
 
         const eAction = {
             type: 'ATTACK', user: this.e, target: this.p, move: eMove,
@@ -592,18 +588,7 @@ const Battle = {
             };
 
             // --- ENEMY AI ---
-            let enemyMove;
-            if (this.e.volatiles.recharging) {
-                enemyMove = { name: "Recharging", priority: 0 };
-            }
-            else if (this.e.volatiles.charging && this.e.volatiles.queuedMove) {
-                enemyMove = this.e.volatiles.queuedMove;
-            }
-            else if (this.e.moves && this.e.moves.length > 0) {
-                enemyMove = this.e.moves[Math.floor(Math.random() * this.e.moves.length)];
-            } else {
-                enemyMove = { name: "STRUGGLE", type: "normal", power: 50, accuracy: 100, priority: 0 };
-            }
+            const enemyMove = BattleAI.chooseMove(this.e, this.p);
 
             const eAction = {
                 type: 'ATTACK', user: this.e, target: this.p, move: enemyMove,
@@ -641,12 +626,7 @@ const Battle = {
 
             const swapAction = { type: 'SWITCH', user: this.p, newMon: newMon, priority: 6, isPlayer: true };
 
-            let eMove;
-            if (this.e.moves && this.e.moves.length > 0) {
-                eMove = this.e.moves[Math.floor(Math.random() * this.e.moves.length)];
-            } else {
-                eMove = { name: "STRUGGLE", type: "normal", power: 50, accuracy: 100, priority: 0 };
-            }
+            const eMove = BattleAI.chooseMove(this.e, this.p);
 
             const eAction = {
                 type: 'ATTACK', user: this.e, target: this.p, move: eMove,
@@ -678,12 +658,7 @@ const Battle = {
 
             const itemAction = { type: 'ITEM', user: this.p, item: itemKey, priority: 6, isPlayer: true };
 
-            let eMove;
-            if (this.e.moves && this.e.moves.length > 0) {
-                eMove = this.e.moves[Math.floor(Math.random() * this.e.moves.length)];
-            } else {
-                eMove = { name: "STRUGGLE", type: "normal", power: 50, accuracy: 100, priority: 0 };
-            }
+            const eMove = BattleAI.chooseMove(this.e, this.p);
 
             const eAction = {
                 type: 'ATTACK', user: this.e, target: this.p, move: eMove,

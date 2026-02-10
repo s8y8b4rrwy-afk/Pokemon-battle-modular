@@ -4,6 +4,21 @@ const Game = {
     state: 'START', selectedPartyIndex: -1, forcedSwitch: false, previousState: 'SELECTION', wins: 0, bossesDefeated: 0,
     playerName: 'PLAYER', currentSummaryIndex: 0, savedBattleState: null,
 
+    // --- SCREEN SHIMS ---
+    showSelectionScreen(...args) { return SelectionScreen.open(...args); },
+    openSummary(...args) { return SummaryScreen.open(...args); },
+    renderSummaryData(...args) { return SummaryScreen.render(...args); },
+    navSummary(...args) { return SummaryScreen.nav(...args); },
+    closeSummary(...args) { return SummaryScreen.close(...args); },
+    confirmSelection(...args) { return SelectionScreen.confirm(...args); },
+    openParty(...args) { return PartyScreen.open(...args); },
+    renderParty(...args) { return PartyScreen.render(...args); },
+    openContext(...args) { return PartyScreen.openContext(...args); },
+    closeContext(...args) { return PartyScreen.closeContext(...args); },
+    releasePokemon(...args) { return PartyScreen.release(...args); },
+    applyItemToPokemon(...args) { return PartyScreen.applyItem(...args); },
+    partySwitch(...args) { return PartyScreen.shift(...args); },
+
     toggleLcd() {
         Input.lcdEnabled = !Input.lcdEnabled;
         const el = document.getElementById('lcd-check');
@@ -33,7 +48,7 @@ const Game = {
             data.party.forEach((p) => {
                 const img = document.createElement('img'); img.src = p.icon; img.className = 'mini-icon';
                 if (p.currentHp <= 0) img.classList.add('fainted');
-                img.onclick = () => this.openSummary(p, 'READ_ONLY');
+                img.onclick = () => SummaryScreen.open(p, 'READ_ONLY');
                 prevRow.appendChild(img);
             });
             Input.setMode('CONTINUE');
@@ -161,7 +176,7 @@ const Game = {
         this.party = []; this.wins = 0; this.bossesDefeated = 0;
         this.inventory = { potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0 };
         if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
-        this.showSelectionScreen();
+        SelectionScreen.open();
     },
 
     resetToTitle() {
@@ -241,256 +256,7 @@ const Game = {
     // --- MENUS (Selection, Summary, Party, etc) ---
     // These remain largely unchanged, just compacted slightly for cleanliness
 
-    async showSelectionScreen() {
-        this.state = 'SELECTION'; Battle.uiLocked = false; Input.setMode('NONE');
-        ['scene', 'dialog-box', 'summary-panel', 'streak-box'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        document.getElementById('selection-screen').classList.remove('hidden');
 
-        document.getElementById('sel-text-box').innerHTML = '<span class="blink-text">CATCHING POKEMON...</span>';
-        document.getElementById('sel-cursor').style.display = 'none';
-        document.querySelectorAll('.pokeball-select').forEach(b => b.remove());
-        document.getElementById('sel-preview-img').style.display = 'none';
-        document.getElementById('sel-preview-shiny').style.display = 'none';
-
-        // Determine Selection IDs
-        const ids = [];
-        if (DEBUG.ENABLED && DEBUG.PLAYER.ID) ids.push(DEBUG.PLAYER.ID);
-        while (ids.length < 3) { const r = RNG.int(1, 251); if (!ids.includes(r)) ids.push(r); }
-
-        const [_, list] = await Promise.all([
-            wait(1000),
-            Promise.all(ids.map((id, i) => {
-                let lvl = 15; let shiny = null; const overrides = {};
-                if (DEBUG.ENABLED && i === 0) {
-                    if (DEBUG.PLAYER.LEVEL) lvl = DEBUG.PLAYER.LEVEL;
-                    if (DEBUG.PLAYER.SHINY !== null) shiny = DEBUG.PLAYER.SHINY;
-                    if (DEBUG.PLAYER.MOVES) overrides.moves = DEBUG.PLAYER.MOVES;
-                }
-                if (shiny !== null) overrides.shiny = shiny;
-                return API.getPokemon(id, lvl, overrides);
-            }))
-        ]);
-
-        this.tempSelectionList = list;
-        const table = document.getElementById('lab-table');
-
-        this.tempSelectionList.forEach((p, i) => {
-            if (!p) return;
-            const ball = document.createElement('div'); ball.className = 'pokeball-select'; ball.id = `ball-${i}`;
-            ball.onmouseenter = () => { Input.focus = i; Input.updateVisuals(); };
-            ball.onclick = () => { this.tempSelection = p; this.openSummary(p, 'SELECTION'); };
-            table.appendChild(ball);
-        });
-
-        document.getElementById('sel-text-box').innerHTML = 'SELECT A POKEMON';
-        document.getElementById('sel-cursor').style.display = 'block';
-        Input.setMode('SELECTION', 0);
-    },
-
-    openSummary(p, mode) {
-        this.previousState = this.state;
-        this.state = mode || 'SUMMARY';
-        Input.setMode('SUMMARY', 1);
-
-        if (mode === 'SELECTION') this.currentSummaryIndex = this.tempSelectionList.indexOf(p);
-        else {
-            const idx = this.party.findIndex(mon => mon.id === p.id && mon.exp === p.exp);
-            this.currentSummaryIndex = (idx !== -1) ? idx : 0;
-        }
-
-        document.getElementById('summary-panel').classList.remove('hidden');
-        this.renderSummaryData(p);
-
-        // Setup Buttons
-        const btn = document.getElementById('btn-action');
-        const prevBtn = document.getElementById('btn-prev');
-        const nextBtn = document.getElementById('btn-next');
-        const backBtn = document.getElementById('btn-back-sum');
-
-        // Basic Listeners
-        [prevBtn, btn, backBtn, nextBtn].forEach((el, i) => el.onmouseenter = () => { Input.focus = i; Input.updateVisuals(); });
-
-        btn.disabled = false; btn.className = "confirm-btn";
-        prevBtn.disabled = false; nextBtn.disabled = false;
-
-        if (this.state === 'SELECTION') {
-            btn.innerText = "I CHOOSE YOU!"; btn.onclick = () => this.confirmSelection();
-        } else if (this.state === 'OVERFLOW') {
-            btn.innerText = "RELEASE"; btn.className = "confirm-btn danger"; btn.onclick = () => this.releasePokemon(this.selectedPartyIndex);
-            prevBtn.disabled = true; nextBtn.disabled = true;
-        } else if (this.state === 'READ_ONLY') {
-            btn.innerText = "ACTION"; btn.disabled = true;
-        } else if (this.state === 'HEAL') {
-            btn.innerText = "USE"; btn.onclick = () => this.applyItemToPokemon(this.selectedPartyIndex);
-            prevBtn.disabled = true; nextBtn.disabled = true;
-        } else {
-            btn.innerText = "SHIFT"; btn.onclick = () => this.partySwitch();
-        }
-    },
-
-    renderSummaryData(p) {
-        AudioEngine.playCry(p.cry);
-        const statusEl = document.getElementById('sum-status-text');
-        if (p.currentHp <= 0) { statusEl.innerText = "STATUS/FNT"; statusEl.style.color = "#c83828"; }
-        else if (p.status && STATUS_DATA[p.status]) { statusEl.innerText = `STATUS/${STATUS_DATA[p.status].name}`; statusEl.style.color = STATUS_DATA[p.status].color; }
-        else { statusEl.innerText = "STATUS/OK"; statusEl.style.color = "black"; }
-
-        document.getElementById('sum-name').innerText = p.name;
-        document.getElementById('sum-name').style.color = p.isShiny ? "#d8b030" : "black";
-        document.getElementById('sum-shiny-icon').style.display = p.isShiny ? "block" : "none";
-        document.getElementById('sum-sprite-img').src = p.frontSprite;
-        document.getElementById('sum-types').innerHTML = p.types.map(t => `<span class="type-tag">${t.toUpperCase()}</span>`).join('');
-
-        document.getElementById('sum-hp-txt').innerText = `${Math.max(0, p.currentHp)}/${p.maxHp}`;
-        const hpPct = Math.min(100, Math.max(0, (p.currentHp / p.maxHp) * 100));
-        document.getElementById('sum-hp-bar').style.cssText = `width:${hpPct}%; background:${hpPct > 50 ? "var(--hp-green)" : hpPct > 20 ? "var(--hp-yellow)" : "var(--hp-red)"}`;
-
-        document.getElementById('sum-exp-txt').innerText = `${p.exp}/${p.nextLvlExp}`;
-        document.getElementById('sum-exp-bar').style.width = `${Math.min(100, (p.exp / p.nextLvlExp) * 100)}%`;
-
-        document.getElementById('summary-stats').innerHTML = `
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-        <div>ATK ${p.stats.atk}</div><div>DEF ${p.stats.def}</div>
-        <div>SPA ${p.stats.spa}</div><div>SPD ${p.stats.spd}</div>
-        <div>SPE ${p.stats.spe}</div>
-    </div>`;
-        document.getElementById('summary-moves').innerHTML = p.moves.map(m => `
-    <div class="move-row"><span class="move-name">${m.name}</span><div class="move-info-grp"><span class="move-pwr">PWR ${m.power || '-'}</span><span class="move-type">${m.type.toUpperCase()}</span></div></div>`).join('');
-    },
-
-    navSummary(dir) {
-        if (['HEAL', 'OVERFLOW'].includes(this.state)) return;
-        let list = (this.state === 'SELECTION') ? this.tempSelectionList : this.party;
-        let nextIdx = this.currentSummaryIndex + dir;
-        if (nextIdx < 0) nextIdx = list.length - 1;
-        if (nextIdx >= list.length) nextIdx = 0;
-        this.currentSummaryIndex = nextIdx;
-        if (['PARTY', 'SUMMARY'].includes(this.state)) this.selectedPartyIndex = nextIdx;
-        if (this.state === 'SELECTION') this.tempSelection = list[nextIdx];
-        this.renderSummaryData(list[nextIdx]);
-    },
-
-    closeSummary() {
-        document.getElementById('summary-panel').classList.add('hidden');
-        this.state = this.previousState;
-        if (this.state === 'SELECTION') Input.setMode('SELECTION', this.currentSummaryIndex);
-        else if (this.state === 'PARTY') { document.getElementById('party-context').classList.add('hidden'); Input.setMode('PARTY', this.selectedPartyIndex); }
-        else if (this.state === 'HEAL') Input.setMode('CONTEXT');
-        else if (this.state === 'READ_ONLY') Input.setMode('CONTINUE');
-    },
-
-    async confirmSelection() {
-        if (!this.tempSelection) return;
-        document.getElementById('summary-panel').classList.add('hidden');
-        this.party = [this.tempSelection];
-        this.activeSlot = 0; this.wins = 0; this.bossesDefeated = 0; this.save();
-        document.getElementById('selection-screen').classList.add('hidden');
-        ['scene', 'dialog-box', 'streak-box'].forEach(id => document.getElementById(id).classList.remove('hidden'));
-        document.getElementById('streak-box').innerText = "WINS: 0";
-        this.state = 'BATTLE'; this.startNewBattle(true);
-    },
-
-    openParty(forced) {
-        if (Battle.uiLocked && !forced && !['OVERFLOW', 'HEAL'].includes(this.state)) return;
-        if (this.state === 'BATTLE' && !forced) Battle.lastMenuIndex = Input.focus;
-
-        if (!['OVERFLOW', 'HEAL'].includes(this.state)) this.state = 'PARTY';
-        this.forcedSwitch = forced;
-        document.getElementById('party-screen').classList.remove('hidden');
-        document.getElementById('party-context').classList.add('hidden');
-
-        const closeBtn = document.getElementById('party-close-btn');
-        const header = document.getElementById('party-header-text');
-        closeBtn.onmouseenter = () => { Input.focus = this.party.length; Input.updateVisuals(); };
-
-        closeBtn.style.pointerEvents = "auto"; closeBtn.style.display = "block";
-
-        if (this.state === 'OVERFLOW') {
-            header.innerText = "PARTY FULL! RELEASE ONE.";
-            closeBtn.innerText = "SELECT TO RELEASE"; closeBtn.style.pointerEvents = "none";
-        } else if (this.state === 'HEAL') {
-            header.innerText = "USE ON WHICH PKMN?"; closeBtn.innerText = "CANCEL";
-            closeBtn.onclick = () => { document.getElementById('party-screen').classList.add('hidden'); Battle.openPack(); };
-        } else {
-            header.innerText = "POKEMON PARTY"; closeBtn.innerText = forced ? "CHOOSE A POKEMON" : "CLOSE [X]";
-            closeBtn.onclick = forced ? null : () => Battle.uiToMenu();
-            if (forced) closeBtn.style.display = "none";
-        }
-        this.renderParty(); Input.setMode('PARTY');
-    },
-
-    renderParty() {
-        const list = document.getElementById('party-list'); list.innerHTML = "";
-        this.party.forEach((p, i) => {
-            const div = document.createElement('div'); div.className = 'party-slot';
-            if (p.currentHp <= 0) div.classList.add('fainted');
-            if (i === this.activeSlot && p.currentHp > 0) div.classList.add('active-mon');
-            if (i === 6) div.classList.add('new-catch');
-            const pct = (p.currentHp / p.maxHp) * 100; const color = pct > 50 ? "#48c050" : pct > 20 ? "#d8b030" : "#c83828";
-            div.innerHTML = `<img class="slot-icon" src="${p.icon}"><div class="slot-info"><div class="slot-row"><span>${p.name}</span><span>Lv${p.level}</span></div><div class="slot-row"><div class="mini-hp-bg"><div class="mini-hp-fill" style="width:${pct}%; background:${color}"></div></div><span>${Math.max(0, p.currentHp)}/${p.maxHp}</span></div></div>`;
-            div.onmouseenter = () => { Input.focus = i; Input.updateVisuals(); };
-            div.onclick = () => { this.selectedPartyIndex = i; this.openContext(i); };
-            list.appendChild(div);
-        });
-    },
-
-    openContext(index) {
-        this.selectedPartyIndex = index; const ctx = document.getElementById('party-context'); ctx.classList.remove('hidden'); ctx.innerHTML = "";
-        const addBtn = (txt, fn, cls = '') => { const b = document.createElement('div'); b.className = `ctx-btn ${cls}`; b.innerText = txt; b.onclick = fn; const idx = ctx.children.length; b.onmouseenter = () => { Input.focus = idx; Input.updateVisuals(); }; ctx.appendChild(b); };
-        if (this.state === 'HEAL') { addBtn("USE", () => this.applyItemToPokemon(index)); }
-        else if (this.state === 'OVERFLOW') { addBtn("RELEASE", () => this.releasePokemon(index), "warn"); }
-        else { addBtn("SHIFT", () => this.partySwitch()); }
-        addBtn("SUMMARY", () => this.partyStats()); addBtn("CLOSE", () => this.closeContext());
-        Input.setMode('CONTEXT');
-    },
-
-    closeContext() { document.getElementById('party-context').classList.add('hidden'); Input.setMode('PARTY', this.selectedPartyIndex); },
-
-    releasePokemon(index) {
-        this.closeContext(); this.closeSummary();
-        const releasedMon = this.party[index]; this.party.splice(index, 1);
-        document.getElementById('party-screen').classList.add('hidden');
-        if (index < this.activeSlot) this.activeSlot--;
-        if (index === this.activeSlot) {
-            if (this.activeSlot >= this.party.length) this.activeSlot = this.party.length - 1;
-            Battle.animateSwap(releasedMon, this.party[this.activeSlot], () => this.handleWin(true));
-        } else {
-            UI.typeText(`Bye bye, ${releasedMon.name}!`, () => this.handleWin(true));
-        }
-    },
-
-    applyItemToPokemon(index) {
-        this.closeContext(); this.closeSummary(); const p = this.party[index]; const data = ITEMS[this.selectedItemKey];
-        if (data.type === 'revive' && p.currentHp > 0) { AudioEngine.playSfx('error'); return; }
-        if (data.type === 'heal' && (p.currentHp <= 0 || p.currentHp >= p.maxHp)) { AudioEngine.playSfx('error'); return; }
-
-        if (data.type === 'revive') p.currentHp = Math.floor(p.maxHp / 2);
-        if (data.type === 'heal') p.currentHp = Math.min(p.maxHp, p.currentHp + data.heal);
-
-        this.inventory[this.selectedItemKey]--; AudioEngine.playSfx('heal'); this.renderParty();
-        if (index === this.activeSlot) UI.updateHUD(p, 'player');
-        ['party-screen', 'pack-screen', 'action-menu'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        this.state = 'BATTLE'; UI.typeText(`Used ${data.name} on ${p.name}!`, () => Battle.endTurnItem());
-    },
-
-    partySwitch() {
-        const idx = this.selectedPartyIndex; const mon = this.party[idx];
-        if (mon.currentHp <= 0 || idx === this.activeSlot) { AudioEngine.playSfx('error'); return; }
-
-        if (Battle.userInputPromise) {
-            this.closeContext(); this.closeSummary(); document.getElementById('party-screen').classList.add('hidden');
-            this.activeSlot = idx; this.state = 'BATTLE';
-            Battle.userInputPromise(idx); return;
-        }
-
-        this.party[this.activeSlot].rageLevel = 0;
-        this.party[this.activeSlot].volatiles = {};
-        this.party[this.activeSlot].stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
-
-        this.closeContext(); this.closeSummary(); document.getElementById('party-screen').classList.add('hidden');
-        this.activeSlot = idx; this.state = 'BATTLE';
-        if (this.forcedSwitch) Battle.switchIn(mon, true); else Battle.performSwitch(mon);
-    },
 
     // --- EXP & WINS ---
     async distributeExp(amount, targetIndices, isBossReward) {
@@ -602,7 +368,7 @@ const Game = {
 
     handleLoss() {
         UI.textEl.classList.remove('full-width');
-        if (this.party.some(p => p.currentHp > 0)) this.openParty(true);
+        if (this.party.some(p => p.currentHp > 0)) PartyScreen.open(true);
         else {
             Battle.cleanup();
             document.getElementById('game-boy').style.animation = "flashWhite 0.5s";

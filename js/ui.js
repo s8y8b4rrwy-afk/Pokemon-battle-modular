@@ -6,8 +6,15 @@ const UI = {
     forceReflow(el) { void el.offsetWidth; },
 
     // --- SCREEN MANAGEMENT ---
-    show(id) { document.getElementById(id).classList.remove('hidden'); },
-    hide(id) { document.getElementById(id).classList.add('hidden'); },
+    show(idOrEl) {
+        const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+        if (el) el.classList.remove('hidden');
+    },
+    hide(idOrEl) {
+        const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+        if (el) el.classList.add('hidden');
+    },
+    showAll(ids) { ids.forEach(id => this.show(id)); },
     hideAll(ids) { ids.forEach(id => this.hide(id)); },
 
     // --- TEXT ENGINE ---

@@ -71,5 +71,21 @@ const BattleAnims = {
         AudioEngine.playSfx('rumble');
         await wait(500);
         document.getElementById('scene').classList.remove('anim-violent');
+    },
+
+    async animateSwap(oldMon, newMon, cb) {
+        const sprite = document.getElementById('player-sprite');
+        AudioEngine.playSfx('ball');
+        sprite.classList.add('anim-return');
+        await wait(400);
+        sprite.src = newMon.backSprite;
+        sprite.classList.remove('anim-return');
+        sprite.classList.add('anim-enter');
+        AudioEngine.playSfx('ball');
+        UI.spawnSmoke(60, 150);
+        if (newMon.cry) AudioEngine.playCry(newMon.cry);
+        await wait(600);
+        sprite.classList.remove('anim-enter');
+        if (cb) cb();
     }
 };

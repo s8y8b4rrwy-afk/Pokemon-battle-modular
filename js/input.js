@@ -154,10 +154,10 @@ const Input = {
             if (['z', 'Z', 'Enter'].includes(k)) document.querySelectorAll('#party-context .ctx-btn')[Input.focus].click();
         },
         'SUMMARY': (k) => {
-            if (k === 'ArrowRight') { if (Input.focus < 3) Input.focus++; else Game.navSummary(1); }
-            if (k === 'ArrowLeft') { if (Input.focus > 0) Input.focus--; else Game.navSummary(-1); }
-            if (k === 'ArrowDown') Game.navSummary(1);
-            if (k === 'ArrowUp') Game.navSummary(-1);
+            if (k === 'ArrowRight') { if (Input.focus < 3) Input.focus++; else SummaryScreen.nav(1); }
+            if (k === 'ArrowLeft') { if (Input.focus > 0) Input.focus--; else SummaryScreen.nav(-1); }
+            if (k === 'ArrowDown') SummaryScreen.nav(1);
+            if (k === 'ArrowUp') SummaryScreen.nav(-1);
             if (['z', 'Z', 'Enter'].includes(k)) document.querySelectorAll('.sum-buttons .confirm-btn')[Input.focus].click();
         }
     },
@@ -172,8 +172,8 @@ const Input = {
         if (k === 'x' || k === 'X') {
             if (['MOVES', 'BAG', 'CONFIRM_RUN'].includes(this.mode)) { BattleMenus.uiToMenu(); return; }
             if (this.mode === 'PARTY') { if (document.getElementById('party-close-btn').innerText !== "CHOOSE A POKEMON") BattleMenus.uiToMenu(); return; }
-            if (this.mode === 'CONTEXT') { Game.closeContext(); return; }
-            if (this.mode === 'SUMMARY') { Game.closeSummary(); return; }
+            if (this.mode === 'CONTEXT') { PartyScreen.closeContext(); return; }
+            if (this.mode === 'SUMMARY') { SummaryScreen.close(); return; }
         }
 
         // 2. Global Navigation Sound
