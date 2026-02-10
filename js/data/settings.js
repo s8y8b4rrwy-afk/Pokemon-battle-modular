@@ -39,7 +39,7 @@ const DEBUG = {
     // Force specific Player attributes
     PLAYER: {
         ID: null,       // Pokedex Number (e.g. 249 = Lugia).
-        LEVEL: null,    // Level (1-100).
+        LEVEL: 85, // null,    // Level (1-100).
         SHINY: null,    // true/false.
         RAGE: 0,        // Start with Rage (0-3).
 

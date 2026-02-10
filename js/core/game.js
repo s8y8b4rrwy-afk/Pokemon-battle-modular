@@ -280,7 +280,7 @@ const Game = {
                 if (p.exp >= p.nextLvlExp) await this.processLevelUp(p);
             }
         }
-        this.finishWin();
+        await this.finishWin();
     },
 
     gainExpAnim(amount, p) {
@@ -310,13 +310,43 @@ const Game = {
         });
     },
 
-    finishWin() {
+    async finishWin() {
         const p = this.party[this.activeSlot];
-        const range = GAME_BALANCE.HEAL_WIN_MAX_PCT - GAME_BALANCE.HEAL_WIN_MIN_PCT;
-        const healAmt = Math.floor(p.maxHp * (GAME_BALANCE.HEAL_WIN_MIN_PCT + (Math.random() * range)));
-        if (healAmt > 0) { p.currentHp = Math.min(p.maxHp, p.currentHp + healAmt); AudioEngine.playSfx('heal'); UI.updateHUD(p, 'player'); }
 
-        const finalize = () => { this.save(); setTimeout(() => this.startNewBattle(false), 1000); };
+        // 1. Conditional HP restoration (Only if NOT fainted)
+        if (p.currentHp > 0) {
+            const range = GAME_BALANCE.HEAL_WIN_MAX_PCT - GAME_BALANCE.HEAL_WIN_MIN_PCT;
+            const healAmt = Math.floor(p.maxHp * (GAME_BALANCE.HEAL_WIN_MIN_PCT + (Math.random() * range)));
+            if (healAmt > 0) {
+                p.currentHp = Math.min(p.maxHp, p.currentHp + healAmt);
+                AudioEngine.playSfx('heal');
+                UI.updateHUD(p, 'player');
+            }
+        }
+
+        const finalize = async () => {
+            // Check if active mon is fainted (Simultaneous faint case)
+            if (p.currentHp <= 0) {
+                const hasOthers = this.party.some(mon => mon.currentHp > 0);
+                if (hasOthers) {
+                    await UI.typeText(`${p.name} fainted!\nChoose another!`);
+                    const selectedIndex = await new Promise(resolve => {
+                        Battle.userInputPromise = resolve;
+                        this.openParty(true);
+                    });
+                    Battle.userInputPromise = null;
+                    this.activeSlot = selectedIndex;
+                } else {
+                    // Everyone is fainted - this shouldn't happen if handleWin/Loss are synced
+                    // but as a safety, trigger loss if no one is left.
+                    await this.handleLoss();
+                    return;
+                }
+            }
+
+            this.save();
+            setTimeout(() => this.startNewBattle(false), 1000);
+        };
 
         const checkTransform = async () => {
             if (p.transformBackup) {
@@ -324,28 +354,39 @@ const Game = {
                 AudioEngine.playSfx('swoosh'); s.style.filter = "brightness(10)"; await wait(200);
                 Battle.revertTransform(p);
                 s.src = p.backSprite; s.classList.remove('transformed-sprite'); s.style.filter = "none";
-                UI.updateHUD(p, 'player'); await UI.typeText(`${p.name} transformed\nback!`);
+                UI.updateHUD(p, 'player');
+                await UI.typeText(`${p.name} transformed\nback!`);
             }
-            finalize();
+            await finalize();
         };
 
-        const checkRage = () => { if (p.rageLevel > 0) { p.rageLevel = 0; UI.updateHUD(p, 'player'); UI.typeText(`${p.name} became\ncalm again!`, checkTransform); } else checkTransform(); };
+        const checkRage = async () => {
+            if (p.rageLevel > 0) {
+                p.rageLevel = 0;
+                UI.updateHUD(p, 'player');
+                await UI.typeText(`${p.name} became\ncalm again!`);
+                await checkTransform();
+            } else await checkTransform();
+        };
 
-        const checkLoot = () => {
+        const checkLoot = async () => {
             const levelDiff = this.enemyMon.level - p.level;
             let rate = this.enemyMon.isBoss ? LOOT_SYSTEM.DROP_RATE_BOSS : LOOT_SYSTEM.DROP_RATE_WILD;
             if (levelDiff > 0) rate += (levelDiff * 0.05);
             if (RNG.roll(rate)) {
                 const key = Mechanics.getLoot(this.enemyMon, this.wins, levelDiff); this.inventory[key]++; AudioEngine.playSfx('funfair');
-                UI.typeText(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`, checkRage);
-            } else checkRage();
+                await UI.typeText(`Oh! ${this.enemyMon.name} dropped\\na ${ITEMS[key].name}.`);
+                await checkRage();
+            } else await checkRage();
         };
 
         if (p.volatiles.substituteHP > 0) {
             if (p.volatiles.originalSprite) document.getElementById('player-sprite').src = p.volatiles.originalSprite;
             p.volatiles.substituteHP = 0; p.volatiles.originalSprite = null;
-            AudioEngine.playSfx('swoosh'); UI.typeText("The SUBSTITUTE\nfaded away!", checkLoot);
-        } else checkLoot();
+            AudioEngine.playSfx('swoosh');
+            await UI.typeText("The SUBSTITUTE\\nfaded away!");
+            await checkLoot();
+        } else await checkLoot();
     },
 
     async tryMidBattleDrop(enemy) {
@@ -356,34 +397,47 @@ const Game = {
         }
     },
 
-    handleWin(wasCaught) {
+    async handleWin(wasCaught) {
         Battle.cleanup(); this.wins++; if (this.enemyMon.isBoss) this.bossesDefeated++;
         document.getElementById('streak-box').innerText = `WINS: ${this.wins}`; this.state = 'BATTLE';
         if (!wasCaught) this.enemyMon.currentHp = 0;
 
         // EXP Calc
-        let gain = Mechanics.calcExpGain(this.enemyMon, this.party[this.activeSlot], wasCaught);
+        const activeMon = this.party[this.activeSlot];
+        let gain = Mechanics.calcExpGain(this.enemyMon, activeMon, wasCaught);
 
         let targets, amt;
         if (this.enemyMon.isBoss) {
-            targets = this.party.map((p, i) => ({ p, i })).filter(x => x.p.currentHp > 0).map(x => x.i); amt = gain;
+            targets = this.party.map((p, i) => ({ p, i })).filter(x => x.p.currentHp > 0).map(x => x.i);
+            amt = gain;
         } else {
-            targets = Array.from(Battle.participants); amt = Math.floor(gain / Math.max(1, targets.length));
+            // Filter participants to only those still alive (Gen 2 style)
+            targets = Array.from(Battle.participants).filter(idx => this.party[idx] && this.party[idx].currentHp > 0);
+            amt = Math.floor(gain / Math.max(1, targets.length));
         }
-        this.distributeExp(amt, targets, this.enemyMon.isBoss);
+
+        if (targets.length > 0) {
+            await this.distributeExp(amt, targets, this.enemyMon.isBoss);
+        } else {
+            await this.finishWin();
+        }
     },
 
-    handleLoss() {
+    async handleLoss() {
         UI.textEl.classList.remove('full-width');
-        if (this.party.some(p => p.currentHp > 0)) PartyScreen.open(true);
-        else {
+        if (this.party.some(p => p.currentHp > 0)) {
+            PartyScreen.open(true);
+        } else {
             Battle.cleanup();
             document.getElementById('game-boy').style.animation = "flashWhite 0.5s";
-            AudioEngine.playCry(this.party[this.activeSlot].cry);
-            UI.typeText(`Player is out of Pokemon...`, () => setTimeout(() => {
-                document.getElementById('game-boy').style.animation = "";
-                this.newGame();
-            }, 2500));
+
+            await UI.typeText(`${this.playerName} is out of\nuseable Pokemon!`);
+            await wait(1000);
+            await UI.typeText(`${this.playerName} blacked out!`);
+            await wait(2000);
+
+            document.getElementById('game-boy').style.animation = "";
+            this.newGame(); // Reset game & wipe save
         }
     },
 };

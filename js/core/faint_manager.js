@@ -74,7 +74,7 @@ const FaintManager = {
                 await wait(ANIM.FAINT_POST_DELAY);
 
                 // If Destiny Bond triggers, it's always handled as a win for the player in this engine's current state
-                Game.handleWin(false);
+                await Game.handleWin(false);
                 return true;
             }
         }
@@ -84,9 +84,9 @@ const FaintManager = {
         textEl.classList.remove('full-width');
 
         if (isPlayer) {
-            Game.handleLoss();
+            await Game.handleLoss();
         } else {
-            Game.handleWin(false);
+            await Game.handleWin(false);
         }
 
         return true;

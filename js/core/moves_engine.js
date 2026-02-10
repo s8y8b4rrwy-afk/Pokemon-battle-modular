@@ -203,14 +203,6 @@ const MovesEngine = {
     },
 
     async handleMoveSideEffects(battle, attacker, defender, move, isPlayer, prevActionSuccess) {
-        if (move.id === 'self-destruct' || move.id === 'explosion') {
-            attacker.currentHp = 0;
-            UI.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
-            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-            sprite.classList.add('anim-faint');
-            return true;
-        }
-
         if (!prevActionSuccess) return false;
 
         let didSomething = false;

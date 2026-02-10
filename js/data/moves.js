@@ -134,6 +134,44 @@ const MOVE_DEX = {
         }
     },
 
+    // --- SUICIDE MOVES ---
+    'EXPLOSION': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const isPlayer = (user === battle.p);
+            // 1. User faints visually first
+            user.currentHp = 0;
+            UI.updateHUD(user, isPlayer ? 'player' : 'enemy');
+            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+            sprite.classList.add('anim-faint');
+            AudioEngine.playSfx('swoosh');
+            await wait(1000);
+
+            // 2. Damage Phase
+            const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'physical' };
+            await battle.handleDamageSequence(user, target, moveData, isPlayer, weatherMod);
+            return true;
+        }
+    },
+    'SELF DESTRUCT': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const isPlayer = (user === battle.p);
+            // 1. User faints visually first
+            user.currentHp = 0;
+            UI.updateHUD(user, isPlayer ? 'player' : 'enemy');
+            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+            sprite.classList.add('anim-faint');
+            AudioEngine.playSfx('swoosh');
+            await wait(1000);
+
+            // 2. Damage Phase
+            const moveData = { name: 'SELF-DESTRUCT', type: 'normal', power: 200, category: 'physical' };
+            await battle.handleDamageSequence(user, target, moveData, isPlayer, weatherMod);
+            return true;
+        }
+    },
+
     // --- SUBSTITUTE MECHANIC ---
     'SUBSTITUTE': {
         isUnique: true,

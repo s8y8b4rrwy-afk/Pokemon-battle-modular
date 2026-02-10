@@ -4,7 +4,7 @@ This document outlines potential enhancements, technical debt, and new features 
 
 ## 🛠️ Technical Debt & Refactoring
 - [ ] **CSS Modularization**: Break down the 1,900+ line `styles.css` into separate files matching the JS modules (e.g., `ui.css`, `animations.css`, `screens.css`).
-- [ ] **FaintManager**: Extract the fainting logic from `battle.js` and `turn_manager.js` into its own module to handle simultaneous faints, Destiny Bond, and replacement timing more cleanly.
+- [x] **FaintManager**: Extract the fainting logic from `battle.js` and `turn_manager.js` into its own module to handle simultaneous faints, Destiny Bond, and replacement timing more cleanly.
 - [ ] **VisualsManager**: Centralize all sprite manipulation, filtering, and screen-shaking into a dedicated module to further simplify `battle.js`.
 - [ ] **Proper Type Serialization**: Move from global objects to a more robust state management system (perhaps a simple store pattern) to avoid direct global property access.
 
