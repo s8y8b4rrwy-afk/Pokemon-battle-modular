@@ -441,15 +441,18 @@ const MOVE_DEX = {
 
 // Logic for Two-Turn and Special Moves
 const MOVE_LOGIC = {
-    'fly': { type: 'charge', msg: "flew up high!", invuln: 'flying', hide: true },
-    'dig': { type: 'charge', msg: "burrowed underground!", invuln: 'digging', hide: true },
-    'dive': { type: 'charge', msg: "hid underwater!", invuln: 'diving', hide: true },
+    'fly': { type: 'charge', msg: "flew up high!", invuln: 'flying', hide: true, sound: 'swoosh' },
+    'dig': { type: 'charge', msg: "burrowed underground!", invuln: 'digging', hide: true, sound: 'rumble' },
+    'dive': { type: 'charge', msg: "hid underwater!", invuln: 'diving', hide: true, sound: 'swoosh' },
+    'bounce': { type: 'charge', msg: "sprang up!", invuln: 'bouncing', hide: true, sound: 'swoosh' },
+    'phantom-force': { type: 'charge', msg: "vanished instantly!", invuln: 'shadow', hide: true, sound: 'swoosh' },
     'solar-beam': { type: 'charge', msg: "took in sunlight!", invuln: null, hide: false, weatherSkip: 'sun' },
     'skull-bash': { type: 'charge', msg: "lowered its head!", invuln: null, hide: false, buff: { stat: 'def', val: 1 } },
     'hyper-beam': { type: 'recharge' },
     'giga-impact': { type: 'recharge' },
     'protect': { type: 'protect' },
-    'detect': { type: 'protect' }
+    'detect': { type: 'protect' },
+    'endure': { type: 'protect' }
 };
 
 // --- HELPERS for DEX ---

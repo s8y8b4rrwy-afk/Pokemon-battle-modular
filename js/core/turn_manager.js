@@ -159,8 +159,10 @@ const TurnManager = {
                 const inv = defender.volatiles.invulnerable;
                 let hits = false;
                 if (inv === 'digging' && ['EARTHQUAKE', 'MAGNITUDE', 'FISSURE'].includes(move.name)) hits = true;
-                if (inv === 'flying' && ['THUNDER', 'GUST', 'TWISTER', 'SKY UPPERCUT'].includes(move.name)) hits = true;
+                if (inv === 'flying' && ['THUNDER', 'GUST', 'TWISTER', 'SKY UPPERCUT', 'HURRICANE', 'SMACK DOWN'].includes(move.name)) hits = true;
+                if (inv === 'bouncing' && ['THUNDER', 'GUST', 'TWISTER', 'SKY UPPERCUT', 'HURRICANE', 'SMACK DOWN'].includes(move.name)) hits = true;
                 if (inv === 'diving' && ['SURF', 'WHIRLPOOL'].includes(move.name)) hits = true;
+                if (inv === 'shadow' && ['FEINT', 'PHANTOM FORCE'].includes(move.name)) hits = true;
                 if (!hits) {
                     await UI.typeText(`${defender.name} avoided\nthe attack!`);
                     return false;
@@ -217,7 +219,13 @@ const TurnManager = {
                 if (logic.invuln) attacker.volatiles.invulnerable = logic.invuln;
 
                 await wait(400);
-                if (logic.hide) { AudioEngine.playSfx('swoosh'); sprite.style.opacity = 0; await wait(250); }
+                await wait(400);
+                if (logic.hide) {
+                    const sfx = logic.sound || 'swoosh';
+                    AudioEngine.playSfx(sfx);
+                    sprite.style.opacity = 0;
+                    await wait(250);
+                }
 
                 await UI.typeText(`${attacker.name}\n${logic.msg}`);
                 if (logic.buff) await battle.applyStatChanges(attacker, [{ stat: { name: logic.buff.stat }, change: logic.buff.val }], isPlayer);
