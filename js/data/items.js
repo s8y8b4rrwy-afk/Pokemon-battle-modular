@@ -29,6 +29,7 @@ const LOOT_SYSTEM = {
 
         { key: 'ultraball', ...RARITY.ULTRA_RARE },
         { key: 'maxpotion', ...RARITY.ULTRA_RARE },
+        { key: 'maxrevive', ...RARITY.ULTRA_RARE },
 
         { key: 'masterball', ...RARITY.LEGENDARY }
     ]
@@ -40,6 +41,7 @@ const ITEMS = {
     hyperpotion: { name: "HYPER POTION", heal: 200, type: 'heal', desc: "Restores Pokemon HP by 200.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/hyper-potion.png" },
     maxpotion: { name: "MAX POTION", heal: 9999, type: 'heal', desc: "Fully restores Pokemon HP.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/max-potion.png" },
     revive: { name: "REVIVE", type: 'revive', desc: "Restores a fainted Pokemon to 50% HP.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/revive.png" },
+    maxrevive: { name: "MAX REVIVE", type: 'revive', desc: "Fully restores a fainted Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/max-revive.png" },
     pokeball: { name: "POKE BALL", type: 'ball', rate: 1, desc: "A device for catching wild Pokemon.", css: '', img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" },
     greatball: { name: "GREAT BALL", type: 'ball', rate: 1.5, desc: "A good Ball with a higher catch rate.", css: 'great', img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png" },
     ultraball: { name: "ULTRA BALL", type: 'ball', rate: 2, desc: "A better Ball with a high catch rate.", css: 'ultra', img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png" },

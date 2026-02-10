@@ -175,7 +175,7 @@ const Game = {
     newGame() {
         StorageSystem.wipe();
         this.party = []; this.wins = 0; this.bossesDefeated = 0;
-        this.inventory = { potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0 };
+        this.inventory = { potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0 };
         if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
         SelectionScreen.open();
     },
@@ -237,7 +237,7 @@ const Game = {
             // Generate initial inventory driven by constants/debug
             const potions = DEBUG.ENABLED && DEBUG.PLAYER.ITEMS && DEBUG.PLAYER.ITEMS.POTION ? DEBUG.PLAYER.ITEMS.POTION : 5;
             const balls = DEBUG.ENABLED && DEBUG.PLAYER.ITEMS && DEBUG.PLAYER.ITEMS.POKEBALL ? DEBUG.PLAYER.ITEMS.POKEBALL : 10;
-            this.inventory = { 'potion': potions, 'pokeball': balls, 'superpotion': 0, 'ultraball': 0, 'revive': 0, 'elixir': 0 };
+            this.inventory = { 'potion': potions, 'pokeball': balls, 'superpotion': 0, 'ultraball': 0, 'revive': 0, 'maxrevive': 0, 'elixir': 0 };
         } else {
             // Restore Volatiles for existing party
             const p = this.party[this.activeSlot];

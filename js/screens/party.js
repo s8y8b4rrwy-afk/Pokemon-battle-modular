@@ -121,7 +121,9 @@ const PartyScreen = {
         if (data.type === 'revive' && p.currentHp > 0) { AudioEngine.playSfx('error'); return; }
         if (data.type === 'heal' && (p.currentHp <= 0 || p.currentHp >= p.maxHp)) { AudioEngine.playSfx('error'); return; }
 
-        if (data.type === 'revive') p.currentHp = Math.floor(p.maxHp / 2);
+        if (Game.selectedItemKey === 'revive') p.currentHp = Math.floor(p.maxHp / 2);
+        if (Game.selectedItemKey === 'maxrevive') p.currentHp = p.maxHp;
+
         if (data.type === 'heal') p.currentHp = Math.min(p.maxHp, p.currentHp + data.heal);
 
         Game.inventory[Game.selectedItemKey]--;
