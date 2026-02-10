@@ -3,25 +3,43 @@
   <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/249.png" width="120" alt="Lugia">
 </p>
 
-<h1 align="center">⚔️ Pokémon G/S Battle Simulator</h1>
+<h1 align="center">⚔️ Pokémon G/S Battle Simulator (Modular)</h1>
 
 <p align="center">
-  <strong>A faithful Pokémon Gold/Silver battle system clone running entirely in the browser.</strong>
+  <strong>A modularized and enhanced version of the Pokémon Gold/Silver battle system.</strong>
 </p>
+
+> **📦 This is a work-in-progress modularization** of the [original single-file implementation](https://github.com/s8y8b4rrwy-afk/pokemon-gs-battle-system-clone).  
+> The goal is to break down the 6,090-line monolith into a maintainable, modular codebase while preserving all features and adding enhancements.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Generation-II-gold?style=for-the-badge" alt="Gen II">
   <img src="https://img.shields.io/badge/Pokémon-251-red?style=for-the-badge" alt="251 Pokemon">
-  <img src="https://img.shields.io/badge/Engine-Vanilla_JS-yellow?style=for-the-badge" alt="Vanilla JS">
-  <img src="https://img.shields.io/badge/Lines-6090-blue?style=for-the-badge" alt="6090 Lines">
-  <img src="https://img.shields.io/badge/Dependencies-Zero-green?style=for-the-badge" alt="Zero Dependencies">
+  <img src="https://img.shields.io/badge/Status-Modularizing-orange?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/Architecture-ES6_Modules-blue?style=for-the-badge" alt="ES6 Modules">
 </p>
+
+---
+
+## 🔄 About This Repository
+
+This repository contains a **modularized version** of the original single-file Pokémon battle simulator. 
+
+### 🎯 Goals
+- ✅ **Preserve all features** from the original implementation
+- 🔧 **Modular architecture** with separate files for better maintainability
+- 📦 **Modern tooling** (ES6 modules, build system)
+- 🚀 **Enhanced features** and improvements
+- 📚 **Better documentation** and code organization
+
+### 🔗 Related Repositories
+- **Original (Single-File):** [pokemon-gs-battle-system-clone](https://github.com/s8y8b4rrwy-afk/pokemon-gs-battle-system-clone) — The complete battle system in one HTML file
 
 ---
 
 ## 🎮 What Is This?
 
-A fully-featured Pokémon battle simulator inspired by **Pokémon Gold & Silver**, built as a **single HTML file** with zero dependencies. It renders inside a pixel-perfect Game Boy Color shell and features:
+A fully-featured Pokémon battle simulator inspired by **Pokémon Gold & Silver**. It renders inside a pixel-perfect Game Boy Color shell and features:
 
 - 🏟️ Full turn-based battle engine with Gen II damage formula
 - 📡 Live Pokémon data from [PokéAPI](https://pokeapi.co/) (all 251 Gen I & II Pokémon)
@@ -137,46 +155,61 @@ python3 -m http.server 8000
 
 ## 🏗️ Architecture
 
-This project is a **single-file monolith** — all HTML, CSS, and JavaScript live in one `Pokemon.html` file (6,090 lines, ~250KB).
+> **⚠️ Note:** This section describes the **planned modular architecture**. The current state still contains the original monolith `Pokemon.html` while modularization is in progress.
 
-### Module Overview
+### Planned Module Structure
 
 ```
-Pokemon.html
-├── CSS (~1,978 lines)
-│   ├── Design System (CSS variables, fonts)
-│   ├── Layout (Game Boy shell, screens)
-│   ├── Components (HUD, menus, buttons)
-│   ├── Animations (50+ keyframes)
-│   └── Type-specific VFX
+pokemon-battle-modular/
+├── index.html                 # Main HTML entry point
+├── package.json              # Dependencies and build scripts
 │
-├── HTML (~100 lines)
-│   └── DOM Structure (screens, HUDs, overlays)
+├── src/
+│   ├── index.js             # Main entry point
+│   │
+│   ├── config/              # Configuration & Constants
+│   │   ├── constants.js     # DEBUG, ENCOUNTER_CONFIG, GAME_BALANCE
+│   │   ├── items.js         # ITEMS dictionary
+│   │   ├── status.js        # STATUS_DATA
+│   │   ├── types.js         # TYPE_CHART
+│   │   ├── animations.js    # ANIM timing constants
+│   │   └── balance.js       # LOOT_SYSTEM, STAGE_MULT, WEATHER_FX
+│   │
+│   ├── data/                # Game Data
+│   │   ├── move-dex.js      # MOVE_DEX special moves
+│   │   └── move-logic.js    # MOVE_LOGIC behaviors
+│   │
+│   ├── engine/              # Core Engine Modules
+│   │   ├── audio.js         # AudioEngine module
+│   │   ├── api.js           # API module (PokéAPI)
+│   │   ├── input.js         # Input module
+│   │   ├── storage.js       # StorageSystem module
+│   │   └── encounter.js     # EncounterManager module
+│   │
+│   ├── game/                # Game Logic
+│   │   ├── game.js          # Game module (state management)
+│   │   └── battle.js        # Battle module (combat engine)
+│   │
+│   ├── ui/                  # UI Components
+│   │   ├── screens/         # Screen-specific logic
+│   │   └── components/      # Reusable UI components
+│   │
+│   └── utils/               # Utility Functions
+│       ├── helpers.js       # wait(), sleep(), RNG
+│       ├── stats.js         # StatCalc
+│       └── animations.js    # Animation helpers
 │
-└── JavaScript (~4,000 lines)
-    ├── Constants & Config
-    │   ├── DEBUG          — Developer overrides
-    │   ├── ENCOUNTER_CONFIG — Boss/scaling rules
-    │   ├── GAME_BALANCE   — Tuning parameters
-    │   ├── LOOT_SYSTEM    — Drop tables
-    │   ├── ITEMS          — Item definitions
-    │   ├── STATUS_DATA    — Status condition data
-    │   ├── TYPE_CHART     — 18×18 type matrix
-    │   └── ANIM           — Animation timing
-    │
-    ├── Core Modules
-    │   ├── AudioEngine    — Web Audio synthesizer
-    │   ├── API            — PokéAPI integration
-    │   ├── Input          — Keyboard/mouse handler
-    │   ├── StorageSystem  — localStorage wrapper
-    │   └── EncounterManager — Enemy generation
-    │
-    ├── Game Manager
-    │   └── Game           — State machine, screens, party, inventory
-    │
-    └── Battle Engine
-        └── Battle         — Turn system, damage, animations, AI
+└── styles/                  # CSS Modules
+    ├── main.css            # Base styles
+    ├── layout.css          # Game Boy shell, screens
+    ├── components.css      # UI components
+    ├── animations.css      # Keyframes
+    └── effects.css         # Type-specific VFX
 ```
+
+### Current State (Original Monolith)
+
+The repository currently contains `Pokemon.html` — a **single-file monolith** (6,090 lines, ~250KB) with all HTML, CSS, and JavaScript. See the [original repository](https://github.com/s8y8b4rrwy-afk/pokemon-gs-battle-system-clone) for detailed documentation of the monolith structure.
 
 ### Key Design Decisions
 
