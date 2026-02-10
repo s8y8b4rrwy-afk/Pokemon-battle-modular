@@ -1,3 +1,7 @@
+// --- HELPERS ---
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => wait(ms);
+
 const StatCalc = {
     // Gen 2 Style Formula
     other: (base, lvl) => Math.floor((2 * base * lvl) / 100 + 5),
@@ -31,7 +35,4 @@ const RNG = {
     pick: (array) => array[Math.floor(Math.random() * array.length)]
 };
 
-// --- GLOBAL HELPERS ---
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
