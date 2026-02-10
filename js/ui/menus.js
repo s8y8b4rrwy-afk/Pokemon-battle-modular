@@ -77,10 +77,26 @@ const BattleMenus = {
         list.innerHTML = "";
         let idxCounter = 0;
 
-        Object.keys(Game.inventory).forEach((key) => {
+        const itemOrder = [
+            'potion', 'superpotion', 'hyperpotion', 'maxpotion',
+            'revive', 'maxrevive',
+            'pokeball', 'greatball', 'ultraball', 'masterball'
+        ];
+
+        const sortedKeys = Object.keys(Game.inventory).sort((a, b) => {
+            const idxA = itemOrder.indexOf(a);
+            const idxB = itemOrder.indexOf(b);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return a.localeCompare(b);
+        });
+
+        sortedKeys.forEach((key) => {
             const count = Game.inventory[key];
             if (count > 0) {
                 const data = ITEMS[key];
+                if (!data) return;
                 const div = document.createElement('div');
                 div.className = 'pack-item';
                 div.innerHTML = `<span>${data.name}</span> <span>x${count}</span>`;
