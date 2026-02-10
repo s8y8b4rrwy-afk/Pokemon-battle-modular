@@ -303,7 +303,6 @@ const TurnManager = {
             if (isBP) msg = `${battle.p.name} passed\nthe baton!`;
 
             await UI.typeText(msg);
-            await wait(ANIM.TEXT_READ_PAUSE);
 
             AudioEngine.playSfx('swoosh');
             document.getElementById('player-hud').classList.remove('hud-active');
@@ -345,7 +344,6 @@ const TurnManager = {
 
         // 2. Text First
         await UI.typeText(`Go! ${newMon.name}!`);
-        await wait(300);
 
         // 3. Pokeball Poof & Start Animation (Mirroring Battle.js logic exactly)
         AudioEngine.playSfx('ball');

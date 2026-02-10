@@ -1971,10 +1971,23 @@ body.retro-motion #lcd-overlay {
 
 /* --- FLIPPED DOLL ANIMATION (was dynamically injected) --- */
 @keyframes shakeFlipped {
-    0% { transform: scaleX(-1) translate(0, 0); }
-    25% { transform: scaleX(-1) translate(6px, 0); }
-    75% { transform: scaleX(-1) translate(-6px, 0); }
-    100% { transform: scaleX(-1) translate(0, 0); }
+    0% {
+        transform: scaleX(-1) translate(0, 0);
+    }
+
+    25% {
+        transform: scaleX(-1) translate(6px, 0);
+    }
+
+    75% {
+        transform: scaleX(-1) translate(-6px, 0);
+    }
+
+    100% {
+        transform: scaleX(-1) translate(0, 0);
+    }
 }
 
-.anim-hit-flipped { animation: shakeFlipped 0.4s, flicker 0.4s; }
+.anim-hit-flipped {
+    animation: shakeFlipped 0.4s, flicker 0.4s;
+}
