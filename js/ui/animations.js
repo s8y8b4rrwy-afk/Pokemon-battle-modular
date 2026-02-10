@@ -36,11 +36,12 @@ const BattleAnims = {
 
     async triggerExplosionAnim() {
         const scene = document.getElementById('scene');
+        const fxLayer = document.getElementById('fx-container'); // Use dedicated FX layer
 
         // 1. Create Flash Overlay
         const flash = document.createElement('div');
         flash.className = 'explosion-flash';
-        scene.appendChild(flash);
+        fxLayer.appendChild(flash);
 
         // 2. Play Sound & Shake
         AudioEngine.playSfx('explosion'); // Need to ensure this SFX exists or map to 'rumble'
