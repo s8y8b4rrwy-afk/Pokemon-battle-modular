@@ -286,7 +286,7 @@ const TurnManager = {
     async processSwitch(battle, newMon, isFaintSwap = false) {
         document.getElementById('action-menu').classList.add('hidden');
         const eSprite = document.getElementById('enemy-sprite');
-        eSprite.style.opacity = 1;
+        if (battle.e.currentHp > 0) eSprite.style.opacity = 1;
 
         await wait(ANIM.SWITCH_STABILIZE);
         const sprite = document.getElementById('player-sprite');

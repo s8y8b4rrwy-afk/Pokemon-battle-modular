@@ -54,7 +54,7 @@ const DEBUG = {
 
         // Force specific moves (Array of lowercase strings with dashes)
         // e.g. ['fly', 'dig', 'solar-beam', 'protect']
-        MOVES: ['destiny-bond', 'spikes', 'explosion', 'u-turn']
+        MOVES: ['destiny-bond', 'bounce', 'explosion', 'u-turn']
     },
 
     // Control Drop Rates
