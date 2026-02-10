@@ -22,8 +22,8 @@ const Game = {
     checkSave() {
         if (StorageSystem.exists()) {
             const data = StorageSystem.load();
-            UIManager.hideScreen('start-screen');
-            UIManager.showScreen('continue-screen');
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('continue-screen').classList.remove('hidden');
             document.getElementById('save-wins').innerText = data.wins || 0;
             document.getElementById('save-bosses').innerText = data.bossesDefeated || 0;
             document.getElementById('save-name').innerText = data.playerName || 'PLAYER';
@@ -38,7 +38,7 @@ const Game = {
             });
             Input.setMode('CONTINUE');
         } else {
-            UIManager.hideScreen('start-screen');
+            document.getElementById('start-screen').classList.add('hidden');
             this.startNameInput();
         }
     },
@@ -103,17 +103,17 @@ const Game = {
     },
 
     loadGame() {
-        UIManager.hideScreen('continue-screen');
+        document.getElementById('continue-screen').classList.add('hidden');
         Battle.resetScene();
         Battle.uiLocked = true;
 
         if (this.load()) {
             if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
 
-            UIManager.hideScreen('selection-screen');
-            UIManager.showScreen('scene');
-            UIManager.showScreen('dialog-box');
-            UIManager.showScreen('streak-box');
+            document.getElementById('selection-screen').classList.add('hidden');
+            document.getElementById('scene').classList.remove('hidden');
+            document.getElementById('dialog-box').classList.remove('hidden');
+            document.getElementById('streak-box').classList.remove('hidden');
             document.getElementById('streak-box').innerText = `WINS: ${this.wins}`;
 
             // Safety Check: Active slot alive?
@@ -177,9 +177,9 @@ const Game = {
 
     returnToTitle() {
         this.state = 'START';
-        UIManager.hideAll(['scene', 'dialog-box', 'streak-box', 'summary-panel', 'party-screen', 'pack-screen', 'action-menu', 'move-menu']);
+        ['scene', 'dialog-box', 'streak-box', 'summary-panel', 'party-screen', 'pack-screen', 'action-menu', 'move-menu'].forEach(id => document.getElementById(id).classList.add('hidden'));
         Battle.resetScene();
-        UIManager.showScreen('start-screen');
+        document.getElementById('start-screen').classList.remove('hidden');
         Input.setMode('START');
     },
 
@@ -200,7 +200,7 @@ const Game = {
         Battle.uiLocked = true;
         this.enemyMon = null;
 
-        UIManager.typeText("Searching for wild Pokemon...", 'text-content', true);
+        Battle.typeText("Searching for wild Pokemon...", null, true);
 
         // Reset Player Logic
         if (this.party[this.activeSlot]) {
@@ -243,8 +243,8 @@ const Game = {
 
     async showSelectionScreen() {
         this.state = 'SELECTION'; Battle.uiLocked = false; Input.setMode('NONE');
-        UIManager.hideAll(['scene', 'dialog-box', 'summary-panel', 'streak-box']);
-        UIManager.showScreen('selection-screen');
+        ['scene', 'dialog-box', 'summary-panel', 'streak-box'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById('selection-screen').classList.remove('hidden');
 
         document.getElementById('sel-text-box').innerHTML = '<span class="blink-text">CATCHING POKEMON...</span>';
         document.getElementById('sel-cursor').style.display = 'none';
@@ -298,8 +298,8 @@ const Game = {
             this.currentSummaryIndex = (idx !== -1) ? idx : 0;
         }
 
-        UIManager.showScreen('summary-panel');
-        UIManager.renderSummary(p);
+        document.getElementById('summary-panel').classList.remove('hidden');
+        this.renderSummaryData(p);
 
         // Setup Buttons
         const btn = document.getElementById('btn-action');
@@ -435,26 +435,16 @@ const Game = {
     },
 
     openContext(index) {
-        this.selectedPartyIndex = index;
-        const options = [];
-        if (this.state === 'HEAL') {
-            options.push({ text: "USE", fn: () => this.applyItemToPokemon(index) });
-        } else if (this.state === 'OVERFLOW') {
-            options.push({ text: "RELEASE", fn: () => this.releasePokemon(index), cls: "warn" });
-        } else {
-            options.push({ text: "SHIFT", fn: () => this.partySwitch() });
-        }
-        options.push({ text: "SUMMARY", fn: () => this.partyStats() });
-        options.push({ text: "CLOSE", fn: () => this.closeContext() });
-
-        UIManager.renderContextMenu(options, (idx) => {
-            Input.focus = idx;
-            Input.updateVisuals();
-        });
+        this.selectedPartyIndex = index; const ctx = document.getElementById('party-context'); ctx.classList.remove('hidden'); ctx.innerHTML = "";
+        const addBtn = (txt, fn, cls = '') => { const b = document.createElement('div'); b.className = `ctx-btn ${cls}`; b.innerText = txt; b.onclick = fn; const idx = ctx.children.length; b.onmouseenter = () => { Input.focus = idx; Input.updateVisuals(); }; ctx.appendChild(b); };
+        if (this.state === 'HEAL') { addBtn("USE", () => this.applyItemToPokemon(index)); }
+        else if (this.state === 'OVERFLOW') { addBtn("RELEASE", () => this.releasePokemon(index), "warn"); }
+        else { addBtn("SHIFT", () => this.partySwitch()); }
+        addBtn("SUMMARY", () => this.partyStats()); addBtn("CLOSE", () => this.closeContext());
         Input.setMode('CONTEXT');
     },
 
-    closeContext() { UIManager.hideScreen('party-context'); Input.setMode('PARTY', this.selectedPartyIndex); },
+    closeContext() { document.getElementById('party-context').classList.add('hidden'); Input.setMode('PARTY', this.selectedPartyIndex); },
 
     releasePokemon(index) {
         this.closeContext(); this.closeSummary();
@@ -586,7 +576,18 @@ const Game = {
     },
 
     getLoot(enemy, levelDiff = 0) {
-        return Mechanics.selectLoot(enemy, this.wins, levelDiff);
+        if (DEBUG.ENABLED && DEBUG.LOOT.FORCE_ITEM) return DEBUG.LOOT.FORCE_ITEM;
+        const bst = Object.values(enemy.baseStats).reduce((a, b) => a + b, 0);
+        const score = (enemy.level * 1.5) + (bst / 10) + (this.wins * 1.5) + (Math.max(0, levelDiff) * 25);
+
+        let totalWeight = 0;
+        const pool = LOOT_SYSTEM.TABLE.map(item => {
+            let weight = Math.max(0, item.base + (score * item.scaling));
+            totalWeight += weight; return { key: item.key, weight: weight };
+        });
+        let random = Math.random() * totalWeight;
+        for (let item of pool) { if (random < item.weight) return item.key; random -= item.weight; }
+        return 'potion';
     },
 
     async tryMidBattleDrop(enemy) {
@@ -603,7 +604,10 @@ const Game = {
         if (!wasCaught) this.enemyMon.currentHp = 0;
 
         // EXP Calc
-        const gain = Mechanics.calculateExpGain(this.enemyMon, this.party[this.activeSlot], 1, wasCaught);
+        const b = this.enemyMon.baseExp; const L = this.enemyMon.level; const Lp = this.party[this.activeSlot].level;
+        let gain = Math.floor(((b * L) / 5) * Math.pow((2 * L + 10) / (L + Lp + 10), 2.5)) + 1;
+        if (this.enemyMon.isBoss) gain = Math.floor(gain * 1.5);
+        if (wasCaught) gain = Math.floor(gain * 0.8);
 
         let targets, amt;
         if (this.enemyMon.isBoss) {
