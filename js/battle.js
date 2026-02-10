@@ -3,46 +3,22 @@ const Battle = {
     participants: new Set(),
     userInputPromise: null,
 
-    // 1. Standardized Visual Hit (Handles sprites, sounds, invisible checks, and sub flipping)
-    async triggerHitAnim(target, moveType = 'normal') {
-        const isPlayer = (target === this.p);
-        const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-        const isInvisible = !!target.volatiles.invulnerable;
+    // --- UI & MENU SHIMS (Delegately to UI/BattleMenus modules) ---
+    resetSprite(...args) { return UI.resetSprite(...args); },
+    forceReflow(...args) { return UI.forceReflow(...args); },
+    uiToMoves(...args) { return BattleMenus.uiToMoves(...args); },
+    uiToMenu(...args) { return BattleMenus.uiToMenu(...args); },
+    askRun(...args) { return BattleMenus.askRun(...args); },
+    openPack(...args) { return BattleMenus.openPack(...args); },
+    renderPackList(...args) { return BattleMenus.renderPackList(...args); },
+    buildMoveMenu(...args) { return BattleMenus.buildMoveMenu(...args); },
 
-        // 1. Audio
-        // Map specific status types to sounds, default to damage
-        const sfx = (moveType === 'paralysis') ? 'electric' : (['burn', 'poison'].includes(moveType) ? 'damage' : moveType);
-        // If it's a move type (fire/water), play that, otherwise default damage
-        if (SFX_LIB[sfx] || ['fire', 'water', 'ice', 'grass', 'electric', 'psychic'].includes(sfx)) AudioEngine.playSfx(sfx);
-        else AudioEngine.playSfx('damage');
+    // --- ANIMATION SHIMS (Delegately to BattleAnims module) ---
+    triggerHitAnim(...args) { return BattleAnims.triggerHitAnim(...args); },
+    performVisualSwap(...args) { return BattleAnims.performVisualSwap(...args); },
+    triggerRageAnim(...args) { return BattleAnims.triggerRageAnim(...args); },
 
-        if (['fire', 'water', 'ice', 'grass', 'electric', 'psychic'].includes(moveType)) {
-            const scene = document.getElementById('scene');
-            scene.classList.remove(`fx-${moveType}`);
-            UI.forceReflow(scene);
-            scene.classList.add(`fx-${moveType}`);
-            // We don't await the screen flash here, we let it play in parallel with the hit
-            setTimeout(() => scene.classList.remove(`fx-${moveType}`), 600);
-        }
-
-        // 3. Sprite Shake (Skip if Digging/Flying)
-        if (!isInvisible) {
-            // Check if it is a Substitute (Doll) on the player side to flip the shake animation
-            const isFlipped = sprite.classList.contains('sub-back');
-            const hitClass = isFlipped ? 'anim-hit-flipped' : 'anim-hit';
-
-            sprite.classList.remove('anim-hit', 'anim-hit-flipped');
-            UI.forceReflow(sprite);
-            sprite.classList.add(hitClass);
-
-            await wait(400); // Wait for shake to finish
-            sprite.classList.remove(hitClass);
-        } else {
-            await wait(200); // Small delay even if invisible
-        }
-    },
-
-    // 2. Standardized Damage Application
+    // 1. Standardized Damage Application
     async applyDamage(target, amount, type = 'normal') {
         // A. Handle Substitute
         if (target.volatiles.substituteHP > 0 && type !== 'recoil' && type !== 'poison' && type !== 'burn') {
@@ -97,49 +73,7 @@ const Battle = {
 
 
 
-    // --- VISUAL SWAP HELPER (Fixed) ---
-    // --- NEW HELPER: Handles "Poof" Swaps ---
-    async performVisualSwap(mon, targetSrc, isDoll, isPlayerOverride = null) {
-        const isPlayer = (isPlayerOverride !== null) ? isPlayerOverride : (mon === this.p);
-        const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
 
-        const x = isPlayer ? 60 : 230;
-        const y = isPlayer ? 150 : 70;
-
-        AudioEngine.playSfx('ball');
-        UI.spawnSmoke(x, y);
-
-        sprite.style.opacity = 0;
-        await wait(100);
-
-        sprite.src = targetSrc;
-
-        if (isPlayer && isDoll) sprite.classList.add('sub-back');
-        else sprite.classList.remove('sub-back');
-
-        sprite.style.opacity = 1;
-
-        // Reset animation class
-        sprite.classList.remove('anim-enter');
-        UI.forceReflow(sprite);
-        sprite.classList.add('anim-enter');
-
-        // FIX: Remove the animation class after it finishes
-        // This prevents the "Growing" animation from playing again when hit
-        setTimeout(() => {
-            sprite.classList.remove('anim-enter');
-        }, 600);
-
-        await wait(200);
-    },
-
-    async triggerRageAnim(cry) {
-        document.getElementById('scene').classList.add('anim-violent');
-        if (cry) AudioEngine.playCry(cry);
-        AudioEngine.playSfx('rumble');
-        await wait(500);
-        document.getElementById('scene').classList.remove('anim-violent');
-    },
 
 
 
@@ -1649,157 +1583,12 @@ const Battle = {
         for (let i = 0; i < 5; i++) { const star = document.createElement('div'); star.className = 'shiny-star'; star.style.left = (rect.x - spread + Math.random() * (spread * 2)) + 'px'; star.style.top = (rect.y - spread + Math.random() * (spread * 2)) + 'px'; star.style.animation = `sparkle 0.6s ease-out ${i * 0.15}s forwards`; container.appendChild(star); setTimeout(() => star.remove(), 1500); }
     },
 
-    uiToMoves() {
-        if (this.uiLocked) return;
-
-        this.lastMenuIndex = Input.focus;
-
-        // Rebuild menu to account for Transform/Metronome/etc changes
-        this.buildMoveMenu();
-
-        document.getElementById('action-menu').classList.add('hidden');
-        document.getElementById('move-menu').classList.remove('hidden');
-        UI.textEl.innerHTML = "Select a move.";
-
-        Input.setMode('MOVES');
-
-        // --- FIX: Prevent Instant Double-Input ---
-        // Locks the UI for 200ms. This stops the 'Enter' key press from the 
-        // main menu from bleeding over and selecting the first move instantly.
-        this.uiLocked = true;
-        setTimeout(() => { this.uiLocked = false; }, 200);
-    },
-
-    // IN: Battle object
-    uiToMenu() {
-        // 1. CHECK RECHARGE (Hyper Beam, Giga Impact)
-        // If recharging, player cannot select a move. Force a dummy "Recharging" turn.
-        if (this.p.volatiles.recharging) {
-            this.performTurn({ name: 'Recharging', priority: 0 });
-            return;
-        }
-
-        // 2. CHECK CHARGE (Fly, Dig, Solar Beam)
-        // If mid-air or underground, player cannot select a move. Force the Saved Move.
-        if (this.p.volatiles.charging && this.p.volatiles.queuedMove) {
-            this.performTurn(this.p.volatiles.queuedMove);
-            return;
-        }
-
-        // 3. NORMAL STATE: Show Menu
-        Game.state = 'BATTLE';
-        document.getElementById('move-menu').classList.add('hidden');
-        document.getElementById('pack-screen').classList.add('hidden');
-        document.getElementById('party-screen').classList.add('hidden');
-        document.getElementById('action-menu').classList.remove('hidden');
-        UI.textEl.innerHTML = `What will<br>${this.p.name} do?`;
-
-        // Restore cursor position
-        Input.setMode('BATTLE', this.lastMenuIndex);
-    },
-
-    askRun() {
-        if (this.e.isBoss) { UI.typeText("Can't escape a BOSS!"); setTimeout(() => this.uiToMenu(), 1000); return; }
-        // SAVE CURSOR
-        this.lastMenuIndex = Input.focus;
-        const menu = document.getElementById('action-menu');
-        // Added onmouseenter to these generated buttons so they highlight with mouse
-        menu.innerHTML = `<div class="menu-item centered" id="run-yes" onclick="Battle.performRun()" onmouseenter="Input.focus=0;Input.updateVisuals()">YES</div><div class="menu-item centered" id="run-no" onclick="Battle.uiToMenu()" onmouseenter="Input.focus=1;Input.updateVisuals()">NO</div>`;
-        UI.textEl.innerHTML = "Give up and\nrestart?";
-        Input.setMode('CONFIRM_RUN');
-    },
-
-    openPack() {
-        if (this.uiLocked) return;
-        // SAVE CURSOR
-        this.lastMenuIndex = Input.focus;
-        document.getElementById('pack-screen').classList.remove('hidden');
-        document.querySelector('.bag-icon').style.backgroundImage = "url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/backpack.png')";
-        this.renderPackList();
-        Input.setMode('BAG');
-    },
-    renderPackList() {
-        const list = document.getElementById('pack-list'); list.innerHTML = "";
-        let idxCounter = 0;
-
-        // Render Items
-        Object.keys(Game.inventory).forEach((key) => {
-            const count = Game.inventory[key];
-            if (count > 0) {
-                const data = ITEMS[key];
-                const div = document.createElement('div'); div.className = 'pack-item';
-                div.innerHTML = `<span>${data.name}</span> <span>x${count}</span>`;
-
-                const showDesc = () => { document.getElementById('pack-desc').innerText = data.desc; if (data.img) { document.querySelector('.bag-icon').style.backgroundImage = `url('${data.img}')`; } };
-                const currentIdx = idxCounter;
-
-                div.onmouseover = () => showDesc();
-                div.onmouseenter = () => { Input.focus = currentIdx; Input.updateVisuals(); showDesc(); };
-                div.onclick = () => {
-                    if (data.type === 'heal' || data.type === 'revive') { Game.selectedItemKey = key; Game.state = 'HEAL'; document.getElementById('pack-screen').classList.add('hidden'); Game.openParty(false); }
-                    else { this.performItem(key); }
-                };
-                list.appendChild(div); idxCounter++;
-            }
-        });
-
-        // Render Cancel Button
-        const cancelBtn = document.createElement('div');
-        cancelBtn.className = 'pack-item cancel-btn';
-        cancelBtn.innerText = "CANCEL";
-
-        // --- FIX: ADD MOUSE TRACKING HERE ---
-        cancelBtn.onmouseenter = () => { Input.focus = idxCounter; Input.updateVisuals(); };
-        // ------------------------------------
-
-        cancelBtn.onmouseover = () => { document.getElementById('pack-desc').innerText = "Close the Pack."; };
-        cancelBtn.onclick = () => { this.uiToMenu(); };
-        list.appendChild(cancelBtn);
-    },
-
-    buildMoveMenu() {
-        const menu = document.getElementById('move-menu'); menu.innerHTML = '';
-        const infoPanel = document.createElement('div'); infoPanel.id = 'move-info'; infoPanel.innerHTML = '<div>SELECT<br>A MOVE</div>';
-        const grid = document.createElement('div'); grid.id = 'move-grid';
-
-        this.p.moves.forEach((m, i) => {
-            const btn = document.createElement('div');
-            btn.className = 'move-btn';
-            btn.innerText = m.name;
-
-            // NEW: Attach data to the button for the keyboard to find
-            btn.dataset.type = m.type;
-            btn.dataset.power = m.power > 0 ? m.power : '-';
-            btn.dataset.accuracy = m.accuracy || '-';
-
-            btn.onclick = () => this.performTurn(m);
-
-            // Mouse logic (Kept for consistency)
-            const updateInfo = () => { infoPanel.innerHTML = `<div>TYPE/<br>${m.type.toUpperCase()}</div><div>PWR/${m.power > 0 ? m.power : '-'}</div><div>ACC/${m.accuracy || '-'}%</div>`; };
-            btn.onmouseover = updateInfo;
-            btn.onmouseenter = () => { Input.focus = i; Input.updateVisuals(); updateInfo(); };
-
-            grid.appendChild(btn);
-        });
-
-        const backBtn = document.createElement('div');
-        backBtn.className = 'move-btn cancel';
-        backBtn.innerText = 'BACK';
-        backBtn.dataset.action = 'back'; // Mark this as the back button
-        backBtn.onclick = () => this.uiToMenu();
-
-        const idx = this.p.moves.length;
-        backBtn.onmouseenter = () => { Input.focus = idx; Input.updateVisuals(); infoPanel.innerHTML = '<div>RETURN<br>TO MENU</div>'; };
-
-        grid.appendChild(backBtn);
-        menu.appendChild(infoPanel); menu.appendChild(grid);
-    },
     switchIn(newMon, wasForced) {
         // We pass 'wasForced' as the second argument to processSwitch
         if (wasForced) {
             this.processSwitch(newMon, true).then(() => {
                 this.uiLocked = false;
-                this.uiToMenu();
+                BattleMenus.uiToMenu();
             });
         } else {
             this.performSwitch(newMon);

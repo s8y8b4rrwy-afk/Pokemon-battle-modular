@@ -180,10 +180,10 @@
             <div id="dialog-box" class="hidden">
                 <div id="text-content">...</div>
                 <div id="action-menu" class="hidden">
-                    <div class="menu-item" id="opt-fight" onclick="Battle.uiToMoves()">FIGHT</div>
+                    <div class="menu-item" id="opt-fight" onclick="BattleMenus.uiToMoves()">FIGHT</div>
                     <div class="menu-item" id="opt-pkmn" onclick="Game.openParty(false)">PKMN</div>
-                    <div class="menu-item" id="opt-pack" onclick="Battle.openPack()">PACK</div>
-                    <div class="menu-item" id="opt-run" onclick="Battle.askRun()">RUN</div>
+                    <div class="menu-item" id="opt-pack" onclick="BattleMenus.openPack()">PACK</div>
+                    <div class="menu-item" id="opt-run" onclick="BattleMenus.askRun()">RUN</div>
                 </div>
                 <div id="move-menu" class="hidden"></div>
             </div>
@@ -208,6 +208,8 @@
 
     <script src="js/ui.js"></script>
     <script src="js/mechanics.js"></script>
+    <script src="js/menus.js"></script>
+    <script src="js/animations.js"></script>
     <script src="js/game.js"></script>
     <script src="js/battle.js"></script>
 

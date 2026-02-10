@@ -170,8 +170,8 @@ const Input = {
 
         // 1. Global Back Button (X)
         if (k === 'x' || k === 'X') {
-            if (['MOVES', 'BAG', 'CONFIRM_RUN'].includes(this.mode)) { Battle.uiToMenu(); return; }
-            if (this.mode === 'PARTY') { if (document.getElementById('party-close-btn').innerText !== "CHOOSE A POKEMON") Battle.uiToMenu(); return; }
+            if (['MOVES', 'BAG', 'CONFIRM_RUN'].includes(this.mode)) { BattleMenus.uiToMenu(); return; }
+            if (this.mode === 'PARTY') { if (document.getElementById('party-close-btn').innerText !== "CHOOSE A POKEMON") BattleMenus.uiToMenu(); return; }
             if (this.mode === 'CONTEXT') { Game.closeContext(); return; }
             if (this.mode === 'SUMMARY') { Game.closeSummary(); return; }
         }
