@@ -160,7 +160,7 @@ const EffectsManager = {
 
         if (typeMatch) {
             await UI.typeText("It doesn't affect\n" + target.name + "...");
-            return false;
+            return 'IMMUNE';
         }
 
         target.status = ailment;

@@ -499,7 +499,7 @@ const MOVE_DEX = {
             // Grass types are immune
             if (target.types.includes('grass')) {
                 await UI.typeText("It doesn't affect\n" + target.name + "...");
-                return false;
+                return 'IMMUNE';
             }
 
             // Already seeded
