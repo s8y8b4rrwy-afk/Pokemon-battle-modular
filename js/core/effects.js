@@ -167,7 +167,8 @@ const EffectsManager = {
         UI.updateHUD(target, isPlayerTarget ? 'player' : 'enemy');
 
         AudioEngine.playSfx(ailment === 'par' ? 'electric' : 'poison');
-        await UI.typeText(`${target.name} ${STATUS_DATA[ailment].applyMsg}`);
+        const msg = STATUS_DATA[ailment].applyMsg || STATUS_DATA[ailment].msg || 'was affected!';
+        await UI.typeText(`${target.name} ${msg}`);
 
         if (ailment === 'slp') {
             target.volatiles.sleepTurns = Math.floor(Math.random() * 3) + 3;
@@ -199,7 +200,8 @@ const EffectsManager = {
                 await wait(600);
                 sprite.classList.remove(animClass);
             }
-            await UI.typeText(`${mon.name} ${STATUS_DATA[mon.status].tickMsg}`);
+            const tickMsg = STATUS_DATA[mon.status].tickMsg || STATUS_DATA[mon.status].msg || 'is affected!';
+            await UI.typeText(`${mon.name} ${tickMsg}`);
             const dmg = Math.floor(mon.maxHp / 8);
             await battle.applyDamage(mon, Math.max(1, dmg), mon.status === 'brn' ? 'burn' : 'poison');
             if (mon.currentHp <= 0) return;
