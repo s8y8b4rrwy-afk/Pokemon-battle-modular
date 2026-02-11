@@ -258,5 +258,15 @@ const EffectsManager = {
 
             if (mon.currentHp <= 0) return;
         }
+
+        // F. DISABLE
+        if (mon.volatiles.disabled) {
+            mon.volatiles.disabled.turns--;
+            if (mon.volatiles.disabled.turns <= 0) {
+                const moveName = mon.volatiles.disabled.moveName;
+                delete mon.volatiles.disabled;
+                await UI.typeText(`${mon.name}'s ${moveName}\nis no longer disabled!`);
+            }
+        }
     }
 };

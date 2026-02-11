@@ -117,6 +117,33 @@ const MOVE_DEX = {
         }
     },
 
+    // --- DISABLE ---
+    'DISABLE': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            // Check if target has used a move
+            if (!target.lastMoveUsed || !target.lastMoveUsed.name) {
+                await UI.typeText("But it failed!");
+                return false;
+            }
+
+            // Check if already disabled
+            if (target.volatiles.disabled) {
+                await UI.typeText("But it failed!");
+                return false;
+            }
+
+            // Apply disable
+            target.volatiles.disabled = {
+                moveName: target.lastMoveUsed.name,
+                turns: Math.floor(Math.random() * 4) + 4 // 4-7 turns
+            };
+
+            await UI.typeText(`${target.name}'s ${target.lastMoveUsed.name}\nwas disabled!`);
+            return true;
+        }
+    },
+
     // --- HAZARDS ---
     'SPIKES': {
         isUnique: true,

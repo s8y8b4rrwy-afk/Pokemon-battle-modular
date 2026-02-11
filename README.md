@@ -75,6 +75,7 @@ The game implements a dual-status system:
 - **Perish Song** — Faint after 3 turns countdown
 - **Trapped** — Lose 1/16 max HP per turn, cannot switch out (Bind, Wrap, Fire Spin, Whirlpool, Clamp)
 - **Leech Seed** — Lose 1/8 max HP per turn, heals opponent
+- **Disable** — Prevents using last-used move for 4-7 turns
 - **Substitute** — Decoy absorbs damage
 - **Invulnerable** — Untargetable during Fly/Dig/Bounce
 - **Destiny Bond** — If user faints, opponent faints too

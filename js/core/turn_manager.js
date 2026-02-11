@@ -131,6 +131,12 @@ const TurnManager = {
             return;
         }
 
+        // Check if move is disabled
+        if (attacker.volatiles.disabled && attacker.volatiles.disabled.moveName === move.name) {
+            await UI.typeText(`${attacker.name}'s ${move.name}\nis disabled!`);
+            return;
+        }
+
         const canMove = await EffectsManager.checkCanMove(battle, attacker, isPlayer);
         if (!canMove) {
             if (attacker.volatiles.charging) {
@@ -152,6 +158,9 @@ const TurnManager = {
         }
 
         await UI.typeText(`${attacker.name} used\n${move.name}!`);
+
+        // Track last move used (for Disable, Encore, etc.)
+        attacker.lastMoveUsed = move;
 
         const checkInvulnHit = async () => {
             if (move.target === 'user' || move.target === 'users-field') return true;
