@@ -124,13 +124,13 @@ const MOVE_DEX = {
             // Check if target has used a move
             if (!target.lastMoveUsed || !target.lastMoveUsed.name) {
                 await UI.typeText("But it failed!");
-                return false;
+                return 'FAIL';
             }
 
             // Check if already disabled
             if (target.volatiles.disabled) {
                 await UI.typeText("But it failed!");
-                return false;
+                return 'FAIL';
             }
 
             // Apply disable
