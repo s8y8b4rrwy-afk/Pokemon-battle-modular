@@ -65,12 +65,12 @@ const TYPE_CHART = {
 };
 
 const STATUS_DATA = {
-    par: { name: "PAR", color: "#d8b030", msg: "is paralyzed!\nIt can't move!" },
-    brn: { name: "BRN", color: "#c83828", msg: "is hurt\nby its burn!" },
-    psn: { name: "PSN", color: "#a040a0", msg: "is hurt\nby poison!" },
-    frz: { name: "FRZ", color: "#40a8c0", msg: "is frozen\nsolid!" },
-    slp: { name: "SLP", color: "#888888", msg: "is fast\nasleep!" },
-    confused: { name: "confused", msg: "is confused!" }
+    par: { name: "PAR", color: "#d8b030", applyMsg: "was paralyzed!", tickMsg: "is paralyzed!\nIt can't move!" },
+    brn: { name: "BRN", color: "#c83828", applyMsg: "was burned!", tickMsg: "is hurt\nby its burn!" },
+    psn: { name: "PSN", color: "#a040a0", applyMsg: "was poisoned!", tickMsg: "is hurt\nby poison!" },
+    frz: { name: "FRZ", color: "#40a8c0", applyMsg: "was frozen\nsolid!", tickMsg: "is frozen\nsolid!" },
+    slp: { name: "SLP", color: "#888888", applyMsg: "fell asleep!", tickMsg: "is fast\nasleep!" },
+    confused: { name: "confused", applyMsg: "became confused!", tickMsg: "is confused!" }
 };
 
 // Stat stage multipliers: -6 to +6

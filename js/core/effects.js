@@ -1,4 +1,17 @@
 const EffectsManager = {
+    // Helper: Convert PokeAPI ailment names to short codes
+    normalizeAilment(ailment) {
+        const ailmentMap = {
+            'paralysis': 'par',
+            'burn': 'brn',
+            'poison': 'psn',
+            'freeze': 'frz',
+            'sleep': 'slp',
+            'confusion': 'confusion'
+        };
+        return ailmentMap[ailment] || ailment;
+    },
+
     // 1. Check if Pokemon can move (Flinch, Sleep, Freeze, Para, Confusion)
     async checkCanMove(battle, mon, isPlayer) {
         // 0. FLINCH (Volatile - resets immediately)
@@ -111,6 +124,9 @@ const EffectsManager = {
 
     // 3. Apply Status Ailment
     async applyStatus(battle, target, ailment, isPlayerTarget) {
+        // Normalize ailment name (convert PokeAPI names to short codes)
+        ailment = this.normalizeAilment(ailment);
+
         if (target.volatiles.substituteHP > 0 && ailment !== 'confusion') {
             await UI.typeText("But it failed!");
             return false;
@@ -131,8 +147,8 @@ const EffectsManager = {
             return true;
         }
 
+        // Check if already has a status (fail silently - move will show "But it failed!")
         if (target.status) {
-            await UI.typeText(`${target.name} already\nhas a status!`);
             return false;
         }
 
@@ -150,13 +166,11 @@ const EffectsManager = {
         target.status = ailment;
         UI.updateHUD(target, isPlayerTarget ? 'player' : 'enemy');
 
+        AudioEngine.playSfx(ailment === 'par' ? 'electric' : 'poison');
+        await UI.typeText(`${target.name} ${STATUS_DATA[ailment].applyMsg}`);
+
         if (ailment === 'slp') {
             target.volatiles.sleepTurns = Math.floor(Math.random() * 3) + 3;
-            AudioEngine.playSfx('poison');
-            await UI.typeText(`${target.name}\nfell asleep!`);
-        } else {
-            AudioEngine.playSfx(ailment === 'par' ? 'electric' : 'poison');
-            await UI.typeText(`${target.name} ${STATUS_DATA[ailment].msg}`);
         }
 
         return true;
@@ -166,6 +180,14 @@ const EffectsManager = {
     async processEndTurnStatus(battle, mon, isPlayer) {
         if (mon.currentHp <= 0) return;
         const isInvisible = !!mon.volatiles.invulnerable;
+
+        // Safety: Clear invalid status values (e.g. 'confusion' which should be volatile)
+        if (mon.status && !STATUS_DATA[mon.status]) {
+            console.warn(`Invalid status '${mon.status}' on ${mon.name}, clearing...`);
+            mon.status = null;
+            UI.updateHUD(mon, isPlayer ? 'player' : 'enemy');
+            return;
+        }
 
         // A. STATUS DAMAGE (Burn/Poison)
         if (mon.status === 'brn' || mon.status === 'psn') {
@@ -177,7 +199,7 @@ const EffectsManager = {
                 await wait(600);
                 sprite.classList.remove(animClass);
             }
-            await UI.typeText(`${mon.name} ${STATUS_DATA[mon.status].msg}`);
+            await UI.typeText(`${mon.name} ${STATUS_DATA[mon.status].tickMsg}`);
             const dmg = Math.floor(mon.maxHp / 8);
             await battle.applyDamage(mon, Math.max(1, dmg), mon.status === 'brn' ? 'burn' : 'poison');
             if (mon.currentHp <= 0) return;

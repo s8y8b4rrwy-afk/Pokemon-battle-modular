@@ -1,6 +1,20 @@
 const API = {
     base: 'https://pokeapi.co/api/v2',
 
+    // Helper: Convert PokeAPI ailment names to short codes
+    normalizeAilment(ailment) {
+        if (!ailment) return null;
+        const ailmentMap = {
+            'paralysis': 'par',
+            'burn': 'brn',
+            'poison': 'psn',
+            'freeze': 'frz',
+            'sleep': 'slp',
+            'confusion': 'confusion'
+        };
+        return ailmentMap[ailment] || ailment;
+    },
+
     async getPokemon(id, level, overrides = {}) {
         try {
             // 1. Fetch Core Data
@@ -52,7 +66,21 @@ const API = {
             const nextLvlExp = Math.pow(level + 1, 3) - Math.pow(level, 3);
             const bst = getStat('hp') + getStat('attack') + getStat('defense') + getStat('special-attack') + getStat('special-defense') + getStat('speed');
 
-            // 6. Assemble Object
+            // 6. Normalize Status Override
+            let normalizedStatus = null;
+            let initialVolatiles = {};
+
+            if (overrides.status) {
+                const normalized = this.normalizeAilment(overrides.status);
+                // Confusion should be a volatile, not a major status
+                if (normalized === 'confusion') {
+                    initialVolatiles.confused = Math.floor(Math.random() * 4) + 2;
+                } else {
+                    normalizedStatus = normalized;
+                }
+            }
+
+            // 7. Assemble Object
             return {
                 id: data.id,
                 name: data.name.toUpperCase(),
@@ -64,8 +92,8 @@ const API = {
                 exp: 0,
                 nextLvlExp: nextLvlExp,
                 baseExp: data.base_experience || 64,
-                status: overrides.status || null,
-                volatiles: {},
+                status: normalizedStatus,
+                volatiles: initialVolatiles,
                 stages: Object.assign({ atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 }, overrides.stages || {}),
                 types: data.types.map(t => t.type.name),
                 moves: validMoves,
