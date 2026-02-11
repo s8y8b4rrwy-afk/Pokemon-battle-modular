@@ -403,6 +403,121 @@ const MOVE_DEX = {
         }
     },
 
+    // --- TRAPPING MOVES ---
+    'BIND': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            // 1. Deal initial damage
+            const moveData = { name: 'BIND', type: 'normal', power: 15, category: 'physical' };
+            const result = await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+
+            if (result.success && target.currentHp > 0) {
+                // 2. Apply trap
+                target.volatiles.trapped = {
+                    turns: Math.floor(Math.random() * 4) + 2, // 2-5 turns
+                    source: user.name,
+                    moveName: 'BIND'
+                };
+                await UI.typeText(`${target.name} was squeezed\nby ${user.name}!`);
+            }
+            return result.success;
+        }
+    },
+    'WRAP': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const moveData = { name: 'WRAP', type: 'normal', power: 15, category: 'physical' };
+            const result = await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+
+            if (result.success && target.currentHp > 0) {
+                target.volatiles.trapped = {
+                    turns: Math.floor(Math.random() * 4) + 2,
+                    source: user.name,
+                    moveName: 'WRAP'
+                };
+                await UI.typeText(`${target.name} was wrapped\nby ${user.name}!`);
+            }
+            return result.success;
+        }
+    },
+    'FIRE SPIN': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const moveData = { name: 'FIRE SPIN', type: 'fire', power: 35, category: 'special' };
+            const result = await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+
+            if (result.success && target.currentHp > 0) {
+                target.volatiles.trapped = {
+                    turns: Math.floor(Math.random() * 4) + 2,
+                    source: user.name,
+                    moveName: 'FIRE SPIN'
+                };
+                await UI.typeText(`${target.name} was trapped\nin the fiery vortex!`);
+            }
+            return result.success;
+        }
+    },
+    'WHIRLPOOL': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const moveData = { name: 'WHIRLPOOL', type: 'water', power: 35, category: 'special' };
+            const result = await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+
+            if (result.success && target.currentHp > 0) {
+                target.volatiles.trapped = {
+                    turns: Math.floor(Math.random() * 4) + 2,
+                    source: user.name,
+                    moveName: 'WHIRLPOOL'
+                };
+                await UI.typeText(`${target.name} was trapped\nin the vortex!`);
+            }
+            return result.success;
+        }
+    },
+    'CLAMP': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const moveData = { name: 'CLAMP', type: 'water', power: 35, category: 'physical' };
+            const result = await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+
+            if (result.success && target.currentHp > 0) {
+                target.volatiles.trapped = {
+                    turns: Math.floor(Math.random() * 4) + 2,
+                    source: user.name,
+                    moveName: 'CLAMP'
+                };
+                await UI.typeText(`${user.name} clamped\n${target.name}!`);
+            }
+            return result.success;
+        }
+    },
+
+    // --- LEECH SEED ---
+    'LEECH SEED': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            // Grass types are immune
+            if (target.types.includes('grass')) {
+                await UI.typeText("It doesn't affect\n" + target.name + "...");
+                return false;
+            }
+
+            // Already seeded
+            if (target.volatiles.seeded) {
+                await UI.typeText(`${target.name} is already\nseeded!`);
+                return false;
+            }
+
+            target.volatiles.seeded = {
+                source: user === battle.p ? 'player' : 'enemy'
+            };
+
+            AudioEngine.playSfx('poison');
+            await UI.typeText(`${target.name} was seeded!`);
+            return true;
+        }
+    },
+
     // --- CONDITIONAL ---
     'DREAM EATER': { condition: (t) => t.status === 'slp' },
     'NIGHTMARE': { condition: (t) => t.status === 'slp' },

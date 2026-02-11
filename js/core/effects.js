@@ -224,5 +224,37 @@ const EffectsManager = {
             await battle.applyDamage(mon, Math.max(1, dmg), 'poison');
             if (mon.currentHp <= 0) return;
         }
+
+        // D. TRAPPED (Bind, Wrap, Fire Spin, Whirlpool, Clamp)
+        if (mon.volatiles.trapped) {
+            await wait(400);
+            const trap = mon.volatiles.trapped;
+            await UI.typeText(`${mon.name} is hurt by\n${trap.moveName}!`);
+            const dmg = Math.floor(mon.maxHp / 16);
+            await battle.applyDamage(mon, Math.max(1, dmg), 'normal');
+
+            trap.turns--;
+            if (trap.turns <= 0) {
+                delete mon.volatiles.trapped;
+                await UI.typeText(`${mon.name} was freed\nfrom ${trap.moveName}!`);
+            }
+            if (mon.currentHp <= 0) return;
+        }
+
+        // E. LEECH SEED
+        if (mon.volatiles.seeded) {
+            await wait(400);
+            const dmg = Math.floor(mon.maxHp / 8);
+            await UI.typeText(`${mon.name}'s health\nis sapped by LEECH SEED!`);
+            await battle.applyDamage(mon, Math.max(1, dmg), 'grass');
+
+            // Heal the source (if still alive)
+            const source = mon.volatiles.seeded.source === 'player' ? battle.p : battle.e;
+            if (source && source.currentHp > 0 && source.currentHp < source.maxHp) {
+                await battle.applyHeal(source, Math.max(1, dmg), null);
+            }
+
+            if (mon.currentHp <= 0) return;
+        }
     }
 };

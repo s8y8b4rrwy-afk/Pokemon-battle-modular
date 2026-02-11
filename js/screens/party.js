@@ -1,6 +1,13 @@
 const PartyScreen = {
     open(forced) {
         if (Battle.uiLocked && !forced && !['OVERFLOW', 'HEAL'].includes(Game.state)) return;
+
+        // Prevent switching when trapped (unless forced)
+        if (Game.state === 'BATTLE' && !forced && Battle.p && Battle.p.volatiles.trapped) {
+            UI.typeText(`${Battle.p.name} can't be\nrecalled!`);
+            return;
+        }
+
         if (Game.state === 'BATTLE' && !forced) Battle.lastMenuIndex = Input.focus;
 
         if (!['OVERFLOW', 'HEAL'].includes(Game.state)) Game.state = 'PARTY';
