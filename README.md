@@ -58,6 +58,29 @@ A fully-featured Pokémon battle simulator inspired by **Pokémon Gold & Silver*
 - **Status Conditions** — Burn, Poison, Paralysis, Freeze, Sleep with accurate mechanics
 - **Volatile Statuses** — Confusion, Flinch, Substitute, Invulnerability (Fly/Dig), Recharge, Focus Energy
 
+#### Status System Architecture
+The game implements a dual-status system:
+
+**Major Statuses** (stored in `mon.status`, only 1 allowed):
+- **Burn (BRN)** — Halves physical attack damage, deals 1/8 max HP per turn
+- **Poison (PSN)** — Deals 1/8 max HP per turn
+- **Paralysis (PAR)** — 25% chance to be unable to move each turn
+- **Freeze (FRZ)** — Cannot move, 20% chance to thaw each turn
+- **Sleep (SLP)** — Cannot move for 1-3 turns
+
+**Volatile Statuses** (stored in `mon.volatiles`, multiple allowed):
+- **Confusion** — 33% chance to hurt self, lasts 2-5 turns
+- **Flinch** — Skip turn (resets immediately)
+- **Cursed** — Lose 1/4 max HP per turn (from Ghost-type Curse)
+- **Perish Song** — Faint after 3 turns countdown
+- **Substitute** — Decoy absorbs damage
+- **Invulnerable** — Untargetable during Fly/Dig/Bounce
+- **Destiny Bond** — If user faints, opponent faints too
+- **Recharging** — Must rest after Hyper Beam
+- **Protected** — Immune to attacks (Protect/Detect)
+
+A Pokémon can have **one major status AND multiple volatile statuses simultaneously**. The system includes automatic normalization of PokeAPI ailment names to ensure compatibility.
+
 ### 🧠 Move System (80+ Unique Behaviors)
 - **Two-Turn Moves** — Fly, Dig, Solar Beam, Skull Bash (with weather skip)
 - **Recharge Moves** — Hyper Beam
@@ -272,9 +295,34 @@ const DEBUG = {
 | [Google Fonts — Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) | Retro pixel typeface |
 | [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) | Synthesized sound effects |
 
+
 ---
 
-## 📄 Documentation
+## 📝 Recent Updates
+
+### v1.1.0 - Status System Overhaul (Feb 2026)
+**Fixed:**
+- ✅ Status ailment TypeError when applying burn, poison, paralysis from moves
+- ✅ Confusion incorrectly being set as major status instead of volatile
+- ✅ Redundant "already has a status" messages
+
+**Improved:**
+- 🎯 Added automatic normalization of PokeAPI ailment names (`paralysis` → `par`, `burn` → `brn`, etc.)
+- � Contextual status messages (different text when applied vs. ongoing)
+  - Apply: "PIKACHU was burned!"
+  - Tick: "PIKACHU is hurt by its burn!"
+- 🛡️ Safety checks to prevent invalid status values from crashing the game
+- 📚 Enhanced documentation of dual-status system architecture
+
+**Technical:**
+- Added `normalizeAilment()` helper in both `EffectsManager` and `API` modules
+- Updated `STATUS_DATA` with separate `applyMsg` and `tickMsg` properties
+- Improved error handling in `processEndTurnStatus`
+
+---
+
+## �📄 Documentation
+
 
 For a detailed structural breakdown of every module, function, constant, and line range in the codebase, see:
 
