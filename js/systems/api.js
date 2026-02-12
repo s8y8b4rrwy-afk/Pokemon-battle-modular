@@ -103,6 +103,7 @@ const API = {
                 icon: data.sprites.versions['generation-vii']['icons'].front_default,
                 cry: data.cries ? data.cries.latest : null,
                 isBoss: false,
+                speciesUrl: data.species ? data.species.url : null,
                 failedCatches: 0,
                 rageLevel: 0,
                 isHighTier: bst > 480
@@ -136,5 +137,22 @@ const API = {
                 max_hits: mData.meta ? mData.meta.max_hits : null
             };
         } catch (e) { return null; }
+    },
+
+    async getEvolutionChain(speciesUrl) {
+        try {
+            // 1. Get Species Data
+            const sRes = await fetch(speciesUrl);
+            const sData = await sRes.json();
+
+            // 2. Get Evolution Chain
+            const cRes = await fetch(sData.evolution_chain.url);
+            const cData = await cRes.json();
+
+            return cData.chain;
+        } catch (e) {
+            console.error("Evo Chain Error", e);
+            return null;
+        }
     }
 };

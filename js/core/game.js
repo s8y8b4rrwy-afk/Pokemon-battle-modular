@@ -353,6 +353,13 @@ const Game = {
                 UI.updateHUD(p, 'player');
             }
             await UI.typeText(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to Level ${p.level}!`);
+
+            // Evolution Check
+            if (typeof Evolution !== 'undefined') {
+                const evo = await Evolution.check(p);
+                if (evo) await Evolution.execute(p, evo);
+            }
+
             resolve();
         });
     },

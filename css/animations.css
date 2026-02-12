@@ -675,3 +675,40 @@
     animation: circle 1.5s linear infinite;
     position: absolute;
 }
+
+/* --- EVOLUTION --- */
+@keyframes evo-glow {
+    0% {
+        filter: brightness(1) drop-shadow(0 0 0px white);
+    }
+
+    50% {
+        filter: brightness(10) drop-shadow(0 0 20px white);
+    }
+
+    100% {
+        filter: brightness(1) drop-shadow(0 0 0px white);
+    }
+}
+
+@keyframes evo-flash {
+    0% {
+        background-color: transparent;
+    }
+
+    50% {
+        background-color: white;
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+.anim-evo-glow {
+    animation: evo-glow 1.5s ease-in-out infinite;
+}
+
+.anim-evo-flash {
+    animation: evo-flash 0.5s ease-out;
+}

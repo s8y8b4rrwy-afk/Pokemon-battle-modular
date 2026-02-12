@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/battle.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/explosion.css">
+    <link rel="stylesheet" href="css/evolution.css">
 </head>
 
 <body>
@@ -43,6 +44,7 @@
 
             <!-- Name Input Screen -->
             <div id="name-screen" class="hidden">
+                <!-- ... (unchanged) ... -->
                 <div style="margin-bottom: 10px;">REGISTRATION</div>
                 <div style="font-size: 8px; margin-bottom: 20px;">PLEASE ENTER YOUR NAME</div>
                 <input type="text" id="name-input" maxlength="8" placeholder="NAME">
@@ -51,6 +53,7 @@
 
             <!-- CONTINUE SCREEN -->
             <div id="continue-screen" class="hidden">
+                <!-- ... (unchanged) ... -->
                 <div class="cont-menu-box">
                     <div class="cont-opt" id="opt-continue" onclick="Game.loadGame()">CONTINUE</div>
                     <div class="cont-opt" id="opt-newgame" onclick="Game.startNameInput()">NEW GAME</div>
@@ -67,6 +70,7 @@
 
             <!-- Summary Screen -->
             <div id="summary-panel" class="hidden">
+                <!-- ... (unchanged content, just preserving structure) ... -->
                 <div class="sum-header">
                     <div style="font-weight: bold; font-size: 10px;" id="sum-name">NAME</div>
                     <div id="sum-shiny-icon" style="color:gold; font-size:10px; display:none;">✦</div>
@@ -118,6 +122,18 @@
                     <div class="pack-list" id="pack-list"></div>
                 </div>
                 <div class="pack-desc-box" id="pack-desc">Choose an item.</div>
+            </div>
+
+            <!-- EVOLUTION SCREEN (NEW) -->
+            <div id="evolution-screen" class="hidden">
+                <div class="evo-preview-box">
+                    <div class="evo-sprite-container">
+                        <img id="evo-sprite" src="">
+                    </div>
+                </div>
+                <div class="evo-text-box" id="evo-text">
+                    What? ELKIE is evolving!
+                </div>
             </div>
 
             <!-- RETRO SELECTION SCREEN -->
@@ -240,6 +256,7 @@
     <script src="js/screens/summary.js"></script>
     <script src="js/screens/selection.js"></script>
     <script src="js/engine/ai.js"></script>
+    <script src="js/core/evolution.js"></script>
     <script src="js/core/game.js"></script>
     <script src="js/core/battle.js"></script>
 
