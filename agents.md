@@ -15,18 +15,33 @@ It is CRITICAL to respect this structure. Do not place files randomly.
 pokemon-battle-modular/
 ├── Pokemon.html          # Main Entry Point (Loads all scripts in order)
 ├── css/
-│   └── styles.css        # Global Stylesheet (Single file for now)
+│   ├── base.css          # Root variables, body, game container, LCD
+│   ├── utils.css         # Hidden, buttons, focus states, scrollbars, retro motion
+│   ├── screens.css       # Start, Name Entry, Continue screens
+│   ├── selection.css     # Starter selection lab screen
+│   ├── summary.css       # Pokémon summary panel
+│   ├── party.css         # Party screen & context menu
+│   ├── pack.css          # Bag/item screen
+│   ├── battle.css        # Battle scene, sprites, HUD, dialog, menus
+│   ├── animations.css    # All @keyframes & animation classes
+│   └── explosion.css     # Explosion FX
 └── js/
     ├── core/             # Core Game Logic (The Brain)
     │   ├── game.js       # Game State & Flow (Save/Load, Win/Loss)
     │   ├── battle.js     # Battle Manager (Orchestrator)
     │   ├── turn_manager.js # Turn Sequences & Action Queue
     │   ├── moves_engine.js # Move Logic & Damage Phase Execution
-    │   └── mechanics.js  # Math & Formulas (Damage, Exp, Catch Rate)
+    │   ├── mechanics.js  # Math & Formulas (Damage, Exp, Catch Rate)
+    │   ├── effects.js    # End-of-turn effects & status processing
+    │   ├── capture.js    # Pokéball catch logic & animations
+    │   ├── environment.js # Weather & field effects
+    │   ├── faint_manager.js # Fainting, replacement, & simultaneous faint logic
+    │   └── rage_manager.js  # Rage mechanic processing
     ├── data/             # Static Data (The Database)
-    │   ├── constants.js  # Global Config (ANIM, TYPE_CHART)
+    │   ├── constants.js  # Global Config (ANIM, TYPE_CHART, STATUS_DATA)
+    │   ├── debug.js      # Debug/Dev Mode Configuration
     │   ├── items.js      # Item Definitions
-    │   ├── moves.js      # Move Definitions
+    │   ├── moves.js      # Move Definitions (MOVE_DEX)
     │   └── settings.js   # User Preferences (Keybinds, etc)
     ├── engine/           # Procedural Generators
     │   ├── ai.js         # Enemy AI Logic
@@ -35,12 +50,15 @@ pokemon-battle-modular/
     │   ├── api.js        # PokeAPI Interface
     │   ├── audio.js      # Web Audio API Wrapper
     │   ├── input.js      # Keyboard Input Handler
+    │   ├── logger.js     # Battle Logger (Console output)
     │   ├── storage.js    # LocalStorage Wrapper
-    │   └── utils.js      # Helpers (RNG, Math)
+    │   └── utils.js      # Helpers (RNG, Math, wait)
     ├── ui/               # Interface Components
-    │   ├── ui.js         # General DOM Helpers (Text typing, HUD updates)
-    │   ├── menus.js      # Menu logic (Action, Move, Bag)
-    │   └── animations.js # CSS Animation Triggers
+    │   ├── ui.js            # General DOM Helpers (Text typing, HUD updates)
+    │   ├── menus.js         # Menu logic (Action, Move, Bag)
+    │   ├── anim_framework.js # Data-driven animation engine (registry + step executor)
+    │   ├── anim_registry.js  # Pre-built animation definitions (registered sequences)
+    │   └── animations.js    # High-level animation API (delegates to framework)
     └── screens/          # Full-Screen Modules
         ├── party.js      # Pokemon Party Screen
         ├── selection.js  # Starter Selection Screen
@@ -77,7 +95,26 @@ Order matters in `Pokemon.html`.
 ### 5. CSS & Styling
 *   **Rule:** Use kebab-case for classes (`.hp-bar`, `.active-slot`).
 *   **Rule:** ID selectors are okay for unique static elements (`#player-hud`).
-*   **Rule:** Keep animations in `css/styles.css` but trigger them via `js/ui/animations.js`.
+*   **Rule:** CSS is modular: `base.css` (variables), `battle.css` (scene), `animations.css` (keyframes), etc.
+*   **Rule:** New `@keyframes` go in `css/animations.css`. New screen styles go in their own CSS file.
+
+### 6. Animation Framework
+*   **Rule:** New battle animations should be registered via `AnimFramework.register(name, steps)` in `js/anim/anim_registry.js`.
+*   **Rule:** Steps are declarative objects: `{ type: 'sfx'|'beam'|'particles'|'screenFx'|'spriteShake'|'flash'|'spawn'|'parallel'|..., ...params }`.
+*   **Rule:** Use `'attacker'` and `'defender'` as position/element references — the framework resolves player/enemy side automatically.
+*   **Rule:** `BattleAnims.playRegistered(name, ctx)` is the preferred entry point for new code.
+
+---
+
+## 📖 Agent Skills Reference
+
+These skills provide detailed, step-by-step guidance for common workflows. **Always read the relevant skill before starting a task.**
+
+| Skill | Path | When to Use |
+|-------|------|-------------|
+| **Add Feature** | `.agent/skills/add_feature/SKILL.md` | Adding new moves, items, or mechanics. Covers MOVE_DEX patterns, return values, end-of-turn effects, animation registration, and testing checklist. |
+| **Battle Animations & Timing** | `.agent/skills/battle_animations/SKILL.md` | Creating or modifying battle animations. Documents the `AnimFramework` step types, context object, entry/hit/faint sequences, and CSS animation file conventions. |
+| **Project Architecture & Maintenance** | `.agent/skills/architecture/SKILL.md` | Understanding the modular structure, script loading order, global module pattern, cross-module communication, and CSS file organization. |
 
 ---
 
@@ -86,7 +123,7 @@ Order matters in `Pokemon.html`.
 ### Adding a New Move
 1.  **Define it**: Add entry to `MOVES` in `js/data/moves.js`.
 2.  **Logic**: If it has a unique effect, add a handler in `js/core/mechanics.js` (for effects) or `js/core/battle.js` (for turn flow).
-3.  **Anim**: If it needs a specific animation, add to `js/ui/animations.js`.
+3.  **Anim**: Register an animation via `AnimFramework.register()` in `js/anim/anim_registry.js`.
 
 ### Adding a New Item
 1.  **Define it**: Add entry to `ITEMS` in `js/data/items.js`.

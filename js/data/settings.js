@@ -1,7 +1,3 @@
-// --- DEBUG SETTINGS REMOVED --
-// See js/data/debug.js for debug configurations.
-// DEBUG is now defined solely in debug.js to avoid redeclaration errors.
-
 // --- GAME BALANCE CONTROLLER ---
 // Tweak difficulty, RNG, and rewards here.
 const GAME_BALANCE = {
@@ -13,13 +9,19 @@ const GAME_BALANCE = {
 
     // Catching & Rage
     CATCH_RATE_MODIFIER: 1.0,   // Higher = Easier to catch
-    RAGE_TRIGGER_CHANCE: 0.25,  // 25% chance to get angry on miss/fail
+    RAGE_BASE_CHANCE: 0.20,     // 20% base chance to get angry
     RAGE_DEFLECT_CHANCE: 0.20,  // % per rage level to deflect ball
 
     // RAGE MECHANICS (New)
-    RAGE_MULTIHIT_BASE: 0.34,   // 34% chance per rage level to hit again
+    RAGE_MULTIHIT_BASE: 0.20,   // 20% chance per rage level to hit again
     RAGE_RECOIL_CHANCE: 0.20,   // 20% chance to take damage on extra hits
     RAGE_RECOIL_DMG: 0.20,      // Take 20% of damage dealt as recoil
+    RAGE_CRIT_BONUS: 0.25,      // Extra 25% chance if hit by crit
+    RAGE_SUPER_EFF_BONUS: 0.15, // Extra 15% chance if hit by super effective move
+    RAGE_LOW_HP_BONUS: 0.10,    // Extra 10% chance if HP < 50%
+    RAGE_MAX_LEVEL: 3,          // Max level a pokemon can reach
+    RAGE_MIN_DAMAGE_PCT: 0.20,  // Need > 20% HP damage taken to trigger building
+    RAGE_STATUS_BONUS: 0.05,    // Extra 5% chance if status/volatile inflicted
 
     // Post-Battle
     HEAL_WIN_MIN_PCT: 0.15,     // Heal at least 15% HP after win

@@ -15,8 +15,8 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Generation-II-gold?style=for-the-badge" alt="Gen II">
   <img src="https://img.shields.io/badge/Pokémon-251-red?style=for-the-badge" alt="251 Pokemon">
-  <img src="https://img.shields.io/badge/Status-Phase_3_Complete-green?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/Architecture-ES6_Modules-blue?style=for-the-badge" alt="ES6 Modules">
+  <img src="https://img.shields.io/badge/Status-Phase_4_Complete-green?style=for-the-badge" alt="Status">
+  <img src="https://img.shields.io/badge/Architecture-Modular_Globals-blue?style=for-the-badge" alt="Modular Globals">
 </p>
 
 ---
@@ -181,51 +181,70 @@ python3 -m http.server 8000
 
 ## 🏗️ Architecture
 
-> **⚠️ Note:** This section describes the **planned modular architecture**. The current state still contains the original monolith `Pokemon.html` while modularization is in progress.
+> **No-Bundler Modular Approach.** Modules are defined as global singleton objects and loaded sequentially via `<script>` tags in `Pokemon.html`.
 
-### Planned Module Structure
+### Project Structure
 
 ```
 pokemon-battle-modular/
-├── index.html                 # Main HTML entry point
-├── package.json              # Dependencies and build scripts
-│
-├── src/
-│   ├── index.js             # Main entry point (Future-plan)
-│   │
-│   ├── config/              # Configuration & Constants (Moved to js/data)
-│   │   ├── constants.js     # DEBUG, ENCOUNTER_CONFIG, GAME_BALANCE
-│   │   ├── items.js         # ITEMS dictionary
-│   │   ├── settings.js      # User preferences
-│   │   └── types.js         # TYPE_CHART
-│   │
-│   ├── data/                # Reference Data
-│   │   └── moves.js         # MOVE_DEX and MOVE_LOGIC
-│   │
-│   ├── engine/              # Procedural & AI (Moved to js/engine & js/systems)
-│   │   ├── ai.js            # Enemy AI Logic
-│   │   ├── encounter.js     # Wild Pokemon Generator
-│   │   └── api.js           # PokeAPI Interface
-│   │
-│   ├── game/                # Core Battle Logic (Moved to js/core)
-│   │   ├── game.js          # Main Game Module
-│   │   ├── battle.js        # Battle Manager (Delegates to sub-managers)
-│   │   ├── turn_manager.js  # Turn Orchestration & Sequence
-│   │   ├── moves_engine.js  # Move Execution & Damage Processing
-│   │   └── mechanics.js     # Math (Damage, EXP formulas)
-│   │
-│   ├── ui/                  # UI Components (Moved to js/ui & js/ui/screens)
-│   │   ├── ui.js            # Central DOM management
-│   │   ├── animations.js    # Visual FX triggers
-│   │   └── menus.js         # Battle menus (Fight, Bag, PKMN)
-│   │
-│   └── utils/               # Helpers (Moved to js/systems)
-│       └── utils.js         # RNG, wait/sleep helpers
+├── Pokemon.html              # Main Entry Point
+├── css/                      # Modular Stylesheets (10 files)
+│   ├── base.css              # Root variables, body, game container
+│   ├── utils.css             # Utility classes, focus states, scrollbars
+│   ├── screens.css           # Start, Name Entry, Continue screens
+│   ├── selection.css         # Starter selection lab
+│   ├── summary.css           # Pokémon summary panel
+│   ├── party.css             # Party screen & context menu
+│   ├── pack.css              # Bag/item screen
+│   ├── battle.css            # Battle scene, sprites, HUD, dialog
+│   ├── animations.css        # All @keyframes & animation classes
+│   └── explosion.css         # Explosion FX
+└── js/                       # 31 JS Modules
+    ├── core/                 # Core Game Logic
+    │   ├── game.js           # Game State & Flow
+    │   ├── battle.js         # Battle Manager (Orchestrator)
+    │   ├── turn_manager.js   # Turn Sequences & Action Queue
+    │   ├── moves_engine.js   # Move Logic & Damage Execution
+    │   ├── mechanics.js      # Math (Damage, Exp, Catch Rate)
+    │   ├── effects.js        # End-of-turn effects & status ticks
+    │   ├── capture.js        # Pokéball catch logic
+    │   ├── environment.js    # Weather & field effects
+    │   ├── faint_manager.js  # Fainting & replacement logic
+    │   └── rage_manager.js   # Rage mechanic processing
+    ├── data/                 # Static Data & Config
+    │   ├── constants.js      # ANIM, TYPE_CHART, STATUS_DATA
+    │   ├── debug.js          # Debug/Dev Mode Configuration
+    │   ├── items.js          # Item Definitions
+    │   ├── moves.js          # Move Definitions (MOVE_DEX)
+    │   └── settings.js       # User Preferences
+    ├── engine/               # Procedural Generators
+    │   ├── ai.js             # Enemy AI Logic
+    │   └── encounter.js      # Wild Pokemon Generator
+    ├── systems/              # Low-Level Utilities
+    │   ├── api.js            # PokeAPI Interface
+    │   ├── audio.js          # Web Audio API Wrapper
+    │   ├── input.js          # Keyboard Input Handler
+    │   ├── logger.js         # Battle Logger
+    │   ├── storage.js        # LocalStorage Wrapper
+    │   └── utils.js          # Helpers (RNG, Math, wait)
+    ├── ui/                   # Interface Components
+    │   ├── ui.js             # General DOM Helpers (Text, HUD)
+    │   ├── menus.js          # Menu logic (Fight, Bag, PKMN)
+    │   ├── anim_framework.js # Data-driven animation engine
+    │   ├── anim_registry.js  # Pre-built animation definitions
+    │   └── animations.js     # High-level animation API
+    └── screens/              # Full-Screen Modules
+        ├── party.js          # Pokemon Party Screen
+        ├── selection.js      # Starter Selection Screen
+        └── summary.js        # Pokemon Summary Screen
 ```
 
-### Current State (Original Monolith)
-
-The repository currently contains `Pokemon.html` — a **single-file monolith** (6,090 lines, ~250KB) with all HTML, CSS, and JavaScript. See the [original repository](https://github.com/s8y8b4rrwy-afk/pokemon-gs-battle-system-clone) for detailed documentation of the monolith structure.
+### Animation Framework
+Battle animations use a **registry-based, data-driven system**:
+- Define animations as arrays of declarative steps (SFX, beams, particles, screen flashes, sprite shakes)
+- Register with `AnimFramework.register('name', steps)` in `anim_registry.js`
+- Play with `AnimFramework.play('name', { attacker, defender, isPlayerAttacker })`
+- Supports `parallel` steps for combining effects simultaneously
 
 ### Key Design Decisions
 
@@ -274,13 +293,14 @@ const DEBUG = {
 
 | Metric | Value |
 |--------|-------|
-| **Total Lines** | 6,090 |
-| **File Size** | ~250 KB |
-| **CSS Lines** | ~1,978 |
-| **HTML Lines** | ~100 |
-| **JS Lines** | ~4,000 |
+| **Total Lines** | ~7,850 |
+| **JS Files** | 31 modules |
+| **CSS Files** | 10 stylesheets |
+| **CSS Lines** | ~2,000 |
+| **JS Lines** | ~5,600 |
+| **HTML Lines** | ~250 |
 | **Keyframe Animations** | 50+ |
-| **JS Modules** | 7 (AudioEngine, API, Input, StorageSystem, EncounterManager, Game, Battle) |
+| **Registered Anim Sequences** | 20+ (via AnimFramework) |
 | **Unique Move Behaviors** | 80+ |
 | **Sound Effects** | 27 synthesized SFX |
 | **Pokémon Available** | 251 (Gen I + II) |
@@ -303,6 +323,23 @@ const DEBUG = {
 
 ## 📝 Recent Updates
 
+### v1.2.0 - Modularization & Animation Framework (Feb 2026)
+**CSS Modularization:**
+- ✅ Split 1,993-line `styles.css` into 10 focused files (base, utils, screens, selection, summary, party, pack, battle, animations, explosion)
+- ✅ Cleaned up duplicate `@keyframes` definitions
+
+**Animation Framework:**
+- 🎬 Data-driven animation engine (`AnimFramework`) with 14 declarative step types
+- 🎬 Registry-based system — new animations added by calling `AnimFramework.register()`
+- 🎬 Pre-built beam, particle, flash, and screen-shake animations for major move types
+- 🎬 Side-agnostic context resolution (attacker/defender auto-resolved)
+
+**New Modules:**
+- ➕ `anim_framework.js` — Animation engine
+- ➕ `anim_registry.js` — Animation definitions
+- ➕ `rage_manager.js` — Extracted rage mechanic
+- ➕ `logger.js` — Battle logging system
+
 ### v1.1.0 - Status System Overhaul (Feb 2026)
 **Fixed:**
 - ✅ Status ailment TypeError when applying burn, poison, paralysis from moves
@@ -311,7 +348,7 @@ const DEBUG = {
 
 **Improved:**
 - 🎯 Added automatic normalization of PokeAPI ailment names (`paralysis` → `par`, `burn` → `brn`, etc.)
-- � Contextual status messages (different text when applied vs. ongoing)
+- 💬 Contextual status messages (different text when applied vs. ongoing)
   - Apply: "PIKACHU was burned!"
   - Tick: "PIKACHU is hurt by its burn!"
 - 🛡️ Safety checks to prevent invalid status values from crashing the game

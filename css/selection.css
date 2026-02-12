@@ -1,0 +1,123 @@
+/* ========================================
+   SELECTION - Starter Pokémon Lab Screen
+   ======================================== */
+
+#selection-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #202020;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.sel-preview-box {
+    height: 110px;
+    margin: 10px 10px 0 10px;
+    background: #fff;
+    border: 4px solid #444;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.preview-sprite {
+    width: 96px;
+    height: 96px;
+    image-rendering: pixelated;
+}
+
+.shiny-mark {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: gold;
+    font-size: 12px;
+    display: none;
+}
+
+.lab-table-area {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #202020;
+    position: relative;
+}
+
+.table-graphic {
+    width: 200px;
+    height: 60px;
+    background: #fff;
+    border: 2px solid #888;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-radius: 4px;
+    position: relative;
+}
+
+.pokeball-select {
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle at 35% 35%, white 10%, red 11%, red 50%, black 51%, black 60%, white 61%);
+    border-radius: 50%;
+    border: 1px solid black;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
+}
+
+.pokeball-select.focused {
+    transform: scale(1.1);
+    box-shadow: 0 0 5px gold;
+}
+
+.sel-cursor {
+    position: absolute;
+    top: -20px;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    transition: left 0.1s steps(1);
+    pointer-events: none;
+}
+
+.sel-cursor::after {
+    content: "▼";
+    color: #d8b030;
+    font-size: 12px;
+    position: absolute;
+    left: 4px;
+    animation: bounceCursor 0.6s infinite;
+}
+
+@keyframes bounceCursor {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+.sel-desc-box {
+    height: 60px;
+    background: white;
+    border-top: 4px solid #888;
+    padding: 8px;
+    font-size: 8px;
+    line-height: 12px;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}

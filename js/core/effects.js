@@ -29,6 +29,11 @@ const EffectsManager = {
                 await UI.typeText(`${mon.name} thawed out!`);
                 return true;
             }
+            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+            sprite.classList.add('status-anim-frz');
+            AudioEngine.playSfx('ice');
+            await wait(600);
+            sprite.classList.remove('status-anim-frz');
             await UI.typeText(`${mon.name} is\nfrozen solid!`);
             return false;
         }
@@ -42,12 +47,22 @@ const EffectsManager = {
                 await UI.typeText(`${mon.name} woke up!`);
                 return true;
             }
+            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+            sprite.classList.add('status-anim-slp');
+            AudioEngine.playSfx('sleep');
+            await wait(600);
+            sprite.classList.remove('status-anim-slp');
             await UI.typeText(`${mon.name} is\nfast asleep!`);
             return false;
         }
 
         // 3. PARALYSIS
         if (mon.status === 'par' && Math.random() < 0.25) {
+            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+            sprite.classList.add('status-anim-par');
+            AudioEngine.playSfx('electric');
+            await wait(600);
+            sprite.classList.remove('status-anim-par');
             await UI.typeText(`${mon.name} is paralyzed!\nIt can't move!`);
             return false;
         }
@@ -106,6 +121,11 @@ const EffectsManager = {
             }
 
             target.stages[stat] = Math.min(6, Math.max(-6, target.stages[stat] + change));
+
+            // Comprehensive Logging
+            if (typeof BattleLogger !== 'undefined' && BattleLogger.enabled) {
+                BattleLogger.logStatChange(target, stat, change, isPlayer);
+            }
 
             const dir = change > 0 ? "rose!" : "fell!";
             const deg = Math.abs(change) > 1 ? "sharply " : "";
@@ -166,7 +186,16 @@ const EffectsManager = {
         target.status = ailment;
         UI.updateHUD(target, isPlayerTarget ? 'player' : 'enemy');
 
-        AudioEngine.playSfx(ailment === 'par' ? 'electric' : 'poison');
+        // Sprite Flash & Sound
+        const sprite = isPlayerTarget ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+        const animClass = `status-anim-${ailment}`;
+        const sfxMap = { 'par': 'electric', 'psn': 'poison', 'brn': 'burn', 'frz': 'ice', 'slp': 'sleep' };
+
+        if (animClass) sprite.classList.add(animClass);
+        AudioEngine.playSfx(sfxMap[ailment] || 'damage');
+        await wait(600);
+        if (animClass) sprite.classList.remove(animClass);
+
         const msg = STATUS_DATA[ailment].applyMsg || STATUS_DATA[ailment].msg || 'was affected!';
         await UI.typeText(`${target.name} ${msg}`);
 
@@ -197,6 +226,7 @@ const EffectsManager = {
                 const animClass = mon.status === 'brn' ? 'status-anim-brn' : 'status-anim-psn';
                 const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
                 sprite.classList.add(animClass);
+                AudioEngine.playSfx(mon.status === 'brn' ? 'burn' : 'poison');
                 await wait(600);
                 sprite.classList.remove(animClass);
             }

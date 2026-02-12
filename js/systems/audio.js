@@ -89,6 +89,37 @@ const AudioEngine = {
                 osc.start(now); osc.stop(now + 0.3);
                 break;
 
+            case 'poison':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(80, now);
+                osc.frequency.linearRampToValueAtTime(200, now + 0.1);
+                osc.frequency.linearRampToValueAtTime(50, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+                break;
+
+            case 'ice':
+                this.playTone(1200, 'sine', 0.05, 0.1, 0);
+                this.playTone(1800, 'sine', 0.05, 0.1, 0.05);
+                this.playTone(1400, 'sine', 0.05, 0.1, 0.1);
+                break;
+
+            case 'sleep':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.4);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+                break;
+
+            case 'burn':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+                break;
+
             case 'ball': this.playNoise(0.3); break;
             case 'rumble': this.playNoise(0.5); break;
             case 'catch_success': this.playNoise(0.2); break;

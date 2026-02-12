@@ -1,0 +1,150 @@
+/* ========================================
+   UTILS - Hidden, Buttons, Focus States, Scrollbars
+   ======================================== */
+
+/* --- HIGHLIGHT PRIORITY --- */
+.move-btn.cancel.focused {
+    background: #202020 !important;
+    color: white !important;
+    border-color: #000 !important;
+}
+
+.confirm-btn.secondary.focused {
+    background: #000 !important;
+    color: white !important;
+}
+
+.confirm-btn.danger.focused {
+    background: #000 !important;
+    color: white !important;
+}
+
+.pack-item.cancel-btn.focused {
+    background: #202020 !important;
+    color: white !important;
+    border-color: #000 !important;
+}
+
+/* --- UTILITY --- */
+.hidden {
+    display: none !important;
+}
+
+.btn-bar {
+    background: #ddd;
+    text-align: center;
+    padding: 6px;
+    font-size: 8px;
+    cursor: pointer;
+    border-top: 2px solid #999;
+    margin-top: auto;
+}
+
+.btn-bar:hover,
+.btn-bar.focused {
+    background: #ccc;
+}
+
+/* --- FOCUS / HOVER STATES --- */
+.menu-item:hover,
+.menu-item.focused {
+    background-color: #eee;
+}
+
+.menu-item:hover::before,
+.menu-item.focused::before {
+    opacity: 1;
+}
+
+.move-btn:hover,
+.move-btn.focused {
+    background: #e0e0e0;
+    border-color: #202020;
+}
+
+.party-slot:hover,
+.party-slot.focused {
+    background: #eee;
+    border-color: #000;
+}
+
+.pack-item:hover,
+.pack-item.focused {
+    background: #eee;
+    border: 1px solid #ccc;
+}
+
+.ctx-btn:hover,
+.ctx-btn.focused {
+    background: #eee;
+}
+
+.confirm-btn:hover,
+.confirm-btn.focused {
+    background: #000;
+}
+
+/* --- CONFIRM BUTTONS (shared across screens) --- */
+.confirm-btn {
+    flex: 1;
+    background: #444;
+    color: white;
+    border: none;
+    padding: 8px;
+    font-family: 'Press Start 2P';
+    font-size: 7px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.confirm-btn:disabled {
+    background: #bbb;
+    color: #eee;
+    pointer-events: none;
+}
+
+.confirm-btn.secondary {
+    background: #888;
+}
+
+.confirm-btn.nav-btn {
+    flex: 0 0 20px;
+}
+
+.confirm-btn.danger {
+    background: #c83828;
+}
+
+/* --- CUSTOM SCROLLBARS (Retro Style) --- */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #eee;
+    border-left: 2px solid #202020;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border: 1px solid #202020;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* --- SMART RETRO MOTION OVERRIDE --- */
+body.retro-motion * {
+    transition-timing-function: steps(10) !important;
+    animation-timing-function: steps(10) !important;
+}
+
+body.retro-motion .hp-fill,
+body.retro-motion .exp-fill {
+    transition-timing-function: steps(10) !important;
+}
+
+body.retro-motion #lcd-overlay {
+    transition-timing-function: ease !important;
+}

@@ -12,7 +12,7 @@ A systematic guide to adding new content to the Pokemon Battle Modular system, e
 - **Understand the file structure**: 
   - `js/data`: Definitions (Moves, Items, Constants)
   - `js/core`: Logic (Battle flow, Mechanics, Effects)
-  - `js/ui`: Visuals (Animations, Menus)
+  - `js/ui`: Visuals (Animations, Animation Framework, Menus)
   - `js/screens`: Screen modules (Party, Summary, Selection)
 
 ## Adding a New Move
@@ -146,7 +146,33 @@ if (attacker.volatiles.disabled && attacker.volatiles.disabled.moveName === move
 }
 ```
 
-### 6. Update Documentation
+### 6. Add Visual Animation (optional but recommended)
+Location: `js/anim/anim_registry.js`
+
+Register a custom animation for the move using the data-driven `AnimFramework`:
+
+```javascript
+AnimFramework.register('move-name', [
+    { type: 'sfx', sound: 'fire' },
+    { type: 'beam', from: 'attacker', to: 'defender', duration: 400,
+        width: 8, height: 4,
+        beamStyles: { background: '#ff4500', borderRadius: '2px' }
+    },
+    { type: 'parallel', steps: [
+        { type: 'screenFx', class: 'fx-fire', duration: 500 },
+        { type: 'spriteShake', target: 'defender', duration: 400 },
+        { type: 'particles', position: 'defender', count: 10, spread: 30, duration: 500 }
+    ]}
+]);
+```
+
+Available step types: `sfx`, `cry`, `wait`, `screenFx`, `spriteShake`, `cssClass`, `move`, `spawn`, `particles`, `beam`, `flash`, `callback`, `parallel`.
+
+Use `'attacker'` and `'defender'` as position/element references — the framework resolves player/enemy side automatically.
+
+To play: `await AnimFramework.play('move-name', { attacker, defender, isPlayerAttacker });`
+
+### 7. Update Documentation
 - Add to `README.md` under appropriate section
 - If new volatile status, add to volatile status list
 
@@ -205,4 +231,5 @@ If your volatile status needs to tick/expire, you MUST add logic to `processEndT
 - [ ] End-of-turn effects work (damage, expiration)
 - [ ] Move blocking works (if applicable)
 - [ ] Immunity checks work correctly
+- [ ] Custom animation plays correctly (if registered)
 - [ ] README is updated

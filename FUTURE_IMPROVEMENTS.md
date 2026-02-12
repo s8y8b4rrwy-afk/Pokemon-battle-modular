@@ -3,7 +3,7 @@
 This document outlines potential enhancements, technical debt, and new features for the **Pokémon G/S Battle Simulator (Modular)**.
 
 ## 🛠️ Technical Debt & Refactoring
-- [ ] **CSS Modularization**: Break down the 1,900+ line `styles.css` into separate files matching the JS modules (e.g., `ui.css`, `animations.css`, `screens.css`).
+- [x] **CSS Modularization**: Broken down into 10 modular files: `base.css`, `utils.css`, `screens.css`, `selection.css`, `summary.css`, `party.css`, `pack.css`, `battle.css`, `animations.css`, `explosion.css`.
 - [x] **FaintManager**: Extract the fainting logic from `battle.js` and `turn_manager.js` into its own module to handle simultaneous faints, Destiny Bond, and replacement timing more cleanly.
 - [ ] **VisualsManager**: Centralize all sprite manipulation, filtering, and screen-shaking into a dedicated module to further simplify `battle.js`.
 - [ ] **Proper Type Serialization**: Move from global objects to a more robust state management system (perhaps a simple store pattern) to avoid direct global property access.
@@ -12,7 +12,7 @@ This document outlines potential enhancements, technical debt, and new features 
 - [ ] **Hold Items**: Implement Gen II held items like Leftovers, Berries, and Type-enhancing items (Never-Melt Ice, etc.).
 - [ ] **Abilities (Optional Gen III+ Feature)**: While Gen II didn't have abilities, adding an optional "Legacy+" mode with simple abilities like Intimidate or Levitate could add depth.
 - [ ] **2v2 Battles**: Extend the `TurnManager` to support double battles.
-- [ ] **Move Animations**: Add specific visual effects for major move types (Fire, Water, Electric) instead of the generic "hit" flicker.
+- [x] **Move Animations**: Data-driven animation framework (`AnimFramework`) with beam, particle, flash, and screen-shake step types. New animations added declaratively in `anim_registry.js`.
 - [ ] **Pokédex Integration**: A screen to track which of the 251 Pokémon have been caught or encountered.
 
 ## 🎨 UI/UX Enhancements

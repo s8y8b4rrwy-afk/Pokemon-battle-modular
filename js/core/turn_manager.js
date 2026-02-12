@@ -31,6 +31,11 @@ const TurnManager = {
                 return Math.random() - 0.5;
             });
 
+            // Comprehensive Logging
+            if (typeof BattleLogger !== 'undefined' && BattleLogger.enabled) {
+                BattleLogger.system(`Turn Actions: ${pAction.user.name} (Pri: ${pAction.priority}, Spe: ${pAction.speed}) vs ${eAction.user.name} (Pri: ${eAction.priority}, Spe: ${eAction.speed})`);
+            }
+
             const result = await this.runQueue(battle, queue);
             if (result === 'STOP_BATTLE') return;
 
@@ -75,6 +80,10 @@ const TurnManager = {
     },
 
     async runQueue(battle, queue) {
+        // Comprehensive Logging
+        if (typeof BattleLogger !== 'undefined' && BattleLogger.enabled) {
+            BattleLogger.system(`--- PROCESSING QUEUE (${queue.length} actions) ---`);
+        }
         // 0. RESET TURN DATA
         [battle.p, battle.e].forEach(m => {
             m.volatiles.turnDamage = 0;
@@ -105,6 +114,9 @@ const TurnManager = {
 
             await battle.processEndTurnEffects(battle.e, false);
             if (await FaintManager.checkFaints(battle, ['enemy', 'player'])) return 'STOP_BATTLE';
+
+            // 3. RAGE PROCESSING (End of Turn)
+            await RageManager.processRage(battle);
 
             await EnvironmentManager.tickWeather();
         }
@@ -275,11 +287,9 @@ const TurnManager = {
             AudioEngine.playSfx('miss');
             await UI.typeText(`${attacker.name}'s attack\nmissed!`);
 
-            if (Math.random() < GAME_BALANCE.RAGE_TRIGGER_CHANCE) {
-                attacker.rageLevel = Math.min(3, (attacker.rageLevel || 0) + 1);
-                UI.updateHUD(attacker, isPlayer ? 'player' : 'enemy');
-                await battle.triggerRageAnim(attacker.cry);
-                await UI.typeText(`${attacker.name}'s RAGE\nis building!`);
+            if (attacker.rageLevel !== undefined) {
+                attacker.volatiles.rageTriggered = true;
+                attacker.volatiles.rageMiss = true;
             }
             if (move.name === 'SELF-DESTRUCT' || move.name === 'EXPLOSION') await MovesEngine.handleMoveSideEffects(battle, attacker, defender, move, isPlayer, false);
 

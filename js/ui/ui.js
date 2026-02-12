@@ -19,6 +19,12 @@ const UI = {
 
     // --- TEXT ENGINE ---
     typeText(text, cb, fast = false) {
+        // Modular Battle Logging
+        if (typeof BattleLogger !== 'undefined') {
+            BattleLogger.enabled = DEBUG.BATTLE_LOGS;
+            BattleLogger.battle(text.replace(/\n/g, ' '));
+        }
+
         return new Promise(resolve => {
             const el = this.textEl;
             clearInterval(this.typeInterval);

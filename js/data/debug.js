@@ -2,6 +2,7 @@
 // Change ENABLED to true to activate these overrides
 const DEBUG = {
     ENABLED: true,
+    BATTLE_LOGS: true, // Set to true to see detailed battle logs in console
 
     // Customize your starting items (Quantity)
     INVENTORY: {
@@ -61,7 +62,7 @@ const DEBUG = {
 
         // Force specific moves (Array of lowercase strings with dashes)
         // e.g. ['fly', 'dig', 'solar-beam', 'protect']
-        MOVES: ['destiny-bond', 'bounce', 'explosion', 'u-turn']
+        MOVES: ['blizzard', 'explosion', 'ice-beam', 'flamethrower']
     },
 
     // Control Drop Rates

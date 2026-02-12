@@ -20,11 +20,11 @@ const Battle = {
     animateSwap(...args) { return BattleAnims.animateSwap(...args); },
 
     // 1. Standardized Damage Application
-    async applyDamage(target, amount, type = 'normal') {
+    async applyDamage(target, amount, type = 'normal', moveName = null) {
         // A. Handle Substitute
         if (target.volatiles.substituteHP > 0 && type !== 'recoil' && type !== 'poison' && type !== 'burn') {
             target.volatiles.substituteHP -= amount;
-            await this.triggerHitAnim(target, type); // Hit the doll
+            await this.triggerHitAnim(target, type, moveName); // Hit the doll
             await UI.typeText("The SUBSTITUTE took\ndamage for it!");
 
             // Check Break
@@ -44,7 +44,7 @@ const Battle = {
         }
 
         // B. Handle Real HP
-        await this.triggerHitAnim(target, type); // Visuals
+        await this.triggerHitAnim(target, type, moveName); // Visuals
         target.currentHp -= amount; // Math
         UI.updateHUD(target, target === this.p ? 'player' : 'enemy'); // UI
     },

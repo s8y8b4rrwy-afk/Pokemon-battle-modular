@@ -1,0 +1,187 @@
+/* ========================================
+   SCREENS - Start, Name Entry, Continue
+   ======================================== */
+
+/* --- START SCREEN --- */
+#start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gs-black);
+    color: white;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 20px;
+}
+
+.start-title {
+    color: #d8b030;
+    font-size: 16px;
+    line-height: 24px;
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 20px;
+}
+
+.start-btn {
+    background: white;
+    color: black;
+    border: 2px solid #888;
+    padding: 10px;
+    font-size: 8px;
+    font-family: 'Press Start 2P';
+    cursor: pointer;
+}
+
+.start-btn:hover {
+    background: #eee;
+}
+
+.toggle-box {
+    font-size: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.checkbox {
+    width: 10px;
+    height: 10px;
+    border: 2px solid white;
+    display: inline-block;
+    position: relative;
+}
+
+.checkbox.checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 6px;
+    height: 6px;
+    background: #d8b030;
+}
+
+/* --- NAME ENTRY SCREEN --- */
+#name-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gs-blue);
+    color: white;
+    z-index: 950;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+}
+
+#name-input {
+    background: white;
+    color: black;
+    border: 2px solid #888;
+    padding: 5px;
+    font-family: 'Press Start 2P';
+    font-size: 12px;
+    text-transform: uppercase;
+    width: 150px;
+    text-align: center;
+    outline: none;
+    margin-bottom: 20px;
+}
+
+/* --- CONTINUE SCREEN --- */
+#continue-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gs-blue);
+    color: white;
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.cont-menu-box {
+    background: #fff;
+    color: black;
+    border: 4px solid #202020;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cont-opt {
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.cont-opt::before {
+    content: ' ';
+    width: 10px;
+    display: inline-block;
+}
+
+.cont-opt.focused::before {
+    content: '▶';
+}
+
+.save-info-box {
+    background: var(--gs-blue);
+    border: 2px solid white;
+    border-radius: 4px;
+    padding: 10px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.save-row {
+    font-size: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.party-preview-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+.mini-icon {
+    width: 32px;
+    height: 24px;
+    image-rendering: pixelated;
+    cursor: pointer;
+}
+
+.mini-icon.fainted {
+    filter: grayscale(100%) brightness(0.7);
+    opacity: 0.8;
+}
+
+.mini-icon:hover {
+    transform: translateY(-2px);
+}

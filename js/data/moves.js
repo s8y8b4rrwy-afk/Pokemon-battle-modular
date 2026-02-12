@@ -10,7 +10,7 @@ const MOVE_DEX = {
 
             if (!moveData || moveData.name === 'METRONOME' || moveData.name === 'STRUGGLE') {
                 await UI.typeText("But it failed!");
-                return false;
+                return 'FAIL';
             }
 
             await UI.typeText(`${user.name} used\n${moveData.name}!`);
@@ -76,7 +76,7 @@ const MOVE_DEX = {
                 return true;
             }
             await UI.typeText("But it failed!");
-            return false;
+            return 'FAIL';
         }
     },
     'MIRROR COAT': {
@@ -89,7 +89,7 @@ const MOVE_DEX = {
                 return true;
             }
             await UI.typeText("But it failed!");
-            return false;
+            return 'FAIL';
         }
     },
 
@@ -174,7 +174,7 @@ const MOVE_DEX = {
             await BattleAnims.triggerExplosionAnim();
 
             // 2. Damage Phase (handleDamageSequence now allows hits from 0hp attackers on hit 1)
-            const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'physical' };
+            const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'physical', skipAnim: true };
             await battle.handleDamageSequence(user, target, moveData, isPlayer, weatherMod);
 
             // Note: FaintManager will handle the actual 'fainted!' message and animation after this move ends
@@ -193,7 +193,7 @@ const MOVE_DEX = {
             await BattleAnims.triggerExplosionAnim();
 
             // 2. Damage Phase
-            const moveData = { name: 'SELF DESTRUCT', type: 'normal', power: 200, category: 'physical' };
+            const moveData = { name: 'SELF DESTRUCT', type: 'normal', power: 200, category: 'physical', skipAnim: true };
             await battle.handleDamageSequence(user, target, moveData, isPlayer, weatherMod);
 
             return true;
@@ -206,11 +206,11 @@ const MOVE_DEX = {
         onHit: async (battle, user, target) => {
             if (user.volatiles.substituteHP > 0) {
                 await UI.typeText("But it failed!");
-                return false;
+                return 'FAIL';
             }
             if (user.currentHp <= Math.floor(user.maxHp / 4)) {
                 await UI.typeText("Not enough HP!");
-                return false;
+                return 'FAIL';
             }
 
             // 1. Pay Cost
@@ -254,7 +254,7 @@ const MOVE_DEX = {
     'REST': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            if (user.currentHp === user.maxHp) { await UI.typeText("It's already\nfully healthy!"); return false; }
+            if (user.currentHp === user.maxHp) { await UI.typeText("It's already\nfully healthy!"); return 'FAIL'; }
 
             AudioEngine.playSfx('heal');
 
@@ -290,7 +290,7 @@ const MOVE_DEX = {
         isUnique: true,
         onHit: async (battle, user, target) => {
             const exists = battle.delayedMoves.find(m => m.moveData.name === 'FUTURE SIGHT' && m.target === target);
-            if (exists) { await UI.typeText("But it failed!"); return false; }
+            if (exists) { await UI.typeText("But it failed!"); return 'FAIL'; }
 
             await UI.typeText(`${user.name} foresaw\nan attack!`);
             battle.delayedMoves.push({
@@ -304,7 +304,7 @@ const MOVE_DEX = {
         isUnique: true,
         onHit: async (battle, user, target) => {
             const exists = battle.delayedMoves.find(m => m.moveData.name === 'DOOM DESIRE' && m.target === target);
-            if (exists) { await UI.typeText("But it failed!"); return false; }
+            if (exists) { await UI.typeText("But it failed!"); return 'FAIL'; }
             await UI.typeText(`${user.name} chose\nDoom Desire!`);
             battle.delayedMoves.push({
                 turns: 2, user: user, target: target, isPlayer: (user === battle.p),
@@ -345,7 +345,10 @@ const MOVE_DEX = {
     'TRANSFORM': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            if (user.transformBackup) return false; // Already transformed
+            if (user.transformBackup) {
+                await UI.typeText("But it failed!");
+                return false;
+            }
 
             // Create Backup
             user.transformBackup = {
@@ -390,7 +393,7 @@ const MOVE_DEX = {
     'BELLY DRUM': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            if (user.currentHp <= user.maxHp / 2 || user.stages.atk >= 6) { await UI.typeText("But it failed!"); return false; }
+            if (user.currentHp <= user.maxHp / 2 || user.stages.atk >= 6) { await UI.typeText("But it failed!"); return 'FAIL'; }
             user.currentHp = Math.floor(user.currentHp - (user.maxHp / 2));
             user.stages.atk = 6;
             UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
@@ -532,7 +535,7 @@ const MOVE_DEX = {
             // Already seeded
             if (target.volatiles.seeded) {
                 await UI.typeText(`${target.name} is already\nseeded!`);
-                return false;
+                return 'FAIL';
             }
 
             target.volatiles.seeded = {

@@ -9,6 +9,11 @@ const MovesEngine = {
         if (battle.weather.type === 'sun' && (move.type === 'fire' || move.type === 'water')) weatherMod = (move.type === 'fire' ? 1.5 : 0.5);
         if (battle.weather.type === 'rain' && (move.type === 'water' || move.type === 'fire')) weatherMod = (move.type === 'water' ? 1.5 : 0.5);
 
+        // Comprehensive Logging
+        if (typeof BattleLogger !== 'undefined' && BattleLogger.enabled) {
+            BattleLogger.logMove(attacker, move, isPlayer);
+        }
+
         // 1. CHECK MOVE_DEX CONDITIONS
         const special = MOVE_DEX[move.name.replace(/-/g, ' ').toUpperCase()];
         if (special && special.condition) {
@@ -25,7 +30,7 @@ const MovesEngine = {
         if (special && special.isUnique) {
             const result = await special.onHit(battle, attacker, defender, weatherMod);
             if (result === 'IMMUNE') { moveImmune = true; didSomething = false; }
-            else if (result === 'FAIL') { explicitlyFailed = true; didSomething = false; }
+            else if (result === 'FAIL' || result === false) { explicitlyFailed = true; didSomething = false; }
             else { didSomething = !!result; }
         }
         else if (move.category !== 'status') {
@@ -81,6 +86,11 @@ const MovesEngine = {
             result.damage = Math.floor(result.damage * weatherMod);
             if (result.damage > 0) lastHitDamage = result.damage;
 
+            // Comprehensive Logging
+            if (typeof BattleLogger !== 'undefined' && BattleLogger.enabled) {
+                BattleLogger.logDamage(defender, result.damage, !isPlayer, `(Eff: ${result.eff}${result.isCrit ? ', CRIT' : ''})`);
+            }
+
             if (i === 0) {
                 if (result.desc === 'failed') return { success: false, immune: false };
                 if (result.eff === 0) {
@@ -106,19 +116,6 @@ const MovesEngine = {
 
         if (hitsLanded > 0 && isPlayer && defender.currentHp > 0) await Game.tryMidBattleDrop(defender);
 
-        // Check Defender Rage
-        if (hitsLanded > 0 && defender.currentHp > 0 && defender.rageLevel !== undefined && defender.rageLevel < 3) {
-            let chance = GAME_BALANCE.RAGE_TRIGGER_CHANCE;
-            if ((defender.currentHp / defender.maxHp) < 0.5) chance += 0.25;
-
-            if (Math.random() < chance) {
-                defender.rageLevel++;
-                UI.updateHUD(defender, isPlayer ? 'enemy' : 'player');
-                await battle.triggerRageAnim(defender.cry);
-                await UI.typeText(`${defender.name}'s RAGE\nis building!`);
-            }
-        }
-
         // Check Attacker Rage (Multi-hit fury)
         if (didSomething) await this.handleAttackerRage(battle, attacker, defender, move, lastHitDamage, isPlayer);
 
@@ -132,19 +129,13 @@ const MovesEngine = {
             else if (result.eff < 1 && result.eff > 0) AudioEngine.playSfx('not_very_effective');
         }
 
-        await battle.applyDamage(defender, damage, move.type);
+        await battle.applyDamage(defender, damage, move.type, move.skipAnim ? null : move.name);
 
-        // Rage Building (during hit)
-        if (defender.currentHp > 0 && defender.rageLevel !== undefined && defender.rageLevel < 3) {
-            let chance = GAME_BALANCE.RAGE_TRIGGER_CHANCE;
-            if ((defender.currentHp / defender.maxHp) < 0.5) chance += 0.25;
-
-            if (Math.random() < chance) {
-                defender.rageLevel++;
-                UI.updateHUD(defender, isPlayer ? 'enemy' : 'player');
-                await battle.triggerRageAnim(defender.cry);
-                await UI.typeText(`${defender.name}'s RAGE\nis building!`);
-            }
+        // Rage Building flags
+        if (defender.currentHp > 0 && defender.rageLevel !== undefined) {
+            defender.volatiles.rageTriggered = true;
+            if (result.isCrit) defender.volatiles.rageCrit = true;
+            if (result.eff > 1) defender.volatiles.rageSuperEff = true;
         }
 
         // Draining / Recoil
@@ -166,7 +157,7 @@ const MovesEngine = {
 
         let extraHits = 0;
         if (Math.random() < (rage * GAME_BALANCE.RAGE_MULTIHIT_BASE)) {
-            extraHits = (rage === 3 && Math.random() < 0.5) ? 2 : 1;
+            extraHits = (rage === GAME_BALANCE.RAGE_MAX_LEVEL && Math.random() < 0.5) ? 2 : 1;
         }
 
         if (extraHits > 0) {
@@ -219,6 +210,7 @@ const MovesEngine = {
                 if (target.currentHp > 0) {
                     await battle.applyStatChanges(target, move.stat_changes, target === battle.p);
                     didSomething = true;
+                    if (target.rageLevel !== undefined) target.volatiles.rageStatusInflicted = true;
                 }
             }
         }
@@ -228,13 +220,17 @@ const MovesEngine = {
             if (defender.currentHp > 0 && move.meta.flinch_chance > 0) {
                 if (Math.random() * 100 < move.meta.flinch_chance) {
                     defender.volatiles.flinch = true;
+                    if (defender.rageLevel !== undefined) defender.volatiles.rageStatusInflicted = true;
                 }
             }
             if (defender.currentHp > 0 && move.meta.ailment && move.meta.ailment.name !== 'none') {
                 let chance = move.meta.ailment_chance === 0 ? 100 : move.meta.ailment_chance;
                 if (Math.random() * 100 < chance) {
                     const success = await battle.applyStatus(defender, move.meta.ailment.name, !isPlayer);
-                    if (success) didSomething = true;
+                    if (success) {
+                        didSomething = true;
+                        if (defender.rageLevel !== undefined) defender.volatiles.rageStatusInflicted = true;
+                    }
                 }
             }
         }

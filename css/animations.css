@@ -1,0 +1,647 @@
+/* ========================================
+   ANIMATIONS - All @keyframes & animation classes
+   Covers: Entry/Exit, Hits, Faints, Catching,
+   Status FX, Move FX, Stat Changes, Rage
+   ======================================== */
+
+/* --- SPRITE ENTRY / EXIT --- */
+@keyframes spawn {
+    0% {
+        transform: scale(0);
+        filter: brightness(0) invert(1);
+        opacity: 0;
+    }
+
+    70% {
+        transform: scale(1);
+        filter: brightness(0) invert(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1) invert(0);
+        opacity: 1;
+    }
+}
+
+.anim-enter {
+    animation: spawn 0.6s ease-out forwards;
+}
+
+@keyframes withdraw {
+    0% {
+        transform: scale(1);
+        filter: brightness(1) invert(0);
+        opacity: 1;
+    }
+
+    30% {
+        transform: scale(1);
+        filter: brightness(0) invert(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        filter: brightness(0) invert(1);
+        opacity: 0;
+    }
+}
+
+.anim-return {
+    animation: withdraw 0.4s ease-in forwards;
+}
+
+/* --- FAINTING --- */
+@keyframes faint {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+}
+
+.anim-faint {
+    animation: faint 0.6s ease-out forwards;
+}
+
+/* --- HIT REACTIONS --- */
+@keyframes shake {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    25% {
+        transform: translate(-6px, 0);
+    }
+
+    75% {
+        transform: translate(6px, 0);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes flicker {
+    0% {
+        opacity: 1;
+    }
+
+    25% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    75% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.anim-hit {
+    animation: shake 0.4s, flicker 0.4s;
+}
+
+/* Flipped (Substitute/Doll) variant */
+@keyframes shakeFlipped {
+    0% {
+        transform: scaleX(-1) translate(0, 0);
+    }
+
+    25% {
+        transform: scaleX(-1) translate(6px, 0);
+    }
+
+    75% {
+        transform: scaleX(-1) translate(-6px, 0);
+    }
+
+    100% {
+        transform: scaleX(-1) translate(0, 0);
+    }
+}
+
+.anim-hit-flipped {
+    animation: shakeFlipped 0.4s, flicker 0.4s;
+}
+
+/* --- SUBSTITUTE BREAK --- */
+@keyframes subBreak {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+        filter: grayscale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+}
+
+.anim-break {
+    animation: subBreak 0.5s ease-out forwards;
+}
+
+/* --- DEFLECT (Ball bounce-off) --- */
+@keyframes deflectAnim {
+    0% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(15px);
+    }
+
+    40% {
+        transform: translateX(-10px);
+    }
+
+    60% {
+        transform: translateX(5px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.anim-deflect {
+    animation: deflectAnim 0.3s ease-out;
+}
+
+/* --- CATCHING --- */
+@keyframes captureThrow {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    25% {
+        transform: translate(60px, -140px) rotate(180deg);
+    }
+
+    50% {
+        transform: translate(140px, -180px) rotate(360deg);
+    }
+
+    75% {
+        transform: translate(180px, -140px) rotate(540deg);
+    }
+
+    100% {
+        transform: translate(215px, -100px) rotate(720deg);
+    }
+}
+
+@keyframes captureShake {
+
+    0%,
+    100% {
+        transform: translate(215px, -100px) rotate(0deg);
+    }
+
+    25% {
+        transform: translate(215px, -100px) rotate(-15deg);
+    }
+
+    75% {
+        transform: translate(215px, -100px) rotate(15deg);
+    }
+}
+
+/* --- SPARKLE (Shiny reveal) --- */
+@keyframes sparkle {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1) rotate(180deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* --- STATUS ANIMATIONS (Sprite-Only Flash) --- */
+@keyframes spriteFlashRed {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: sepia(1) saturate(8) hue-rotate(-50deg) brightness(0.8);
+    }
+}
+
+@keyframes spriteFlashYellow {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: sepia(1) saturate(10) hue-rotate(20deg) brightness(1.2);
+    }
+}
+
+@keyframes spriteFlashPurple {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: sepia(1) saturate(5) hue-rotate(220deg) brightness(0.7);
+    }
+}
+
+@keyframes spriteFlashCyan {
+
+    0%,
+    100% {
+        filter: none;
+    }
+
+    50% {
+        filter: sepia(1) saturate(5) hue-rotate(130deg) brightness(1.2);
+    }
+}
+
+.status-anim-brn {
+    animation: spriteFlashRed 0.6s steps(4);
+}
+
+.status-anim-par {
+    animation: spriteFlashYellow 0.6s steps(4);
+}
+
+.status-anim-psn {
+    animation: spriteFlashPurple 0.6s steps(4);
+}
+
+.status-anim-frz,
+.status-anim-slp {
+    animation: spriteFlashCyan 0.6s steps(4);
+}
+
+/* --- STAT CHANGE ANIMATIONS --- */
+@keyframes statUpAnim {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(1.1, 1.1) translateY(-5px);
+        filter: sepia(1) saturate(3) hue-rotate(-50deg);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+@keyframes statDownAnim {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(0.9, 0.9) translateY(5px);
+        filter: sepia(1) saturate(3) hue-rotate(180deg);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+.anim-stat-up {
+    animation: statUpAnim 0.8s steps(8);
+}
+
+.anim-stat-down {
+    animation: statDownAnim 0.8s steps(8);
+}
+
+/* --- HUD FLASH (Level Up) --- */
+@keyframes flashHudBlue {
+    0% {
+        background-color: white;
+        box-shadow: 0 0 0 #40a8c0;
+    }
+
+    50% {
+        background-color: #e0f8ff;
+        box-shadow: 0 0 15px #40a8c0;
+        border-color: #40a8c0;
+    }
+
+    100% {
+        background-color: white;
+        box-shadow: 0 0 0 #40a8c0;
+    }
+}
+
+.hud-flash-blue {
+    animation: flashHudBlue 0.6s ease-in-out;
+}
+
+/* --- BOSS INTRO --- */
+@keyframes bossIntroSequence {
+    0% {
+        filter: brightness(10);
+        transform: translate(0, 0);
+    }
+
+    10% {
+        filter: brightness(1);
+        transform: translate(-8px, 8px);
+    }
+
+    20% {
+        transform: translate(8px, -8px);
+    }
+
+    30% {
+        transform: translate(-8px, -8px);
+    }
+
+    40% {
+        transform: translate(8px, 8px);
+    }
+
+    50% {
+        transform: translate(-8px, 0);
+    }
+
+    60% {
+        transform: translate(8px, 0);
+    }
+
+    100% {
+        filter: brightness(1);
+        transform: translate(0, 0);
+    }
+}
+
+.boss-intro {
+    animation: bossIntroSequence 1.0s ease-out forwards;
+}
+
+/* --- RAGE / VIOLENT SHAKE --- */
+@keyframes violentShake {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    25% {
+        transform: translate(-10px, 5px);
+    }
+
+    50% {
+        transform: translate(10px, -5px);
+    }
+
+    75% {
+        transform: translate(-10px, -5px);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+.anim-violent {
+    animation: violentShake 0.5s ease-in-out;
+}
+
+/* --- FADE IN (Resume transition) --- */
+@keyframes fadeInScene {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.anim-fade-in {
+    animation: fadeInScene 0.8s ease-out forwards;
+}
+
+/* --- MOVE TYPE FX (Scene-level effects) --- */
+@keyframes flashRed {
+    0% {
+        box-shadow: inset 0 0 0 red;
+    }
+
+    50% {
+        box-shadow: inset 0 0 150px red;
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 red;
+    }
+}
+
+@keyframes flashBlue {
+    0% {
+        box-shadow: inset 0 0 0 cyan;
+    }
+
+    50% {
+        box-shadow: inset 0 0 150px cyan;
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 cyan;
+    }
+}
+
+@keyframes flashGreen {
+    0% {
+        box-shadow: inset 0 0 0 lime;
+    }
+
+    50% {
+        box-shadow: inset 0 0 150px lime;
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 lime;
+    }
+}
+
+@keyframes flashWhite {
+    0% {
+        filter: brightness(1);
+    }
+
+    20% {
+        filter: brightness(10);
+    }
+
+    40% {
+        filter: brightness(10);
+    }
+
+    60% {
+        filter: brightness(10);
+    }
+
+    100% {
+        filter: brightness(1);
+    }
+}
+
+@keyframes flashPurple {
+    0% {
+        box-shadow: inset 0 0 0 #a040a0;
+    }
+
+    50% {
+        box-shadow: inset 0 0 150px #a040a0;
+    }
+
+    100% {
+        box-shadow: inset 0 0 0 #a040a0;
+    }
+}
+
+@keyframes wobble {
+    0% {
+        filter: hue-rotate(0deg);
+        transform: skew(0) rotate(0);
+    }
+
+    25% {
+        transform: skew(10deg) rotate(5deg);
+    }
+
+    75% {
+        transform: skew(-10deg) rotate(-5deg);
+    }
+
+    100% {
+        filter: hue-rotate(0deg);
+        transform: skew(0) rotate(0);
+    }
+}
+
+@keyframes impact {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    20% {
+        transform: translate(-10px, 10px) rotate(5deg);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes brownQuake {
+    0% {
+        transform: translateY(0);
+    }
+
+    25% {
+        transform: translateY(-10px);
+    }
+
+    75% {
+        transform: translateY(10px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Move type → FX class mapping */
+.fx-fire {
+    animation: flashRed 0.5s steps(5);
+}
+
+.fx-water {
+    animation: flashBlue 0.5s steps(5);
+}
+
+.fx-ice {
+    animation: flashBlue 0.5s steps(5);
+}
+
+.fx-grass {
+    animation: flashGreen 0.5s steps(5);
+}
+
+.fx-electric {
+    animation: flashWhite 0.4s steps(4);
+}
+
+.fx-psychic,
+.fx-dragon {
+    animation: wobble 0.6s steps(6);
+}
+
+.fx-ground,
+.fx-rock {
+    animation: brownQuake 0.4s steps(8);
+}
+
+.fx-normal,
+.fx-fighting,
+.fx-flying {
+    animation: impact 0.3s steps(8);
+}
+
+.fx-poison {
+    animation: flashPurple 0.5s steps(5);
+}
+
+/* --- JUMP (Party icon bounce) --- */
+@keyframes jump {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-4px);
+    }
+}

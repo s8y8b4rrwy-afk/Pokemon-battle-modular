@@ -29,8 +29,9 @@ The order in `Pokemon.html` is strictly enforced. When adding a new file, place 
 1. **Systems & Data** (Foundation): `utils.js`, `constants.js`, `settings.js`.
 2. **Low-Level Engines**: `audio.js`, `api.js`, `storage.js`.
 3. **Core Logic**: `mechanics.js`, `effects.js`, `moves_engine.js`.
-4. **UI**: `ui.js`, `menus.js`, `animations.js`.
-5. **Managers & Orchestrators**: `turn_manager.js`, `battle.js`, `game.js`.
+4. **UI**: `ui.js`, `menus.js`.
+5. **Animation**: `anim_framework.js`, `anim_registry.js`, `animations.js` (in `js/anim/`).
+6. **Managers & Orchestrators**: `turn_manager.js`, `battle.js`, `game.js`.
 
 **Rule**: If `Module A` calls `Module B`, `Module B` MUST be loaded before `Module A` in the HTML file.
 
@@ -43,3 +44,15 @@ Since everything is global, you can call `Battle.someMethod()` from `TurnManager
 2. Define the main object.
 3. **MUST**: Add the script tag to `Pokemon.html` in the correct prioritized section.
 4. Document the module in `agents.md`.
+
+## CSS Structure
+CSS is split into modular files loaded in order in `Pokemon.html`:
+- `base.css` → Variables, body, game container
+- `utils.css` → Utility classes, focus states, scrollbars
+- `screens.css` → Start, Name, Continue screens
+- `selection.css`, `summary.css`, `party.css`, `pack.css` → Individual screen styles
+- `battle.css` → Battle scene, HUD, dialog, menus
+- `animations.css` → All `@keyframes` and `.anim-*`/`.fx-*` classes
+- `explosion.css` → Explosion-specific FX (`@keyframes screenShake`, `.fx-explosion`) — still needed, the animation framework applies these CSS classes but doesn't generate them
+
+New `@keyframes` always go in `animations.css`. New screen styles get their own file.

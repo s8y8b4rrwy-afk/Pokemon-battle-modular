@@ -439,7 +439,7 @@ const Game = {
             if (levelDiff > 0) rate += (levelDiff * 0.05);
             if (RNG.roll(rate)) {
                 const key = Mechanics.getLoot(this.enemyMon, this.wins, levelDiff); this.inventory[key]++; AudioEngine.playSfx('funfair');
-                await UI.typeText(`Oh! ${this.enemyMon.name} dropped\\na ${ITEMS[key].name}.`);
+                await UI.typeText(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`);
                 await checkRage();
             } else await checkRage();
         };
