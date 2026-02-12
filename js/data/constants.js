@@ -39,7 +39,9 @@ const SFX_LIB = {
     // Complex Theme Frequencies (used in sequences)
     shiny_1: 1396.91, shiny_2: 1760.00,
     heal_base: 523.25,
-    levelup_base: 1046.50
+    levelup_base: 1046.50,
+    stat_up_base: 330.00,
+    stat_down_base: 330.00
 };
 
 // --- TYPE CHART MATRIX ---

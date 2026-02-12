@@ -16,9 +16,16 @@
 //   spawn      — Create a temp DOM el    { parentSelector, className, styles, duration }
 //   particles  — Burst of particles      { x, y, count, className, spread, duration }
 //   beam       — Projectile from→to      { fromX, fromY, toX, toY, className, duration, width, height }
-//   stream     — Continuous particle flow { from, to, count, interval, spread, travelTime, size, color, glow }
+//   stream     — Continuous particle flow { from, to, count, svgShape?, scaleStart, scaleEnd }
 //   volley     — Rapid-fire projectiles   { from, to, count, interval, projectile: { width, height, styles } }
 //   flash      — Full-scene flash        { color, duration, opacity }
+//   overlay    — SVG shape on target     { target, shape, color, width, height, animation, count }
+//   formation  — Particles in a pattern  { target, pattern|points, particleSize, color, shape?, stagger }
+//   spriteMove — Move a sprite           { target, preset:'lunge'|'dodge'|'jump'|'recoil'|'charge'|'slam' }
+//   tilt       — Tilt/rotate scene       { angle, duration }
+//   bgColor    — Flash background color  { color, duration }
+//   invert     — Invert colors           { target:'scene'|'attacker'|'defender', duration }
+//   wave       — Wavy scene distortion   { intensity, duration, speed }
 //   callback   — Run arbitrary async fn  { fn }
 //   parallel   — Run steps concurrently  { steps: [...] }
 //
@@ -32,6 +39,7 @@
 //   await AnimFramework.play('flamethrower', { attacker, defender, isPlayerAttacker });
 // ============================================================
 
+/** @type {AnimationEngine} */
 const AnimFramework = {
 
     // --- REGISTRY ---
@@ -40,11 +48,11 @@ const AnimFramework = {
     /**
      * Register a named animation sequence.
      * @param {string} name — Unique identifier (e.g. 'flamethrower', 'thunderbolt')
-     * @param {Array} steps — Array of step objects
+     * @param {AnimStep[]} steps — Array of step objects
      */
     register(name, steps) {
-        if (!Array.isArray(steps)) {
-            console.error(`[AnimFramework] Steps must be an array for "${name}"`);
+        if (!Array.isArray(steps) && typeof steps !== 'function') {
+            console.error(`[AnimFramework] Steps must be an array or function for "${name}"`);
             return;
         }
         this._registry[name.toLowerCase()] = steps;
@@ -73,7 +81,7 @@ const AnimFramework = {
      * @param {Object} ctx  — Context: { attacker, defender, isPlayerAttacker, scene?, fxContainer? }
      */
     async play(name, ctx = {}) {
-        const steps = this._registry[name.toLowerCase()];
+        let steps = this._registry[name.toLowerCase()];
         if (!steps) {
             console.warn(`[AnimFramework] Animation "${name}" not found. Skipping.`);
             return;
@@ -81,6 +89,16 @@ const AnimFramework = {
 
         // Build a rich context with resolved DOM elements
         const resolvedCtx = this._resolveContext(ctx);
+
+        // If steps is a function generator, execute it to get the array
+        if (typeof steps === 'function') {
+            steps = steps(resolvedCtx);
+        }
+
+        if (!Array.isArray(steps)) {
+            console.error(`[AnimFramework] Animation "${name}" did not resolve to an array.`);
+            return;
+        }
 
         for (const step of steps) {
             await this._executeStep(step, resolvedCtx);
@@ -198,6 +216,14 @@ const AnimFramework = {
                 }
                 break;
 
+            case 'overlay': await this._doOverlay(step, ctx); break;
+            case 'formation': await this._doFormation(step, ctx); break;
+            case 'spriteMove': await this._doSpriteMove(step, ctx); break;
+            case 'tilt': await this._doTilt(step, ctx); break;
+            case 'bgColor': await this._doBgColor(step, ctx); break;
+            case 'invert': await this._doInvert(step, ctx); break;
+            case 'wave': await this._doWave(step, ctx); break;
+
             default:
                 console.warn(`[AnimFramework] Unknown step type: "${step.type}"`);
         }
@@ -244,9 +270,9 @@ const AnimFramework = {
         }
 
         const isFlipped = sprite.classList.contains('sub-back');
-        const hitClass = (step.flipped || isFlipped) ? 'anim-hit-flipped' : 'anim-hit';
+        const hitClass = (step.flipped || isFlipped) ? 'anim-shake-only-flipped' : 'anim-shake-only';
 
-        sprite.classList.remove('anim-hit', 'anim-hit-flipped');
+        sprite.classList.remove('anim-hit', 'anim-hit-flipped', 'anim-shake-only', 'anim-shake-only-flipped');
         UI.forceReflow(sprite);
         sprite.classList.add(hitClass);
 
@@ -440,8 +466,6 @@ const AnimFramework = {
         const perpY = dx / dist;
 
         for (let i = 0; i < count; i++) {
-            const p = document.createElement('div');
-
             const offset = (Math.random() - 0.5) * 2 * spread;
             const startX = from.x + perpX * offset;
             const startY = from.y + perpY * offset;
@@ -450,36 +474,36 @@ const AnimFramework = {
             const endX = to.x + perpX * endOffset;
             const endY = to.y + perpY * endOffset;
 
-            // Slight size variance
             const pSize = size + (Math.random() - 0.5) * (size * 0.4);
-
-            // Build 8-bit outline shadow (hard 1px border, no blur)
             const shadow = outline
                 ? `1px 0 0 ${outline}, -1px 0 0 ${outline}, 0 1px 0 ${outline}, 0 -1px 0 ${outline}`
                 : 'none';
 
-            // Transition includes transform for scaling
             const hasScale = scaleStart !== scaleEnd;
             let transition = `left ${travelTime}ms linear, top ${travelTime}ms linear`;
             if (hasScale) transition += `, transform ${travelTime}ms linear`;
             if (fade) transition += `, opacity ${travelTime}ms ease-in`;
 
+            // Create particle: SVG shape or plain pixel div
+            let p;
+            if (step.svgShape && this._shapes[step.svgShape]) {
+                p = this._createShapeEl(step.svgShape, pSize, pSize, color, outline);
+            }
+            if (!p) {
+                p = document.createElement('div');
+                Object.assign(p.style, {
+                    width: pSize + 'px', height: pSize + 'px',
+                    borderRadius: '0', background: color,
+                    boxShadow: shadow, imageRendering: 'pixelated',
+                    ...(step.particleStyles || {})
+                });
+            }
+
             Object.assign(p.style, {
                 position: 'absolute',
-                left: startX + 'px',
-                top: startY + 'px',
-                width: pSize + 'px',
-                height: pSize + 'px',
-                borderRadius: '0',           // 8-bit: square pixels
-                background: color,
-                boxShadow: shadow,
-                opacity: '1',
-                pointerEvents: 'none',
-                zIndex: '25',
-                imageRendering: 'pixelated',
-                transform: `scale(${scaleStart})`,
-                transition: transition,
-                ...(step.particleStyles || {})
+                left: startX + 'px', top: startY + 'px',
+                opacity: '1', pointerEvents: 'none', zIndex: '25',
+                transform: `scale(${scaleStart})`, transition: transition,
             });
 
             parent.appendChild(p);
@@ -550,5 +574,283 @@ const AnimFramework = {
         }
 
         await wait(travelTime);
+    },
+
+    // === SVG SHAPE LIBRARY ===
+    // 8-bit pixel-art shapes. Each has a viewBox and SVG path data.
+    _shapes: {
+        lightning: { vb: '0 0 16 32', d: 'M10 0 L6 12 L10 12 L4 32 L10 20 L6 20 Z' },
+        fire: { vb: '0 0 16 16', d: 'M8 0 L4 6 L2 10 L4 14 L8 16 L12 14 L14 10 L12 6 Z' },
+        water: { vb: '0 0 16 16', d: 'M8 0 L4 8 L4 12 L8 16 L12 12 L12 8 Z' },
+        leaf: { vb: '0 0 16 16', d: 'M8 0 L2 6 L2 12 L8 16 L14 12 L14 6 Z' },
+        star: { vb: '0 0 16 16', d: 'M8 0 L10 6 L16 8 L10 10 L8 16 L6 10 L0 8 L6 6 Z' },
+        claw: { vb: '0 0 16 16', d: 'M2 0 L4 0 L6 16 L4 16Z M7 0 L9 0 L9 16 L7 16Z M12 0 L14 0 L12 16 L10 16Z' },
+        fist: { vb: '0 0 16 16', d: 'M4 2 L12 2 L12 10 L14 10 L14 14 L2 14 L2 10 L4 10 Z' },
+        skull: { vb: '0 0 16 16', d: 'M4 0 L12 0 L16 4 L16 10 L12 14 L4 14 L0 10 L0 4 Z' },
+        spiral: { vb: '0 0 16 16', d: 'M8 6 Q12 6 12 10 Q12 14 8 14 Q4 14 4 10 Q4 2 12 2' },
+        bird: { vb: '0 0 16 10', d: 'M0 5 Q4 0 8 5 Q12 0 16 5 L16 7 Q12 2 8 7 Q4 2 0 7 Z' },
+        duck: { vb: '0 0 16 16', d: 'M4 8 Q4 4 8 4 Q12 4 12 8 L12 12 Q12 14 8 14 Q4 14 4 12 Z M8 4 Q8 0 12 0 L14 2' },
+        rock: { vb: '0 0 16 16', d: 'M4 2 L12 2 L16 6 L16 12 L12 16 L4 16 L0 12 L0 6 Z' },
+        sparkle: { vb: '0 0 16 16', d: 'M8 0 L9 7 L16 8 L9 9 L8 16 L7 9 L0 8 L7 7 Z' },
+        music: { vb: '0 0 16 16', d: 'M4 12 A2 2 0 1 1 8 12 V4 L12 4 L12 12 A2 2 0 1 1 16 12' },
+        heart: { vb: '0 0 16 16', d: 'M8 4 Q12 -2 16 4 Q16 10 8 16 Q0 10 0 4 Q4 -2 8 4Z' },
+        eye: { vb: '0 0 16 16', d: 'M0 8 Q8 0 16 8 Q8 16 0 8Z M8 4 A4 4 0 1 1 8 12 A4 4 0 1 1 8 4' },
+        bubble: { vb: '0 0 16 16', d: 'M8 0 A8 8 0 1 1 8 16 A8 8 0 1 1 8 0 M10 4 A2 2 0 1 1 12 6' },
+        zzz: { vb: '0 0 16 12', d: 'M0 0 L10 0 L2 10 L12 10 L12 12 L0 12 L0 10 L8 0' },
+        drop: { vb: '0 0 8 12', d: 'M4 0 Q8 6 8 8 Q8 12 4 12 Q0 12 0 8 Q0 6 4 0' }, // Sweat drop
+        shield: { vb: '0 0 16 16', d: 'M8 0 L16 4 L16 10 Q16 16 8 16 Q0 16 0 10 L0 4 Z' },
+        wall: { vb: '0 0 16 16', d: 'M0 2 L16 2 L16 14 L0 14 Z M2 4 L6 4 L6 8 L2 8 Z M8 4 L14 4 L14 8 L8 8 Z M2 10 L8 10 L8 12 L2 12 Z' },
+        anger: { vb: '0 0 16 16', d: 'M2 2 L6 6 L2 10 M14 2 L10 6 L14 10 M6 6 L10 6 M8 6 L8 14' } // Rough vein mark
+    },
+
+    // Create an SVG element from a shape definition
+    _createShapeEl(name, w, h, color, outline) {
+        const s = this._shapes[name];
+        if (!s) return null;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', s.vb);
+        svg.setAttribute('width', String(w));
+        svg.setAttribute('height', String(h));
+        svg.style.shapeRendering = 'crispEdges';
+        svg.style.overflow = 'visible';
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', s.d);
+        path.setAttribute('fill', color);
+        if (outline) { path.setAttribute('stroke', outline); path.setAttribute('stroke-width', '1'); }
+        svg.appendChild(path);
+        return svg;
+    },
+
+    // === FORMATION PATTERNS ===
+    // Arrays of {x,y} offsets from center for formation step.
+    _formations: {
+        fireBlast: [ // 大 kanji
+            { x: 0, y: -20 }, { x: 0, y: -12 }, { x: 0, y: -4 }, { x: 0, y: 4 }, { x: 0, y: 12 }, { x: 0, y: 20 },
+            { x: -8, y: -4 }, { x: -16, y: -4 }, { x: 8, y: -4 }, { x: 16, y: -4 },
+            { x: -8, y: 4 }, { x: -16, y: 12 }, { x: -24, y: 20 }, { x: 8, y: 4 }, { x: 16, y: 12 }, { x: 24, y: 20 },
+        ],
+        cross: [
+            { x: 0, y: -12 }, { x: 0, y: -6 }, { x: 0, y: 0 }, { x: 0, y: 6 }, { x: 0, y: 12 },
+            { x: -12, y: 0 }, { x: -6, y: 0 }, { x: 6, y: 0 }, { x: 12, y: 0 },
+        ],
+        ring: [
+            { x: 0, y: -16 }, { x: 11, y: -11 }, { x: 16, y: 0 }, { x: 11, y: 11 },
+            { x: 0, y: 16 }, { x: -11, y: 11 }, { x: -16, y: 0 }, { x: -11, y: -11 },
+        ],
+        xShape: [
+            { x: -16, y: -16 }, { x: -8, y: -8 }, { x: 0, y: 0 }, { x: 8, y: 8 }, { x: 16, y: 16 },
+            { x: 16, y: -16 }, { x: 8, y: -8 }, { x: -8, y: 8 }, { x: -16, y: 16 },
+        ],
+        sparkle: [
+            { x: -12, y: -12 }, { x: 12, y: -10 }, { x: -8, y: 14 }, { x: 14, y: 12 },
+            { x: 0, y: -18 }, { x: -18, y: 0 }, { x: 18, y: 2 }, { x: 0, y: 18 },
+        ],
+        rise: [
+            { x: -10, y: 20 }, { x: 0, y: 20 }, { x: 10, y: 20 },
+            { x: -5, y: 10 }, { x: 5, y: 10 },
+            { x: 0, y: 0 },
+            { x: -5, y: -10 }, { x: 5, y: -10 },
+            { x: 0, y: -20 }
+        ]
+    },
+
+    // === SPRITE MOVEMENT PRESETS ===
+    _getMovePreset(preset, ctx, target) {
+        const isPlayer = (target === 'attacker') ? ctx.isPlayerAttacker : !ctx.isPlayerAttacker;
+        const dX = isPlayer ? 1 : -1;
+        const dY = isPlayer ? -1 : 1;
+        switch (preset) {
+            case 'lunge': return [{ x: 30 * dX, y: 10 * dY, dur: 120 }, { x: 0, y: 0, dur: 120 }];
+            case 'dodge': return [{ x: -20 * dX, y: 0, dur: 80 }, { x: 0, y: 0, dur: 80 }];
+            case 'jump': return [{ x: 0, y: -20, dur: 120 }, { x: 0, y: 0, dur: 120 }];
+            case 'recoil': return [{ x: -15 * dX, y: -5 * dY, dur: 100 }, { x: 0, y: 0, dur: 200 }];
+            case 'charge': return [{ x: 60 * dX, y: 20 * dY, dur: 200 }, { x: 0, y: 0, dur: 200 }];
+            case 'slam': return [{ x: 0, y: -25, dur: 150 }, { x: 0, y: 5, dur: 80 }, { x: 0, y: 0, dur: 80 }];
+            case 'float': return [{ x: 0, y: -10, dur: 300 }, { x: 0, y: 0, dur: 300 }];
+            case 'shake': return [{ x: -6, y: 0, dur: 50 }, { x: 6, y: 0, dur: 50 }, { x: -6, y: 0, dur: 50 }, { x: 6, y: 0, dur: 50 }, { x: 0, y: 0, dur: 50 }];
+            default: return [{ x: 0, y: 0, dur: 200 }];
+        }
+    },
+
+    // === OVERLAY (SVG shape on target) ===
+    async _doOverlay(step, ctx) {
+        const parent = this._resolveElement(step.parent || 'fxContainer', ctx);
+        if (!parent) return;
+        const pos = this._resolvePosition(step.target || 'defender', ctx);
+        const w = step.width || 24, h = step.height || 48;
+        const duration = step.duration || 400;
+        const anim = step.animation || 'grow';
+        const color = step.color || '#ffd700';
+        const outline = step.outline || null;
+        const count = step.count || 1;
+        const spread = step.spread || 0;
+
+        for (let i = 0; i < count; i++) {
+            const ox = count > 1 ? (Math.random() - 0.5) * spread * 2 : 0;
+            const oy = count > 1 ? (Math.random() - 0.5) * spread * 2 : 0;
+            let el = (step.shape && this._shapes[step.shape])
+                ? this._createShapeEl(step.shape, w, h, color, outline)
+                : null;
+            if (!el) {
+                el = document.createElement('div');
+                Object.assign(el.style, { width: w + 'px', height: h + 'px', background: color, borderRadius: '0', imageRendering: 'pixelated' });
+            }
+            const base = { position: 'absolute', pointerEvents: 'none', zIndex: '40' };
+            if (anim === 'strike') {
+                Object.assign(base, {
+                    left: (pos.x - w / 2 + ox) + 'px', top: (pos.y - h - 30 + oy) + 'px', opacity: '1',
+                    transition: `top ${duration * 0.3}ms ease-in, opacity ${duration * 0.4}ms ease-out ${duration * 0.5}ms`
+                });
+            } else if (anim === 'slam') {
+                Object.assign(base, {
+                    left: (pos.x - w / 2 + ox) + 'px', top: (pos.y - h * 2 + oy) + 'px', opacity: '1', transform: 'scale(0.5)',
+                    transition: `top ${duration * 0.25}ms ease-in, transform ${duration * 0.25}ms ease-in, opacity ${duration * 0.4}ms ease-out ${duration * 0.5}ms`
+                });
+            } else { // grow / fade
+                Object.assign(base, {
+                    left: (pos.x - w / 2 + ox) + 'px', top: (pos.y - h / 2 + oy) + 'px',
+                    opacity: anim === 'fade' ? '0' : '1', transform: anim === 'grow' ? 'scale(0)' : 'scale(1)',
+                    transition: `transform ${duration * 0.3}ms ease-out, opacity ${duration * 0.3}ms ease-in`
+                });
+            }
+            Object.assign(el.style, base);
+            parent.appendChild(el);
+            requestAnimationFrame(() => {
+                if (anim === 'strike') { el.style.top = (pos.y - h / 2 + oy) + 'px'; }
+                else if (anim === 'slam') { el.style.top = (pos.y - h / 2 + oy) + 'px'; el.style.transform = 'scale(1)'; }
+                else if (anim === 'grow') { el.style.transform = 'scale(1)'; }
+                else if (anim === 'fade') { el.style.opacity = '1'; }
+                setTimeout(() => { el.style.opacity = '0'; }, duration * 0.6);
+            });
+            setTimeout(() => el.remove(), duration);
+        }
+        await wait(duration);
+    },
+
+    // === FORMATION (particles in a pattern) ===
+    async _doFormation(step, ctx) {
+        const parent = this._resolveElement(step.parent || 'fxContainer', ctx);
+        if (!parent) return;
+        const pos = this._resolvePosition(step.target || 'defender', ctx);
+        const points = Array.isArray(step.points) ? step.points : (this._formations[step.pattern] || this._formations.cross);
+        const sz = step.particleSize || 6;
+        const color = step.color || '#ff4500';
+        const outline = step.outline || null;
+        const duration = step.duration || 600;
+        const stagger = step.stagger || 20;
+        const shadow = outline ? `1px 0 0 ${outline},-1px 0 0 ${outline},0 1px 0 ${outline},0 -1px 0 ${outline}` : 'none';
+
+        const els = [];
+        for (let i = 0; i < points.length; i++) {
+            const pt = points[i];
+            let el = (step.shape && this._shapes[step.shape])
+                ? this._createShapeEl(step.shape, sz, sz, color, outline)
+                : null;
+            if (!el) {
+                el = document.createElement('div');
+                Object.assign(el.style, { width: sz + 'px', height: sz + 'px', background: color, boxShadow: shadow, borderRadius: '0', imageRendering: 'pixelated' });
+            }
+            Object.assign(el.style, {
+                position: 'absolute', left: (pos.x + pt.x - sz / 2) + 'px', top: (pos.y + pt.y - sz / 2) + 'px',
+                pointerEvents: 'none', zIndex: '35', opacity: '0', transform: 'scale(0)',
+                transition: 'opacity 100ms ease-out, transform 150ms ease-out',
+            });
+            parent.appendChild(el);
+            els.push(el);
+            setTimeout(() => { el.style.opacity = '1'; el.style.transform = 'scale(1)'; }, stagger * i);
+        }
+        await wait(stagger * points.length + 150);
+        await wait(duration);
+        els.forEach(el => {
+            el.style.transition = 'opacity 200ms ease-out, transform 200ms ease-out';
+            el.style.opacity = '0'; el.style.transform = 'scale(1.5)';
+        });
+        await wait(250);
+        els.forEach(el => el.remove());
+    },
+
+    // === SPRITE MOVE (with presets) ===
+    async _doSpriteMove(step, ctx) {
+        const target = step.target || 'attacker';
+        const sprite = (target === 'attacker') ? ctx.attackerSprite : ctx.defenderSprite;
+        if (!sprite) return;
+        if (step.preset) {
+            const wps = this._getMovePreset(step.preset, ctx, target);
+            for (const wp of wps) {
+                sprite.style.transition = `transform ${wp.dur}ms ease-out`;
+                sprite.style.transform = `translate(${wp.x}px, ${wp.y}px)`;
+                await wait(wp.dur);
+            }
+        } else {
+            const dur = step.duration || 200;
+            sprite.style.transition = `transform ${dur}ms ${step.easing || 'ease-out'}`;
+            sprite.style.transform = `translate(${step.x || 0}px, ${step.y || 0}px)`;
+            await wait(dur);
+            if (step.reset !== false) {
+                sprite.style.transform = 'translate(0,0)'; await wait(dur);
+            }
+        }
+        sprite.style.transition = ''; sprite.style.transform = '';
+    },
+
+    // === TILT ===
+    async _doTilt(step, ctx) {
+        const scene = ctx.scene;
+        const angle = step.angle || 3, dur = step.duration || 300;
+        scene.style.transition = `transform ${dur * 0.3}ms ease-out`;
+        scene.style.transform = `rotate(${angle}deg)`;
+        await wait(dur * 0.3);
+        scene.style.transition = `transform ${dur * 0.7}ms ease-in-out`;
+        scene.style.transform = 'rotate(0deg)';
+        await wait(dur * 0.7);
+        scene.style.transition = ''; scene.style.transform = '';
+    },
+
+    // === BG COLOR ===
+    async _doBgColor(step, ctx) {
+        const scene = ctx.scene;
+        const dur = step.duration || 500;
+        const original = scene.style.backgroundColor || '';
+        scene.style.transition = `background-color ${dur * 0.2}ms ease-out`;
+        scene.style.backgroundColor = step.color || '#000';
+        await wait(dur * 0.7);
+        scene.style.transition = `background-color ${dur * 0.3}ms ease-in`;
+        scene.style.backgroundColor = original;
+        await wait(dur * 0.3);
+        scene.style.transition = '';
+    },
+
+    // === INVERT ===
+    async _doInvert(step, ctx) {
+        const t = step.target || 'scene';
+        const el = (t === 'attacker') ? ctx.attackerSprite : (t === 'defender') ? ctx.defenderSprite : ctx.scene;
+        if (!el) return;
+        const dur = step.duration || 400;
+        const orig = el.style.filter || '';
+        el.style.transition = 'filter 80ms steps(2)';
+        el.style.filter = 'invert(1)';
+        await wait(dur);
+        el.style.filter = orig;
+        await wait(80);
+        el.style.transition = '';
+    },
+
+    // === WAVE ===
+    async _doWave(step, ctx) {
+        const scene = ctx.scene;
+        const intensity = step.intensity || 3;
+        const dur = step.duration || 600;
+        const speed = step.speed || 100;
+        const cycles = Math.ceil(dur / speed);
+        let styleEl = document.getElementById('anim-wave-style');
+        if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'anim-wave-style'; document.head.appendChild(styleEl); }
+        styleEl.textContent = `@keyframes anim-wave {
+            0%,100% { transform: skewX(0deg) skewY(0deg); }
+            25% { transform: skewX(${intensity}deg) skewY(${intensity * 0.3}deg); }
+            75% { transform: skewX(-${intensity}deg) skewY(-${intensity * 0.3}deg); }
+        }`;
+        scene.style.animation = `anim-wave ${speed}ms ease-in-out ${cycles}`;
+        await wait(dur);
+        scene.style.animation = '';
     }
 };

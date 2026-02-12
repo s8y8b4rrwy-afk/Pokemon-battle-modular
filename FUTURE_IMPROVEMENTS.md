@@ -7,6 +7,7 @@ This document outlines potential enhancements, technical debt, and new features 
 - [x] **FaintManager**: Extract the fainting logic from `battle.js` and `turn_manager.js` into its own module to handle simultaneous faints, Destiny Bond, and replacement timing more cleanly.
 - [ ] **VisualsManager**: Centralize all sprite manipulation, filtering, and screen-shaking into a dedicated module to further simplify `battle.js`.
 - [ ] **Proper Type Serialization**: Move from global objects to a more robust state management system (perhaps a simple store pattern) to avoid direct global property access.
+- [x] **Advanced IntelliSense & Dev Tooling**: Implemented a JSDoc type system (`types.js`) and `jsconfig.json` to provide full autocomplete for Pokémon, moves, items, and animations without using a bundler.
 
 ## ✨ New Features
 - [ ] **Hold Items**: Implement Gen II held items like Leftovers, Berries, and Type-enhancing items (Never-Melt Ice, etc.).

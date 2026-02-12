@@ -12,8 +12,10 @@ A systematic guide to adding new content to the Pokemon Battle Modular system, e
 - **Understand the file structure**: 
   - `js/data`: Definitions (Moves, Items, Constants)
   - `js/core`: Logic (Battle flow, Mechanics, Effects)
-  - `js/ui`: Visuals (Animations, Animation Framework, Menus)
+  - `js/ui`: Visuals (UI, Menus)
+  - `js/anim`: Animation engine, registry, and high-level API
   - `js/screens`: Screen modules (Party, Summary, Selection)
+  - `js/systems`: Audio engine, Logger, Storage
 
 ## Adding a New Move
 
@@ -149,24 +151,34 @@ if (attacker.volatiles.disabled && attacker.volatiles.disabled.moveName === move
 ### 6. Add Visual Animation (optional but recommended)
 Location: `js/anim/anim_registry.js`
 
-Register a custom animation for the move using the data-driven `AnimFramework`:
+Register a custom animation for the move using the data-driven `AnimFramework`. See the **Battle Animations & Timing** skill for the full reference.
 
 ```javascript
 AnimFramework.register('move-name', [
     { type: 'sfx', sound: 'fire' },
-    { type: 'beam', from: 'attacker', to: 'defender', duration: 400,
-        width: 8, height: 4,
-        beamStyles: { background: '#ff4500', borderRadius: '2px' }
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },  // Attacker lunges
+    { type: 'stream', from: 'attacker', to: 'defender',           // SVG flame particles
+        count: 15, interval: 25, spread: 12, travelTime: 350,
+        size: 6, color: '#ff4500', outline: '#8b0000',
+        scaleStart: 0.6, scaleEnd: 2.0, svgShape: 'fire'
     },
+    { type: 'sfx', sound: 'fire' },
     { type: 'parallel', steps: [
         { type: 'screenFx', class: 'fx-fire', duration: 500 },
         { type: 'spriteShake', target: 'defender', duration: 400 },
-        { type: 'particles', position: 'defender', count: 10, spread: 30, duration: 500 }
+        { type: 'formation', target: 'defender', pattern: 'fireBlast',
+            shape: 'fire', particleSize: 8, color: '#ff4500', duration: 500
+        }
     ]}
 ]);
 ```
 
-Available step types: `sfx`, `cry`, `wait`, `screenFx`, `spriteShake`, `cssClass`, `move`, `spawn`, `particles`, `beam`, `flash`, `callback`, `parallel`.
+**20 step types available:**
+- **Audio/Control**: `sfx`, `cry`, `wait`, `callback`, `parallel`
+- **Scene effects**: `screenFx`, `flash`, `tilt`, `bgColor`, `invert`, `wave`, `cssClass`
+- **Sprite effects**: `spriteShake`, `spriteMove` (presets: `lunge`, `dodge`, `jump`, `recoil`, `charge`, `slam`, `float`, `shake`)
+- **Projectiles**: `stream` (supports `svgShape`), `beam`, `volley`, `particles`
+- **Shapes/Overlays**: `overlay` (SVG shapes: `lightning`, `fire`, `water`, `leaf`, `star`, `claw`, `fist`, `skull`, `spiral`), `formation` (patterns: `fireBlast`, `cross`, `ring`, `xShape`), `spawn`
 
 Use `'attacker'` and `'defender'` as position/element references — the framework resolves player/enemy side automatically.
 

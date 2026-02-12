@@ -24,7 +24,7 @@ const FaintManager = {
         const hud = document.getElementById(isPlayer ? 'player-hud' : 'enemy-hud');
 
         // 1. Play Cry
-        if (mon.cry) AudioEngine.playCry(mon.cry);
+        if (mon.cry) AudioEngine.playCry(mon.cry, 0.6, mon.isBoss);
         await wait(ANIM.FAINT_PRE_DELAY);
 
         // 2. Slide Out Animation
@@ -60,7 +60,7 @@ const FaintManager = {
                 const oppSprite = isPlayer ? document.getElementById('enemy-sprite') : document.getElementById('player-sprite');
                 const oppHud = document.getElementById(isPlayer ? 'enemy-hud' : 'player-hud');
 
-                if (opponent.cry) AudioEngine.playCry(opponent.cry);
+                if (opponent.cry) AudioEngine.playCry(opponent.cry, 0.8, opponent.isBoss);
                 await wait(ANIM.FAINT_PRE_DELAY);
                 oppSprite.classList.add('anim-faint');
                 AudioEngine.playSfx('swoosh');

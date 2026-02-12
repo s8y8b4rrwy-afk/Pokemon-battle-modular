@@ -597,24 +597,24 @@
     animation: flashRed 0.5s steps(5);
 }
 
-.fx-water {
-    animation: flashBlue 0.5s steps(5);
-}
-
+.fx-water,
 .fx-ice {
     animation: flashBlue 0.5s steps(5);
 }
 
-.fx-grass {
+.fx-grass,
+.fx-bug {
     animation: flashGreen 0.5s steps(5);
 }
 
-.fx-electric {
+.fx-electric,
+.fx-steel {
     animation: flashWhite 0.4s steps(4);
 }
 
 .fx-psychic,
-.fx-dragon {
+.fx-dragon,
+.fx-ghost {
     animation: wobble 0.6s steps(6);
 }
 
@@ -629,7 +629,8 @@
     animation: impact 0.3s steps(8);
 }
 
-.fx-poison {
+.fx-poison,
+.fx-dark {
     animation: flashPurple 0.5s steps(5);
 }
 
@@ -644,4 +645,33 @@
     50% {
         transform: translateY(-4px);
     }
+}
+
+/* --- SEPARATED HIT ANIMATIONS (To avoid double-flicker) --- */
+.anim-shake-only {
+    animation: shake 0.4s ease-out;
+}
+
+.anim-shake-only-flipped {
+    animation: shakeFlipped 0.4s ease-out;
+}
+
+.anim-flicker-only {
+    animation: flicker 0.4s steps(4);
+}
+
+/* --- CONFUSION EFFECTS --- */
+@keyframes circle {
+    from {
+        transform: rotate(0deg) translateX(15px) rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg) translateX(15px) rotate(-360deg);
+    }
+}
+
+.anim-circle {
+    animation: circle 1.5s linear infinite;
+    position: absolute;
 }

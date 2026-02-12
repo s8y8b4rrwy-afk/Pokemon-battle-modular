@@ -1,7 +1,7 @@
 // --- DEBUG SETTINGS ------------------------
 // Change ENABLED to true to activate these overrides
 const DEBUG = {
-    ENABLED: true,
+    ENABLED: false,
     BATTLE_LOGS: true, // Set to true to see detailed battle logs in console
 
     // Customize your starting items (Quantity)
@@ -52,7 +52,7 @@ const DEBUG = {
         STATUS: null,
 
         // Volatile Status: e.g. { confused: 5 }
-        VOLATILES: null,
+        VOLATILES: { confused: 5 }, //null,
 
         // Stat Stages: e.g. { atk: 6, spe: 6 }
         STAGES: null,
@@ -62,7 +62,7 @@ const DEBUG = {
 
         // Force specific moves (Array of lowercase strings with dashes)
         // e.g. ['fly', 'dig', 'solar-beam', 'protect']
-        MOVES: ['blizzard', 'explosion', 'ice-beam', 'flamethrower']
+        MOVES: ['blizzard', 'thunderbolt', 'ice-beam', 'flamethrower']
     },
 
     // Control Drop Rates

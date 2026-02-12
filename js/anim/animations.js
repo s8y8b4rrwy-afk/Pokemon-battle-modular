@@ -24,6 +24,14 @@ const BattleAnims = {
             isPlayerAttacker: !isPlayer
         };
 
+        // If no moveName is provided, this is a "silent hit" from status effects,
+        // confusion self-damage, or environmental factors. We only want the 
+        // sprite flicker (handled by applyDamage) and no attacker lunge/particles.
+        if (!moveName) {
+            await wait(200);
+            return;
+        }
+
         // 1. Try move-specific animation (e.g. 'flamethrower', 'ice-beam')
         if (moveName) {
             const registryKey = moveName.toLowerCase().replace(/\s+/g, '-');
@@ -33,37 +41,20 @@ const BattleAnims = {
             }
         }
 
-        // 2. Try type-based fx animation (e.g. 'fx-fire')
+        // 2. Try type-based fx animation (e.g. 'fx-fire', 'fx-normal')
         const fxName = `fx-${moveType}`;
         if (AnimFramework.has(fxName)) {
             await AnimFramework.play(fxName, ctx);
             return;
         }
 
-        // 3. Fallback: Classic inline behavior
-        const sfx = (moveType === 'paralysis') ? 'electric' : moveType;
-        AudioEngine.playSfx(sfx);
-
-        if (['fire', 'water', 'ice', 'grass', 'electric', 'psychic'].includes(moveType)) {
-            const scene = document.getElementById('scene');
-            scene.classList.remove(`fx-${moveType}`);
-            UI.forceReflow(scene);
-            scene.classList.add(`fx-${moveType}`);
-            setTimeout(() => scene.classList.remove(`fx-${moveType}`), 600);
-        }
-
-        if (!isInvisible) {
-            const isFlipped = sprite.classList.contains('sub-back');
-            const hitClass = isFlipped ? 'anim-hit-flipped' : 'anim-hit';
-
-            sprite.classList.remove('anim-hit', 'anim-hit-flipped');
-            UI.forceReflow(sprite);
-            sprite.classList.add(hitClass);
-
-            await wait(400);
-            sprite.classList.remove(hitClass);
+        // 3. Absolute Fallback: Use Normal FX if the specific type target is missing
+        if (AnimFramework.has('fx-normal')) {
+            await AnimFramework.play('fx-normal', ctx);
         } else {
-            await wait(200);
+            // Bare minimum fallback just in case the registry is broken
+            AudioEngine.playSfx('normal');
+            await wait(400);
         }
     },
 
@@ -71,24 +62,32 @@ const BattleAnims = {
     async triggerExplosionAnim() {
         if (AnimFramework.has('explosion')) {
             await AnimFramework.play('explosion', {});
-            return;
+        } else {
+            // Minimal fallback
+            AudioEngine.playSfx('explosion');
+            const scene = document.getElementById('scene');
+            scene.classList.add('fx-explosion');
+            await wait(800);
+            scene.classList.remove('fx-explosion');
         }
+    },
 
-        // Fallback
-        const scene = document.getElementById('scene');
-        const fxLayer = document.getElementById('fx-container');
+    // --- HEAL ANIMATION ---
+    // Used by battle.applyHeal. Plays recovery visual effects.
+    async triggerHealAnim(target, animName = 'fx-heal') {
+        const isPlayer = (target === Battle.p);
+        const ctx = {
+            defender: target,
+            isPlayerAttacker: !isPlayer // Target side is the one receiving effects
+        };
 
-        const flash = document.createElement('div');
-        flash.className = 'explosion-flash';
-        fxLayer.appendChild(flash);
-
-        AudioEngine.playSfx('explosion');
-        scene.classList.add('fx-explosion');
-
-        await wait(800);
-
-        scene.classList.remove('fx-explosion');
-        flash.remove();
+        if (AnimFramework.has(animName)) {
+            await AnimFramework.play(animName, ctx);
+        } else {
+            // Fallback
+            AudioEngine.playSfx('heal');
+            await wait(400);
+        }
     },
 
     // --- VISUAL SWAP (Send out / Substitute) ---

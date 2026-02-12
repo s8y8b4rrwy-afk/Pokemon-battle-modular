@@ -35,6 +35,7 @@ const LOOT_SYSTEM = {
     ]
 };
 
+/** @type {Object.<string, ItemEntry>} */
 const ITEMS = {
     potion: { name: "POTION", heal: 20, type: 'heal', desc: "Restores Pokemon HP by 20.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/potion.png" },
     superpotion: { name: "SUPER POTION", heal: 50, type: 'heal', desc: "Restores Pokemon HP by 50.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/super-potion.png" },

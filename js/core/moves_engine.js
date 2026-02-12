@@ -77,12 +77,14 @@ const MovesEngine = {
 
         let hitsLanded = 0;
         let lastHitDamage = 0;
+        let lastResult = null;
         let storedText = null;
 
         for (let i = 0; i < hitCount; i++) {
             if (defender.currentHp <= 0 || (i > 0 && attacker.currentHp <= 0)) break;
 
             const result = Mechanics.calcDamage(attacker, defender, move);
+            lastResult = result;
             result.damage = Math.floor(result.damage * weatherMod);
             if (result.damage > 0) lastHitDamage = result.damage;
 
@@ -117,19 +119,16 @@ const MovesEngine = {
         if (hitsLanded > 0 && isPlayer && defender.currentHp > 0) await Game.tryMidBattleDrop(defender);
 
         // Check Attacker Rage (Multi-hit fury)
-        if (didSomething) await this.handleAttackerRage(battle, attacker, defender, move, lastHitDamage, isPlayer);
+        if (didSomething) await this.handleAttackerRage(battle, attacker, defender, move, lastHitDamage, isPlayer, lastResult);
 
         return { success: didSomething, immune: false };
     },
 
     async resolveSingleHit(battle, attacker, defender, move, damage, isPlayer, isFirstHit, result) {
-        if (isFirstHit) {
-            if (result.isCrit) AudioEngine.playSfx('crit');
-            else if (result.eff > 1) AudioEngine.playSfx('super_effective');
-            else if (result.eff < 1 && result.eff > 0) AudioEngine.playSfx('not_very_effective');
-        }
+        // Effectiveness data is passed INTO applyDamage so SFX plays at impact, not before
+        const effData = { eff: result.eff, isCrit: result.isCrit };
 
-        await battle.applyDamage(defender, damage, move.type, move.skipAnim ? null : move.name);
+        await battle.applyDamage(defender, damage, move.type, move.skipAnim ? false : move.name, effData);
 
         // Rage Building flags
         if (defender.currentHp > 0 && defender.rageLevel !== undefined) {
@@ -151,7 +150,7 @@ const MovesEngine = {
         }
     },
 
-    async handleAttackerRage(battle, attacker, defender, move, baseDmg, isPlayer) {
+    async handleAttackerRage(battle, attacker, defender, move, baseDmg, isPlayer, result) {
         const rage = attacker.rageLevel || 0;
         if (attacker.currentHp <= 0 || rage === 0) return;
 
@@ -172,7 +171,8 @@ const MovesEngine = {
                 const dmgMod = (j === 0) ? 0.8 : 0.5;
                 const extraDmg = Math.max(1, Math.floor(baseDmg * dmgMod));
 
-                await battle.applyDamage(defender, extraDmg, move.type);
+                const effData = { eff: result.eff, isCrit: result.isCrit };
+                await battle.applyDamage(defender, extraDmg, move.type, move.name, effData);
 
                 if (Math.random() < GAME_BALANCE.RAGE_RECOIL_CHANCE) {
                     await wait(500);
@@ -198,7 +198,7 @@ const MovesEngine = {
 
         let didSomething = false;
 
-        // Stat Changes
+        // Stat Changes (delayed)
         if (move.stat_changes && move.stat_changes.length > 0) {
             let chance = move.stat_chance === 0 ? 100 : move.stat_chance;
             if (Math.random() * 100 < chance) {
@@ -208,6 +208,7 @@ const MovesEngine = {
                     if (first && first.change > 0) target = attacker; else target = defender;
                 }
                 if (target.currentHp > 0) {
+                    await wait(300); // Delay before stat change
                     await battle.applyStatChanges(target, move.stat_changes, target === battle.p);
                     didSomething = true;
                     if (target.rageLevel !== undefined) target.volatiles.rageStatusInflicted = true;
@@ -215,7 +216,7 @@ const MovesEngine = {
             }
         }
 
-        // Status & Flinch
+        // Status & Flinch (delayed)
         if (move.meta) {
             if (defender.currentHp > 0 && move.meta.flinch_chance > 0) {
                 if (Math.random() * 100 < move.meta.flinch_chance) {
@@ -226,6 +227,7 @@ const MovesEngine = {
             if (defender.currentHp > 0 && move.meta.ailment && move.meta.ailment.name !== 'none') {
                 let chance = move.meta.ailment_chance === 0 ? 100 : move.meta.ailment_chance;
                 if (Math.random() * 100 < chance) {
+                    await wait(400); // Delay before status infliction
                     const success = await battle.applyStatus(defender, move.meta.ailment.name, !isPlayer);
                     if (success) {
                         didSomething = true;

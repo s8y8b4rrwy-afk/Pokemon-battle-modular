@@ -103,6 +103,8 @@ Order matters in `Pokemon.html`.
 *   **Rule:** Steps are declarative objects: `{ type: 'sfx'|'beam'|'particles'|'screenFx'|'spriteShake'|'flash'|'spawn'|'parallel'|..., ...params }`.
 *   **Rule:** Use `'attacker'` and `'defender'` as position/element references — the framework resolves player/enemy side automatically.
 *   **Rule:** `BattleAnims.playRegistered(name, ctx)` is the preferred entry point for new code.
+*   **Rule:** The system separates physical impact (`.anim-shake-only`) from damage reaction (`.anim-flicker-only`).
+*   **Rule:** Standard animations use `spriteShake` (shakes only). `Battle.applyDamage` triggers the flicker. Do not combine them manually.
 
 ---
 

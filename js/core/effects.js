@@ -78,6 +78,10 @@ const EffectsManager = {
 
             await UI.typeText(`${mon.name} is\nconfused!`);
 
+            // Play confusion animation
+            const ctx = { attacker: isPlayer ? battle.e : battle.p, defender: mon, isPlayerAttacker: !isPlayer };
+            await AnimFramework.play('confused', ctx);
+
             // 33% chance to hit self
             if (Math.random() < 0.33) {
                 await UI.typeText("It hurt itself in\nits confusion!");
@@ -132,8 +136,8 @@ const EffectsManager = {
             const animClass = change > 0 ? 'anim-stat-up' : 'anim-stat-down';
 
             sprite.classList.add(animClass);
-            if (change > 0) AudioEngine.playSfx('heal');
-            else AudioEngine.playSfx('damage');
+            if (change > 0) AudioEngine.playSfx('stat_up');
+            else AudioEngine.playSfx('stat_down');
 
             await wait(800);
             sprite.classList.remove(animClass);
@@ -157,10 +161,8 @@ const EffectsManager = {
                 await UI.typeText(`${target.name} is\nalready confused!`);
                 return false;
             }
-            const scene = document.getElementById('scene');
-            scene.classList.add('fx-psychic');
-            await wait(400);
-            scene.classList.remove('fx-psychic');
+            const ctx = { attacker: isPlayerTarget ? battle.p : battle.e, defender: target, isPlayerAttacker: !isPlayerTarget };
+            await AnimFramework.play('confused', ctx);
 
             target.volatiles.confused = Math.floor(Math.random() * 4) + 2;
             await UI.typeText(`${target.name} became\nconfused!`);

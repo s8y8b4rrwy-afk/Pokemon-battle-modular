@@ -1,3 +1,4 @@
+/** @type {BattleEngine} */
 const Battle = {
     p: null, e: null, uiLocked: true,
     participants: new Set(),
@@ -15,16 +16,30 @@ const Battle = {
 
     // --- ANIMATION SHIMS (Delegately to BattleAnims module) ---
     triggerHitAnim(...args) { return BattleAnims.triggerHitAnim(...args); },
+    triggerHealAnim(...args) { return BattleAnims.triggerHealAnim(...args); },
     performVisualSwap(...args) { return BattleAnims.performVisualSwap(...args); },
     triggerRageAnim(...args) { return BattleAnims.triggerRageAnim(...args); },
     animateSwap(...args) { return BattleAnims.animateSwap(...args); },
 
     // 1. Standardized Damage Application
-    async applyDamage(target, amount, type = 'normal', moveName = null) {
+    // Flow: move animation → delay → hit flash + effectiveness SFX + HP decrease
+    /**
+     * @param {Pokemon} target 
+     * @param {number} amount 
+     * @param {string} type 
+     * @param {string|boolean} moveName 
+     * @param {Object} effectivenessData 
+     */
+    async applyDamage(target, amount, type = 'normal', moveName = null, effectivenessData = null) {
         // A. Handle Substitute
         if (target.volatiles.substituteHP > 0 && type !== 'recoil' && type !== 'poison' && type !== 'burn') {
             target.volatiles.substituteHP -= amount;
-            await this.triggerHitAnim(target, type, moveName); // Hit the doll
+            if (moveName !== false) {
+                await this.triggerHitAnim(target, type, moveName); // Move animation on doll
+            }
+            await wait(150); // Beat before impact
+            this._playEffectivenessSfx(effectivenessData, moveName);
+            await this._flashSprite(target); // Sprite flash
             await UI.typeText("The SUBSTITUTE took\ndamage for it!");
 
             // Check Break
@@ -44,14 +59,62 @@ const Battle = {
         }
 
         // B. Handle Real HP
-        await this.triggerHitAnim(target, type, moveName); // Visuals
-        target.currentHp -= amount; // Math
-        UI.updateHUD(target, target === this.p ? 'player' : 'enemy'); // UI
+        // Step 1: Move animation (projectiles, streams, overlays)
+        // If moveName is explicitly false (from skipAnim), we skip this step
+        if (moveName !== false) {
+            await this.triggerHitAnim(target, type, moveName);
+        }
+
+        // Step 2: Brief pause for dramatic timing
+        await wait(150);
+
+        // Step 3: Effectiveness SFX + sprite flash + HP decrease (simultaneous)
+        this._playEffectivenessSfx(effectivenessData, moveName);
+        const flashPromise = this._flashSprite(target);
+        target.currentHp -= amount;
+        UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
+        await flashPromise;
+    },
+
+    // Play the correct SFX based on effectiveness
+    _playEffectivenessSfx(data, moveName = null) {
+        if (!data) {
+            if (moveName) AudioEngine.playSfx('damage');
+            return;
+        }
+        if (data.isCrit) AudioEngine.playSfx('crit');
+        else if (data.eff > 1) AudioEngine.playSfx('super_effective');
+        else if (data.eff < 1 && data.eff > 0) AudioEngine.playSfx('not_very_effective');
+        else AudioEngine.playSfx('damage');
+    },
+
+    // Flash/flicker the target sprite (the "hit" reaction)
+    async _flashSprite(target) {
+        const isPlayer = (target === this.p);
+        const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+        if (!sprite) return;
+
+        const isInvisible = !!target.volatiles.invulnerable;
+        if (isInvisible) { await wait(200); return; }
+
+        const isFlipped = sprite.classList.contains('sub-back');
+        const hitClass = 'anim-flicker-only';
+
+        sprite.classList.remove('anim-flicker-only', 'anim-shake-only');
+        UI.forceReflow(sprite);
+        sprite.classList.add(hitClass);
+        await wait(400);
+        sprite.classList.remove(hitClass);
     },
 
 
     // Standardized Healing Logic
-    async applyHeal(target, amount, messageOverride = null) {
+    /**
+     * @param {Pokemon} target 
+     * @param {number} amount 
+     * @param {string|false} messageOverride 
+     */
+    async applyHeal(target, amount, messageOverride = null, animName = 'fx-heal') {
         if (target.currentHp >= target.maxHp) return false;
 
         const oldHp = target.currentHp;
@@ -59,7 +122,7 @@ const Battle = {
         const healedAmt = target.currentHp - oldHp;
 
         // Visuals
-        AudioEngine.playSfx('heal');
+        await BattleAnims.triggerHealAnim(target, animName);
         UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
 
         // Text
@@ -216,13 +279,13 @@ const Battle = {
             eSprite.style.filter = 'none';
 
             if (enemy.isBoss) {
-                if (enemy.cry) AudioEngine.playCry(enemy.cry);
+                if (enemy.cry) AudioEngine.playCry(enemy.cry, 1.0, true);
                 AudioEngine.playSfx('rumble');
                 document.getElementById('scene').classList.add('boss-intro');
                 await sleep(ANIM.INTRO_BOSS_RUMBLE);
                 document.getElementById('scene').classList.remove('boss-intro');
             } else {
-                if (enemy.cry) AudioEngine.playCry(enemy.cry);
+                if (enemy.cry) AudioEngine.playCry(enemy.cry, 1.0, false);
             }
 
             await sleep(ANIM.INTRO_REVEAL_DELAY);

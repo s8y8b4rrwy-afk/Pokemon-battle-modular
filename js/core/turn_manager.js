@@ -204,16 +204,22 @@ const TurnManager = {
         if (attacker.volatiles.charging) {
             attacker.volatiles.charging = false;
             attacker.volatiles.invulnerable = null;
-            sprite.style.opacity = 1;
+            // sprite.style.opacity = 1; // DEFER UNTIL AFTER ANIMATION OR FAIL
 
-            if (await checkInvulnHit() === false) { await restoreSub(); return; }
+            if (await checkInvulnHit() === false) {
+                sprite.style.opacity = '1';
+                await restoreSub();
+                return;
+            }
             if (defender.volatiles.protected && move.target !== 'user') {
+                sprite.style.opacity = '1';
                 await UI.typeText(`${defender.name} protected\nitself!`);
                 await restoreSub();
                 return;
             }
 
             await MovesEngine.executeDamagePhase(battle, attacker, defender, move, isPlayer);
+            sprite.style.opacity = '1'; // Restore now if animation didn't
             await restoreSub();
             return;
         }

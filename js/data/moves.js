@@ -1,8 +1,13 @@
-// --- UNIQUE MOVE DATABASE ---
+/// <reference path="../types.d.ts" />
+
+/** 
+ * @type {Object.<string, MoveEntry>} 
+ */
 const MOVE_DEX = {
     // --- RNG GODS ---
     'METRONOME': {
         isUnique: true,
+        /** @param {Battle} battle @param {Pokemon} user @param {Pokemon} target */
         onHit: async (battle, user, target) => {
             await UI.typeText("Waggling a finger...");
             let rndId = Math.floor(Math.random() * 700) + 1;
@@ -72,7 +77,7 @@ const MOVE_DEX = {
             const dmg = user.volatiles.turnDamage || 0;
             const cat = user.volatiles.turnDamageCategory;
             if (dmg > 0 && cat === 'physical') {
-                await battle.applyDamage(target, dmg * 2, 'fighting');
+                await battle.applyDamage(target, dmg * 2, 'fighting', 'COUNTER');
                 return true;
             }
             await UI.typeText("But it failed!");
@@ -85,7 +90,7 @@ const MOVE_DEX = {
             const dmg = user.volatiles.turnDamage || 0;
             const cat = user.volatiles.turnDamageCategory;
             if (dmg > 0 && cat === 'special') {
-                await battle.applyDamage(target, dmg * 2, 'psychic');
+                await battle.applyDamage(target, dmg * 2, 'psychic', 'MIRROR COAT');
                 return true;
             }
             await UI.typeText("But it failed!");
@@ -276,14 +281,14 @@ const MOVE_DEX = {
             return true;
         }
     },
-    'RECOVER': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5) },
-    'SOFT BOILED': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5) },
-    'MILK DRINK': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5) },
-    'SLACK OFF': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5) },
-    'ROOST': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5) },
-    'SYNTHESIS': { isUnique: true, onHit: async (b, u, t) => _weatherHeal(b, u) },
-    'MORNING SUN': { isUnique: true, onHit: async (b, u, t) => _weatherHeal(b, u) },
-    'MOONLIGHT': { isUnique: true, onHit: async (b, u, t) => _weatherHeal(b, u) },
+    'RECOVER': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5, 'recover') },
+    'SOFT BOILED': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5, 'soft-boiled') },
+    'MILK DRINK': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5, 'soft-boiled') },
+    'SLACK OFF': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5, 'recover') },
+    'ROOST': { isUnique: true, onHit: async (b, u, t) => _heal(b, u, 0.5, 'recover') },
+    'SYNTHESIS': { isUnique: true, onHit: async (b, u, t) => _weatherHeal(b, u, 'synthesis') },
+    'MORNING SUN': { isUnique: true, onHit: async (b, u, t) => _weatherHeal(b, u, 'synthesis') },
+    'MOONLIGHT': { isUnique: true, onHit: async (b, u, t) => _weatherHeal(b, u, 'moonlight') },
 
     // --- DELAYED ATTACKS ---
     'FUTURE SIGHT': {
@@ -601,21 +606,21 @@ const MOVE_LOGIC = {
 };
 
 // --- HELPERS for DEX ---
-async function _heal(battle, user, pct) {
+async function _heal(battle, user, pct, animName = 'fx-heal') {
     if (user.currentHp === user.maxHp) { await UI.typeText("It's already\nfully healthy!"); return false; }
 
     const amt = Math.floor(user.maxHp * pct);
     // Use Helper (automatically handles HUD, Sound, and "Regained health" text)
-    await battle.applyHeal(user, amt);
+    await battle.applyHeal(user, amt, null, animName);
 
     return true;
 }
 
-async function _weatherHeal(battle, user) {
+async function _weatherHeal(battle, user, animName = 'fx-heal') {
     let pct = 0.5;
     if (battle.weather.type === 'sun') pct = 0.66;
     else if (battle.weather.type !== 'none') pct = 0.25;
-    return _heal(battle, user, pct);
+    return _heal(battle, user, pct, animName);
 }
 
 // --- NEW HELPERS ---

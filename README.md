@@ -340,6 +340,13 @@ const DEBUG = {
 - ➕ `rage_manager.js` — Extracted rage mechanic
 - ➕ `logger.js` — Battle logging system
 
+### v1.2.1 - Enhanced Developer Experience (Feb 2026)
+**Type System:**
+- 💎 **JSDoc Type Registry** — Created `js/types.js` to provide project-wide autocomplete for `Pokemon`, `Battle`, and `Items`.
+- 💎 **Animation IntelliSense** — Full typing for the `AnimFramework`. Writing new animations now provides suggestions for all 20+ step types and their parameters.
+- 💎 **VS Code Integration** — Added `jsconfig.json` to enable deep IntelliSense across modular JS files without a bundler.
+- 💎 **Permissive Contexts** — Specifically designed types to allow for future extensibility (e.g., custom volatiles) while maintaining core validation.
+
 ### v1.1.0 - Status System Overhaul (Feb 2026)
 **Fixed:**
 - ✅ Status ailment TypeError when applying burn, poison, paralysis from moves
