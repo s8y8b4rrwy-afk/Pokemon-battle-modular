@@ -439,9 +439,7 @@ const createDrainAnim = (intensity = 'low') => {
                 { type: 'screenFx', class: 'fx-grass', duration: 600 },
                 { type: 'spriteShake', target: 'defender', duration: 600 }
             ]
-        },
-        { type: 'sfx', sound: 'heal' },
-        { type: 'flash', color: '#ffffff', duration: 300, opacity: 0.3 }
+        }
     ];
 };
 

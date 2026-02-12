@@ -349,22 +349,20 @@ AnimFramework.register('poison-jab', [
 
 AnimFramework.register('giga-impact', [
     { type: 'sfx', sound: 'normal' },
-    { type: 'bgColor', color: '#808080', duration: 500 },
-    { type: 'spriteMove', target: 'attacker', preset: 'charge', duration: 300 },
+    { type: 'bgColor', color: '#d85b2aff', duration: 500 },
+    { type: 'spriteMove', target: 'attacker', preset: 'charge', duration: 100 },
     {
         type: 'parallel', steps: [
             { type: 'screenFx', class: 'fx-normal', duration: 800 },
             { type: 'tilt', angle: 8, duration: 250 },
             {
                 type: 'overlay', target: 'defender', shape: 'fist',
-                color: '#fff', outline: '#000', width: 80, height: 80,
-                duration: 400, animation: 'slam'
+                color: '#fff', outline: '#000', width: 40, height: 40,
+                duration: 700, animation: 'slam'
             },
             { type: 'sfx', sound: 'damage' } // Heavy hit
         ]
-    },
-    { type: 'spriteShake', target: 'defender', duration: 600 },
-    { type: 'spriteMove', target: 'attacker', preset: 'recoil', duration: 400 } // Recharge feel
+    }
 ]);
 
 AnimFramework.register('superpower', [

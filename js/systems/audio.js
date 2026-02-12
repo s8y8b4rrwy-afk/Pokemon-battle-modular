@@ -229,7 +229,19 @@ const AudioEngine = {
                 osc.start(now); osc.stop(now + 0.4);
                 o2.start(now + 0.05); o2.stop(now + 0.45);
                 break;
-            case 'not_very_effective': osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(100, now + 0.15); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.15); osc.start(now); osc.stop(now + 0.15); break;
+            case 'not_very_effective':
+                // Dull "Thud" - Short burst of low-passed noise
+                const nSrc = this.ctx.createBufferSource(); nSrc.buffer = this.noiseBuffer;
+                const nFilter = this.ctx.createBiquadFilter(); nFilter.type = "lowpass";
+                // Lower frequency for a deeper thud
+                nFilter.frequency.setValueAtTime(180, now);
+                const nGain = this.ctx.createGain();
+                // Moderate gain to avoid sounding "sharp" like a crit
+                nGain.gain.setValueAtTime(6.5, now);
+                nGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                nSrc.connect(nFilter); nFilter.connect(nGain); nGain.connect(this.ctx.destination);
+                nSrc.start(now); nSrc.stop(now + 0.2);
+                break;
             case 'throw': osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(100, now + 0.3); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); break;
             case 'catch_click': osc.type = 'square'; osc.frequency.setValueAtTime(800, now); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05); osc.start(now); osc.stop(now + 0.05); break;
 
@@ -254,6 +266,17 @@ const AudioEngine = {
                 const exGain = this.ctx.createGain(); exGain.gain.setValueAtTime(0.6, now); exGain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
                 exSrc.connect(exFilter); exFilter.connect(exGain); exGain.connect(this.ctx.destination);
                 exSrc.start(now); exSrc.stop(now + 1.3);
+                break;
+
+            case 'faint':
+                // "Laser-like" drop sound
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(1200, now);
+                osc.frequency.exponentialRampToValueAtTime(60, now + 0.6);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
                 break;
 
             default: osc.type = 'square'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.1); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); break;

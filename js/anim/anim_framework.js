@@ -808,16 +808,49 @@ const AnimFramework = {
 
     // === BG COLOR ===
     async _doBgColor(step, ctx) {
-        const scene = ctx.scene;
+        const parent = ctx.scene;
         const dur = step.duration || 500;
-        const original = scene.style.backgroundColor || '';
-        scene.style.transition = `background-color ${dur * 0.2}ms ease-out`;
-        scene.style.backgroundColor = step.color || '#000';
+        const color = step.color || '#000';
+
+        const overlay = document.createElement('div');
+        Object.assign(overlay.style, {
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            background: color,
+            zIndex: '0', // Lowest possible to stay behind sprites/HUD
+            opacity: '0',
+            pointerEvents: 'none',
+            transition: `opacity ${dur * 0.2}ms ease-out`
+        });
+
+        // Insert at the bottom of the stack (before particles/sprites)
+        // If particles are in fx-container (which is usually first child),
+        // we want this BEHIND fx-container if possible, or at least behind sprites.
+        // Inserting before firstChild puts it at the very bottom of DOM order within scene.
+        if (parent.firstChild) {
+            parent.insertBefore(overlay, parent.firstChild);
+        } else {
+            parent.appendChild(overlay);
+        }
+
+        // Trigger reflow
+        overlay.offsetHeight;
+
+        // Fade In
+        overlay.style.opacity = '1';
+
         await wait(dur * 0.7);
-        scene.style.transition = `background-color ${dur * 0.3}ms ease-in`;
-        scene.style.backgroundColor = original;
+
+        // Fade Out
+        overlay.style.transition = `opacity ${dur * 0.3}ms ease-in`;
+        overlay.style.opacity = '0';
+
         await wait(dur * 0.3);
-        scene.style.transition = '';
+
+        overlay.remove();
     },
 
     // === INVERT ===

@@ -389,32 +389,14 @@ AnimFramework.register('explosion', [
     { type: 'wait', ms: 200 }
 ]);
 
-AnimFramework.register('rage-buildup', (ctx) => {
-    // Dynamic intensity based on rage level (if available) or default
-    const level = (ctx.attacker && ctx.attacker.rageLevel) || 1;
-    const intensity = Math.min(level, 3); // Max visual intensity at 3
-
-    return [
-        {
-            type: 'callback', fn: ctx => {
-                if (ctx.attacker && ctx.attacker.cry) AudioEngine.playCry(ctx.attacker.cry);
-            }
-        },
-        {
-            type: 'parallel', steps: [
-                { type: 'sfx', sound: 'rumble' },
-                { type: 'filter', target: 'attacker', filter: 'sepia(1) hue-rotate(-50deg) saturate(3)', duration: 600 }, // Angry Red
-                { type: 'spriteShake', target: 'attacker', duration: 600, intensity: intensity * 2 },
-                {
-                    type: 'overlay', target: 'attacker', shape: 'anger',
-                    color: '#ff0000', outline: '#8b0000', width: 30, height: 30,
-                    duration: 600, animation: 'shake', count: intensity, spread: 20
-                }
-            ]
-        },
-        { type: 'wait', ms: 200 }
-    ];
-});
+AnimFramework.register('rage-buildup', [
+    {
+        type: 'parallel', steps: [
+            { type: 'sfx', sound: 'rumble' },
+            { type: 'cssClass', el: 'scene', class: 'anim-violent', duration: 500 },
+        ]
+    },
+]);
 
 // --- STATUS EFFECT ANIMATIONS ---
 AnimFramework.register('status-brn', [

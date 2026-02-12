@@ -23,18 +23,21 @@ const FaintManager = {
         const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
         const hud = document.getElementById(isPlayer ? 'player-hud' : 'enemy-hud');
 
-        // 1. Play Cry
-        if (mon.cry) AudioEngine.playCry(mon.cry, 0.6, mon.isBoss);
-        await wait(ANIM.FAINT_PRE_DELAY);
+        // 1. Play Cry First
+        if (mon.cry) {
+            AudioEngine.playCry(mon.cry, 0.6, mon.isBoss);
+            await wait(ANIM.CRY_DURATION + 1300); // Wait for cry to mostly finish
+        } else {
+            await wait(ANIM.FAINT_PRE_DELAY);
+        }
 
-        // 2. Slide Out Animation
+        // 2. Slide Out Animation + Swoosh Sync
         sprite.style.opacity = 1;
         sprite.classList.add('anim-faint');
-        AudioEngine.playSfx('swoosh');
+        AudioEngine.playSfx('faint'); // Play "laser-like" drop SFX AT THE SAME TIME
 
         // HUD removal delay
         setTimeout(() => {
-            AudioEngine.playSfx('swoosh');
             hud.classList.remove('hud-active');
         }, ANIM.HUD_SLIDE_DELAY);
 
