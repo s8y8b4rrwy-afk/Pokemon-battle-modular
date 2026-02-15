@@ -154,5 +154,31 @@ const API = {
             console.error("Evo Chain Error", e);
             return null;
         }
+    },
+
+    // Check for moves learned at a specific level (for evolution)
+    async getLearnableMoves(pokemonIdOrName, level) {
+        try {
+            const res = await fetch(`${this.base}/pokemon/${pokemonIdOrName}`);
+            const data = await res.json();
+
+            const learnable = [];
+            for (const m of data.moves) {
+                // Check version details (using 'red-blue' or 'gold-silver' or generic 'level-up')
+                // For simplified logic, we check any version that has level-up at this level
+                const levelUpEntry = m.version_group_details.find(d =>
+                    d.move_learn_method.name === 'level-up' &&
+                    d.level_learned_at === level
+                );
+
+                if (levelUpEntry) {
+                    learnable.push(m.move.name);
+                }
+            }
+            return learnable;
+        } catch (e) {
+            console.error("Move Learn Check Error", e);
+            return [];
+        }
     }
 };

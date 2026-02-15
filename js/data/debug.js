@@ -62,7 +62,7 @@ const DEBUG = {
 
         // Force specific moves (Array of lowercase strings with dashes)
         // e.g. ['fly', 'dig', 'solar-beam', 'protect']
-        MOVES: ['blizzard', 'thunderbolt', 'ice-beam', 'flamethrower']
+        MOVES: ['transform', 'thunderbolt', 'ice-beam', 'flamethrower']
     },
 
     // Control Drop Rates

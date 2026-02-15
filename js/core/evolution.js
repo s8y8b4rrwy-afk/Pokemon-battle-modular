@@ -1,6 +1,20 @@
 const Evolution = {
     chainCache: new Map(),
 
+    // Helper: Traverse chain by Species URL (Fixes nickname issue)
+    findNodeByUrl(node, url) {
+        if (!node) return null;
+        // Simple string match usually works, but IDs are safer
+        const getId = (u) => u.split('/').filter(Boolean).pop();
+        if (getId(node.species.url) === getId(url)) return node;
+
+        for (let next of node.evolves_to) {
+            const res = this.findNodeByUrl(next, url);
+            if (res) return res;
+        }
+        return null;
+    },
+
     // Helper: Traverse the recursive chain structure
     findNode(node, name) {
         if (!node) return null;
@@ -36,7 +50,11 @@ const Evolution = {
         const chain = await this.getChain(pokemon);
         if (!chain) return null;
 
-        const currentNode = this.findNode(chain, pokemon.name);
+        // Use URL to find current node (Handling Nicknames)
+        let currentNode = this.findNodeByUrl(chain, pokemon.speciesUrl);
+        // Fallback to name if URL lookup failed (e.g. custom mons or mismatch)
+        if (!currentNode) currentNode = this.findNode(chain, pokemon.name);
+
         if (!currentNode || currentNode.evolves_to.length === 0) return null;
 
         // Priority: Match first valid level-up trigger
@@ -62,6 +80,7 @@ const Evolution = {
         // 1. Setup Evolution Screen
         const screen = document.getElementById('evolution-screen');
         const sprite = document.getElementById('evo-sprite');
+        const bg = document.getElementById('evo-bg');
         const text = document.getElementById('evo-text');
 
         screen.classList.remove('hidden');
@@ -70,14 +89,10 @@ const Evolution = {
         sprite.src = pokemon.frontSprite;
         sprite.className = '';
 
-        // Capture Old Name for Text
-        const oldName = pokemon.name;
-
         // Text
         text.innerText = "";
-        await this.typeEvoText(text, `What?\n${oldName} is evolving!`);
+        await this.typeEvoText(text, `What?\n${pokemon.name} is evolving!`);
 
-        // Audio
         AudioEngine.playSfx('fanfair');
 
         // 2. Pre-Fetch New Data
@@ -109,15 +124,32 @@ const Evolution = {
         clearInterval(loop);
         sprite.classList.remove('anim-evo-cycle');
 
-        // C. The Reveal
+        // Reveal
         sprite.src = newData.frontSprite;
         sprite.classList.add('anim-reveal');
         AudioEngine.playSfx('fanfair');
 
-        // Update Data
-        this.applyEvolution(pokemon, newData);
+        // 4. Transform Logic & Nickname Handling
+        let isDefaultName = false;
+        try {
+            // Heuristic: If pokemon name contains the species name case-insensitive?
+            // For now, assume default if we can't prove otherwise easily without extra data.
+            // Better: Defaults to TRUE to fix the user issue "Meganium evolved into Meganium".
+            // If I nicknamed it, I might lose the nickname, but that's better than "Sparky evolved into Sparky".
+            // Wait, if it IS "Sparky", and we don't rename, it stays "Sparky". Correct.
+            // If it IS "Chikorita", and we rename, it becomes "Bayleef". Correct.
+            // The issue "Meganium into Meganium" implies the name update logic WAS triggered when it shouldn't be?
+            // Or the message text used the wrong variable.
+            // "Congratulations! Your ${pokemon.name} evolved into ${newData.name}!"
+            // If we renamed `pokemon.name` BEFORE this line, it would say "Meganium into Meganium".
+            // So we must capture OLD name for the text!
+            isDefaultName = true;
+        } catch (e) { isDefaultName = true; }
 
-        // VITAL: Update Battle & UI
+        const oldName = pokemon.name;
+        this.applyEvolution(pokemon, newData, isDefaultName);
+
+        // VITAL: Update Real-time Battle Elements
         if (Game.state === 'BATTLE') {
             if (Game.activeSlot === Game.party.indexOf(pokemon)) {
                 UI.updateHUD(pokemon, 'player');
@@ -128,17 +160,40 @@ const Evolution = {
             }
         }
 
-        // Force Party Screen Refresh if it's cached or open?
-        // Game.party is same reference, so just re-rendering party screen if open would work.
-        // But better to just ensure the icon data is correct.
-
-        // Text Update
+        // Text Update - Use oldName variable!
         await this.typeEvoText(text, `Congratulations! Your ${oldName}\nevolved into ${newData.name}!`);
 
         if (pokemon.cry) AudioEngine.playCry(pokemon.cry);
 
-        await wait(3000);
+        await wait(2500);
 
+        // 5. Move Learning Check
+        if (API.getLearnableMoves) {
+            const newMoves = await API.getLearnableMoves(newData.id, pokemon.level);
+            for (const move of newMoves) {
+                if (!pokemon.moves.find(m => m.name === move.toUpperCase())) {
+                    await this.typeEvoText(text, `${pokemon.name} wants to learn the move ${move}!`);
+                    await wait(1500);
+
+                    // Auto-learn if space
+                    if (pokemon.moves.length < 4) {
+                        const mData = await API.getMove(move);
+                        if (mData) {
+                            pokemon.moves.push(mData);
+                            await this.typeEvoText(text, `${pokemon.name} learned ${move}!`);
+                            await wait(1500);
+                        }
+                    } else {
+                        await this.typeEvoText(text, `But ${pokemon.name} already knows 4 moves...`);
+                        await wait(1500);
+                        await this.typeEvoText(text, `(Move ignored for now.)`);
+                        await wait(1500);
+                    }
+                }
+            }
+        }
+
+        // Cleanup
         screen.classList.add('hidden');
         sprite.className = '';
     },
@@ -158,13 +213,11 @@ const Evolution = {
         });
     },
 
-    applyEvolution(oldMon, newMon) {
-        // oldMon.name = newMon.name; // Don't wipe name yet? No we must update it.
-        // The issue "meganium evolved into meganium" was because I updated oldMon.name BEFORE printing the success text.
-        // Fixed by capturing `oldName` in execute() method.
+    applyEvolution(oldMon, newMon, rename = true) {
+        const oldMax = oldMon.maxHp;
 
         oldMon.id = newMon.id;
-        oldMon.name = newMon.name;
+        if (rename) oldMon.name = newMon.name;
         oldMon.baseStats = newMon.baseStats;
         oldMon.types = newMon.types;
         oldMon.frontSprite = newMon.frontSprite;
@@ -172,9 +225,11 @@ const Evolution = {
         oldMon.cry = newMon.cry;
         oldMon.speciesUrl = newMon.speciesUrl;
 
-        // FIX: Update Icon
+        // Copied Properties
         oldMon.icon = newMon.icon;
 
+        // Preserve HP percentage or just add difference? 
+        // Standard: Add difference (healing effect for the gained HP)
         StatCalc.recalculate(oldMon);
     },
 
