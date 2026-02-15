@@ -797,6 +797,12 @@ AnimFramework.register('sand-attack', [
     { type: 'wait', ms: 200 }
 ]);
 
+AnimFramework.register('haze', [
+    { type: 'sfx', sound: 'psychic' },
+    { type: 'wave', intensity: 2, duration: 800, speed: 100 },
+    { type: 'wait', ms: 200 }
+]);
+
 AnimFramework.register('smokescreen', [
     { type: 'sfx', sound: 'poison' }, // Close enough to smoke sound
     {
@@ -819,6 +825,13 @@ AnimFramework.register('double-team', [
 AnimFramework.register('harden', [
     { type: 'sfx', sound: 'steel' },
     { type: 'filter', target: 'attacker', filter: 'brightness(1.5) contrast(1.2)', duration: 500 },
+    { type: 'wait', ms: 200 }
+]);
+
+AnimFramework.register('belly-drum', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'spriteMove', target: 'attacker', preset: 'jump', duration: 200 },
+    { type: 'bgColor', color: '#ff4500', duration: 400 },
     { type: 'wait', ms: 200 }
 ]);
 
@@ -901,6 +914,15 @@ AnimFramework.register('tick-nightmare', [
     {
         type: 'overlay', target: 'defender', shape: 'zzz',
         color: '#8b0000', outline: '#000', width: 20, height: 20,
+        duration: 400, animation: 'float'
+    }
+]);
+
+AnimFramework.register('tick-perish-song', [
+    { type: 'sfx', sound: 'psychic' },
+    {
+        type: 'overlay', target: 'defender', shape: 'music',
+        color: '#ff69b4', outline: '#000', width: 24, height: 24,
         duration: 400, animation: 'float'
     }
 ]);

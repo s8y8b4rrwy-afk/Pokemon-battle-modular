@@ -43,8 +43,8 @@ const DEBUG = {
 
     // Force specific Player attributes
     PLAYER: {
-        ID: null,       // Pokedex Number (e.g. 249 = Lugia).
-        LEVEL: null,    // Level (1-100).
+        ID: 1,       // Pokedex Number (e.g. 249 = Lugia).
+        LEVEL: 15,    // Level (1-100).
         SHINY: null,    // true/false.
         RAGE: 0,        // Start with Rage (0-3).
 
@@ -52,7 +52,7 @@ const DEBUG = {
         STATUS: null,
 
         // Volatile Status: e.g. { confused: 5 }
-        VOLATILES: { confused: 5 }, //null,
+        VOLATILES: null,
 
         // Stat Stages: e.g. { atk: 6, spe: 6 }
         STAGES: null,
@@ -71,4 +71,101 @@ const DEBUG = {
         MID_BATTLE_RATE: null,// 0.0 to 1.0 (e.g. 0.5 = 50% chance on every hit).
         FORCE_ITEM: null      // Force a specific item ID (e.g. 'masterball').
     }
+};
+
+// --- DEBUG CONSOLE HELPERS ---
+// Teaching a move: DebugTeach(0, 'hyper-beam')
+window.DebugTeach = async (slotIndex, moveName) => {
+    if (typeof Game === 'undefined' || !Game.party[slotIndex]) {
+        console.error("Invalid slot or Game not ready.");
+        return;
+    }
+    const p = Game.party[slotIndex];
+    console.log(`Attempting to teach ${moveName} to ${p.name} via full flow...`);
+
+    if (typeof MoveLearnScreen !== 'undefined') {
+        // Force hide standard menus to prevent overlap
+        if (typeof UI !== 'undefined') {
+            UI.hide('action-menu');
+            UI.hide('move-menu');
+        }
+        await MoveLearnScreen.tryLearn(p, moveName);
+        console.log("Move Learn Flow complete.");
+    } else {
+        console.error("MoveLearnScreen not found.");
+    }
+};
+
+// Check for new moves: DebugCheckMoves(0)
+window.DebugCheckMoves = async (slotIndex) => {
+    if (typeof Game === 'undefined' || !Game.party[slotIndex]) return;
+    const p = Game.party[slotIndex];
+    if (typeof API.getLearnableMoves === 'function') {
+        const moves = await API.getLearnableMoves(p.id, p.level);
+        console.log(`Learnable moves for ${p.name} at Lvl ${p.level}:`, moves);
+        if (moves.length > 0) {
+            console.log("Triggering learn sequence...");
+            for (const m of moves) {
+                if (p.moves.find(x => x.name === m.toUpperCase())) continue;
+                await MoveLearnScreen.tryLearn(p, m);
+            }
+        }
+    }
+};
+
+// Force a win and level up: DebugWinAndLevelUp('flamethrower')
+window.DebugWinAndLevelUp = async (forceMove = 'solar-beam') => {
+    if (typeof Battle === 'undefined' || !Battle.e) {
+        console.error("No active battle.");
+        return;
+    }
+
+    const p = Game.party[Game.activeSlot];
+    const e = Battle.e;
+
+    // 1. Hide Menus
+    if (typeof UI !== 'undefined') {
+        UI.hide('action-menu');
+        UI.hide('move-menu');
+    }
+
+    // 2. Simulate "JUDGEMENT" Move
+    await DialogManager.show(`${p.name} used\nJUDGEMENT!`, { lock: true, delay: 500 });
+
+    // Play powerful animation
+    if (typeof Battle.triggerHitAnim === 'function') {
+        await Battle.triggerHitAnim(e, 'normal', 'hyper-beam');
+    }
+
+    // 3. Temporarily BOOST enemy level/yield to GUARANTEE a level up
+    // We modify the enemy object directly so Mechanics.calcExpGain picks it up
+    const originalLvl = e.level;
+    const originalBase = e.baseExp;
+
+    // Set to something that yields massive EXP based on player level
+    e.level = p.level + 10;
+    e.baseExp = 250;
+
+    // 4. Apply Lethal Damage
+    await Battle.applyDamage(e, e.maxHp, 'normal', false, { eff: 2 });
+
+    // 5. Trigger Faint via Manager
+    // This will trigger the standard EXP/Level Up flow
+    await FaintManager.processFaint(Battle, e, false);
+
+    // 6. Force the move learning for debug testing
+    // We do this AFTER the standard flow finishes to ensure a "learn" happens for testing
+    if (forceMove && typeof MoveLearnScreen !== 'undefined') {
+        // Check if we already have it to avoid duplicates
+        if (!p.moves.find(m => m.name === forceMove.toUpperCase().replace(/-/g, ' '))) {
+            console.log(`Debug: Forcing learn of ${forceMove}...`);
+            await MoveLearnScreen.tryLearn(p, forceMove);
+        }
+    }
+
+    // 7. Restore original enemy stats
+    e.level = originalLvl;
+    e.baseExp = originalBase;
+
+    console.log("Debug win sequence complete. Standard flow + Forced move finished.");
 };

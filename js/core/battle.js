@@ -186,12 +186,19 @@ const Battle = {
         textEl.innerHTML = "";
         textEl.classList.remove('full-width');
 
+        // Hide Menus explicitly
+        UI.hide('action-menu');
+        UI.hide('move-menu');
+        UI.hide('pack-screen');
+        UI.hide('party-screen');
+        Input.setMode('NONE');
+
         UI.forceReflow(pSprite);
         UI.forceReflow(eSprite);
 
         EnvironmentManager.reset();
         this.delayedMoves = [];
-        this.uiLocked = false;
+        this.uiLocked = true; // KEEP LOCKED during win sequence/cleanup
 
         // FIX: Clear Input Promise if resetting to avoid stuck menus
         this.userInputPromise = null;

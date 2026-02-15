@@ -2,9 +2,13 @@ const TurnManager = {
     async performTurn(battle, playerMove) {
         if (battle.uiLocked) return;
 
-        // Safety: If charging, force the queued move
+        // Safety: If charging or locked-in or encored, force the queued move
         if (battle.p.volatiles.charging && battle.p.volatiles.queuedMove) {
             playerMove = battle.p.volatiles.queuedMove;
+        } else if (battle.p.volatiles.lockIn) {
+            playerMove = battle.p.volatiles.lockIn.move;
+        } else if (battle.p.volatiles.encored) {
+            playerMove = battle.p.volatiles.encored.move;
         }
 
         // 1. INSTANT UI FEEDBACK
@@ -123,6 +127,13 @@ const TurnManager = {
     },
 
     async executeAction(battle, action) {
+        // AI Lock-in check
+        if (action.type === 'ATTACK' && !action.isPlayer) {
+            if (action.user.volatiles.lockIn) {
+                action.move = action.user.volatiles.lockIn.move;
+            }
+        }
+
         switch (action.type) {
             case 'ATTACK': await this.processAttack(battle, action.user, action.target, action.move); break;
             case 'SWITCH': await this.processSwitch(battle, action.newMon); break;
@@ -230,8 +241,12 @@ const TurnManager = {
                 attacker.volatiles.protected = false;
             } else {
                 attacker.volatiles.protected = true;
+                // Trigger Animation
+                const ctx = { attacker, defender, isPlayerAttacker: isPlayer };
+                const registryKey = move.name.toLowerCase().replace(/\s+/g, '-');
+                await BattleAnims.playRegistered(registryKey, ctx);
+
                 await UI.typeText(`${attacker.name} protected\nitself!`);
-                AudioEngine.playSfx('clank');
             }
             await restoreSub();
             return;
@@ -305,6 +320,27 @@ const TurnManager = {
 
         await MovesEngine.executeDamagePhase(battle, attacker, defender, move, isPlayer);
         if (logic.type === 'recharge') attacker.volatiles.recharging = true;
+
+        // Handle Lock-in initialization and decrement
+        if (logic.type === 'lock-in') {
+            if (!attacker.volatiles.lockIn) {
+                attacker.volatiles.lockIn = {
+                    move: move,
+                    turns: Math.floor(Math.random() * 2) + 2 // 2 or 3 turns
+                };
+            }
+        }
+
+        if (attacker.volatiles.lockIn) {
+            attacker.volatiles.lockIn.turns--;
+            if (attacker.volatiles.lockIn.turns <= 0) {
+                delete attacker.volatiles.lockIn;
+                await wait(500);
+                await EffectsManager.applyStatus(battle, attacker, 'confusion', isPlayer);
+                await UI.typeText(`${attacker.name} became confused\ndue to fatigue!`);
+            }
+        }
+
         await restoreSub();
     },
 

@@ -1,1 +1,79 @@
-.choice-box { position: absolute; right: 10px; bottom: 50px; background: white; border: 2px solid #333; padding: 5px; z-index: 20; min-width: 80px; } .choice-item { padding: 4px; font-size: 10px; cursor: pointer; } .choice-item.focused { background: #eee; text-decoration: underline; } .choice-box.hidden { display: none; }
+/* ==================================
+   DIALOG BOX & CHOICE BOX
+   ================================== */
+
+/* Choice Box (Yes/No) */
+#dialog-choice-box {
+    position: absolute;
+    right: 15px;
+    top: -55px;
+    /* Positioned above the dialog box */
+    background: white;
+    border: 3px solid #333;
+    padding: 4px;
+    z-index: 1000;
+    min-width: 60px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.choice-item {
+    padding: 4px 8px;
+    font-size: 11px;
+    color: black;
+    /* Pure black text */
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.choice-item.focused {
+    background: #e0e0e0;
+    /* Simulate a small arrow or cursor if needed, but underline/bg is standard */
+    text-decoration: none;
+    position: relative;
+}
+
+.choice-item.focused::before {
+    content: '▶';
+    position: absolute;
+    left: 1px;
+    font-size: 8px;
+}
+
+#dialog-choice-box.hidden {
+    display: none;
+}
+
+/* Advance Arrow (Blinking) */
+#advance-arrow {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid white;
+    animation: blinkArrow 0.6s infinite;
+    z-index: 1001;
+}
+
+#advance-arrow.hidden {
+    display: none;
+}
+
+@keyframes blinkArrow {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    50% {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+}

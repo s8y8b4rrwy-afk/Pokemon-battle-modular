@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/explosion.css">
     <link rel="stylesheet" href="css/evolution.css">
+    <link rel="stylesheet" href="css/move_learn.css">
     <link rel="stylesheet" href="css/dialog.css">
 </head>
 
@@ -139,6 +140,54 @@
                 </div>
             </div>
 
+            <!-- MOVE LEARN SCREEN -->
+            <div id="move-learn-screen" class="hidden">
+                <div class="ml-header">
+                    <span id="ml-title-text" style="width:100%; text-align:center;">SELECT MOVE TO REPLACE</span>
+                </div>
+                <div class="ml-body">
+                    <!-- Left Column: Sprite & Stats -->
+                    <div class="ml-left-col">
+                        <div class="ml-sprite-box">
+                            <img id="ml-poke-sprite" src="">
+                        </div>
+                        <div class="ml-types" id="ml-types"></div>
+                        <div class="ml-stats-container">
+                            <div class="ml-stats-row"><span>ATTACK</span> <span id="ml-stat-atk">--</span></div>
+                            <div class="ml-stats-row"><span>DEFENSE</span> <span id="ml-stat-def">--</span></div>
+                            <div class="ml-stats-row"><span>SP. ATK</span> <span id="ml-stat-spa">--</span></div>
+                            <div class="ml-stats-row"><span>SP. DEF</span> <span id="ml-stat-spd">--</span></div>
+                            <div class="ml-stats-row"><span>SPEED</span> <span id="ml-stat-spe">--</span></div>
+                        </div>
+                    </div>
+                    <!-- Right Column: Move List -->
+                    <div class="ml-right-col" id="ml-move-list">
+                        <!-- Moves injected via JS -->
+                    </div>
+                </div>
+                <!-- Info Panel -->
+                <div class="ml-info-panel">
+                    <div class="ml-info-header">
+                        <div id="ml-info-title">INFO</div>
+                        <div class="ml-info-stats">
+                            <span id="ml-info-power">PWR: --</span>
+                            <span id="ml-info-acc">ACC: --</span>
+                            <span id="ml-info-type">TYPE/NORMAL</span>
+                        </div>
+                    </div>
+                    <div class="ml-info-desc" id="ml-info-desc">
+                        Description text.
+                    </div>
+                </div>
+                <!-- Dialog Overlay -->
+                <div id="ml-dialog" class="ml-dialog hidden">
+                    <div class="ml-dialog-box">
+                        <div id="ml-dialog-text" class="ml-dialog-text">Forget move?</div>
+                        <div class="ml-dialog-hint">Z: CONFIRM | X: CANCEL</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- RETRO SELECTION SCREEN -->
             <div id="selection-screen" class="hidden">
                 <div class="sel-preview-box">
@@ -208,6 +257,7 @@
             <!-- Dialog Box -->
             <div id="dialog-box" class="hidden">
                 <div id="text-content">...</div>
+                <div id="advance-arrow" class="hidden"></div>
                 <div id="action-menu" class="hidden">
                     <div class="menu-item" id="opt-fight" onclick="BattleMenus.uiToMoves()">FIGHT</div>
                     <div class="menu-item" id="opt-pkmn" onclick="UI.hide('action-menu'); Game.openParty(false)">PKMN
@@ -267,6 +317,7 @@
     <script src="js/core/game.js"></script>
     <script src="js/core/battle.js"></script>
     <script src="js/screens/evolution_screen.js"></script>
+    <script src="js/screens/move_learn.js"></script>
 
     <script>
         // --- INITIALIZATION ---

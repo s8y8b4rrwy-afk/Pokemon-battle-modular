@@ -134,7 +134,8 @@ const API = {
                 target: mData.target.name,
                 stat_chance: mData.meta ? mData.meta.stat_chance : 0,
                 min_hits: mData.meta ? mData.meta.min_hits : null,
-                max_hits: mData.meta ? mData.meta.max_hits : null
+                max_hits: mData.meta ? mData.meta.max_hits : null,
+                desc: mData.flavor_text_entries ? (mData.flavor_text_entries.find(f => f.language.name === 'en') || {}).flavor_text : "No description available."
             };
         } catch (e) { return null; }
     },

@@ -41,7 +41,7 @@ const EvolutionScreen = {
     // --- Core Logic ---
 
     setupUI() {
-        const sprite = document.getElementById('evo-sprite');
+        const sprite = /** @type {HTMLImageElement} */ (document.getElementById('evo-sprite'));
         const text = document.getElementById('evo-text');
 
         sprite.src = this.pokemon.frontSprite;
@@ -101,10 +101,10 @@ const EvolutionScreen = {
 
                 const state = phase % 3;
                 if (state === 0) {
-                    sprite.src = this.pokemon.frontSprite;
+                    /** @type {HTMLImageElement} */ (sprite).src = this.pokemon.frontSprite;
                     sprite.classList.remove('evo-white');
                 } else if (state === 1) {
-                    sprite.src = this.newData.frontSprite;
+                    /** @type {HTMLImageElement} */ (sprite).src = this.newData.frontSprite;
                     sprite.classList.remove('evo-white');
                 } else {
                     sprite.classList.add('evo-white');
@@ -115,7 +115,7 @@ const EvolutionScreen = {
         });
 
         // 4. Final Reveal
-        sprite.src = this.newData.frontSprite;
+        /** @type {HTMLImageElement} */ (sprite).src = this.newData.frontSprite;
         sprite.className = 'anim-reveal';
         sprite.classList.remove('evo-white');
         AudioEngine.playSfx('fanfair');
@@ -129,7 +129,7 @@ const EvolutionScreen = {
         if (Game.state === 'BATTLE') {
             if (Game.activeSlot === Game.party.indexOf(this.pokemon)) {
                 UI.updateHUD(this.pokemon, 'player');
-                const pSprite = document.getElementById('player-sprite');
+                const pSprite = /** @type {HTMLImageElement} */ (document.getElementById('player-sprite'));
                 if (pSprite) pSprite.src = this.pokemon.backSprite;
                 const pName = document.getElementById('player-name');
                 if (pName) pName.innerText = this.pokemon.name;
@@ -159,21 +159,22 @@ const EvolutionScreen = {
         for (const move of newMoves) {
             if (this.pokemon.moves.find(m => m.name === move.toUpperCase())) continue;
 
-            await this.typeText(`${this.pokemon.name} wants to learn the move ${move}!`);
-            await this.wait(1500);
+            if (this.pokemon.moves.find(m => m.name === move.toUpperCase())) continue;
 
-            if (this.pokemon.moves.length < 4) {
-                const mData = await API.getMove(move);
-                if (mData) {
-                    this.pokemon.moves.push(mData);
-                    await this.typeText(`${this.pokemon.name} learned ${move}!`);
-                    await this.wait(1500);
-                }
+            // Trigger Move Learn Flow
+            if (typeof MoveLearnScreen !== 'undefined' && typeof DialogManager !== 'undefined') {
+                await MoveLearnScreen.tryLearn(this.pokemon, move);
             } else {
-                await this.typeText(`But ${this.pokemon.name} already knows 4 moves...`);
-                await this.wait(1500);
-                await this.typeText(`(Move ignored for now.)`);
-                await this.wait(1500);
+                // Fallback (Legacy)
+                if (this.pokemon.moves.length < 4) {
+                    const mData = await API.getMove(move);
+                    if (mData) {
+                        this.pokemon.moves.push(mData);
+                        if (typeof DialogManager !== 'undefined') {
+                            await DialogManager.show(`${this.pokemon.name} learned ${move}!`);
+                        }
+                    }
+                }
             }
         }
     },

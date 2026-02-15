@@ -102,6 +102,8 @@ const MOVE_DEX = {
     'PERISH SONG': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('perish-song', ctx);
             await UI.typeText("All Pokemon hearing\nthe song will faint!");
             [battle.p, battle.e].forEach(m => {
                 if (m.volatiles.perishCount === undefined) {
@@ -355,6 +357,9 @@ const MOVE_DEX = {
                 return false;
             }
 
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('transform', ctx);
+
             // Create Backup
             user.transformBackup = {
                 name: user.name, moves: [...user.moves], stats: { ...user.stats },
@@ -370,16 +375,11 @@ const MOVE_DEX = {
             user.frontSprite = target.frontSprite;
             user.backSprite = target.backSprite;
 
-            const sprite = user === battle.p ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+            const isPlayer = (user === battle.p);
+            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
 
-            // Animation
-            AudioEngine.playSfx('swoosh');
-            sprite.style.transition = 'filter 0.2s';
-            sprite.style.filter = "brightness(10)";
-            await wait(300);
-            sprite.src = user === battle.p ? user.backSprite : user.frontSprite;
+            sprite.src = isPlayer ? user.backSprite : user.frontSprite;
             sprite.classList.add('transformed-sprite');
-            sprite.style.filter = "";
 
             await UI.typeText(`${user.transformBackup.name} transformed\ninto ${target.name}!`);
             return true;
@@ -388,10 +388,66 @@ const MOVE_DEX = {
     'HAZE': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('haze', ctx);
             user.stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
             target.stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
-            AudioEngine.playSfx('swoosh');
             await UI.typeText("All stat changes\nwere eliminated!");
+            return true;
+        }
+    },
+    'TOXIC': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            const success = await battle.applyStatus(target, 'tox', target === battle.p);
+            return success;
+        }
+    },
+    'YAWN': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            if (target.status || target.volatiles.drowsy) {
+                await UI.typeText("But it failed!");
+                return 'FAIL';
+            }
+            target.volatiles.drowsy = 2;
+            await UI.typeText(`${user.name} made\n${target.name} drowsy!`);
+            return true;
+        }
+    },
+    'SNORE': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            if (user.status !== 'slp') { await UI.typeText("But it failed!"); return 'FAIL'; }
+            const moveData = { name: 'SNORE', type: 'normal', power: 50, category: 'special' };
+            await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+            return true;
+        }
+    },
+    'SLEEP TALK': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            if (user.status !== 'slp') { await UI.typeText("But it failed!"); return 'FAIL'; }
+            const validMoves = user.moves.filter(m => m.name !== 'SLEEP TALK' && m.name !== 'REST' && m.name !== 'CHATOT'); // Chatot is a placeholder for noise moves if needed
+            if (validMoves.length === 0) { await UI.typeText("But it failed!"); return 'FAIL'; }
+            const move = validMoves[Math.floor(Math.random() * validMoves.length)];
+            await UI.typeText(`${user.name} used\n${move.name}!`);
+            await battle.executeDamagePhase(user, target, move, user === battle.p);
+            return true;
+        }
+    },
+    'ENCORE': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            if (!target.lastMoveUsed || target.volatiles.encored) {
+                await UI.typeText("But it failed!");
+                return 'FAIL';
+            }
+            target.volatiles.encored = {
+                move: target.lastMoveUsed,
+                turns: Math.floor(Math.random() * 3) + 3
+            };
+            await UI.typeText(`${target.name} received\nan ENCORE!`);
             return true;
         }
     },
@@ -399,6 +455,8 @@ const MOVE_DEX = {
         isUnique: true,
         onHit: async (battle, user, target) => {
             if (user.currentHp <= user.maxHp / 2 || user.stages.atk >= 6) { await UI.typeText("But it failed!"); return 'FAIL'; }
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('belly-drum', ctx);
             user.currentHp = Math.floor(user.currentHp - (user.maxHp / 2));
             user.stages.atk = 6;
             UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
@@ -409,13 +467,14 @@ const MOVE_DEX = {
     'CURSE': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('curse', ctx);
             if (user.types.includes('ghost')) {
                 user.currentHp = Math.floor(user.currentHp / 2);
                 UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
                 await UI.typeText(`${user.name} cut its HP\nto lay a curse!`);
 
                 target.volatiles.cursed = true;
-                AudioEngine.playSfx('poison');
                 await UI.typeText(`${target.name} was\ncursed!`);
             } else {
                 await battle.applyStatChanges(user, [{ stat: { name: 'speed' }, change: -1 }, { stat: { name: 'attack' }, change: 1 }, { stat: { name: 'defense' }, change: 1 }], user === battle.p);
@@ -426,6 +485,8 @@ const MOVE_DEX = {
     'PAIN SPLIT': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('pain-split', ctx);
             const avg = Math.floor((user.currentHp + target.currentHp) / 2);
             user.currentHp = Math.min(user.maxHp, avg);
             target.currentHp = Math.min(target.maxHp, avg);
@@ -556,12 +617,13 @@ const MOVE_DEX = {
     // --- CONDITIONAL ---
     'DREAM EATER': { condition: (t) => t.status === 'slp' },
     'NIGHTMARE': { condition: (t) => t.status === 'slp' },
-    'SNORE': { condition: (t) => true }, // Placeholder for sleep check
 
     // --- WEATHER MOVES ---
     'RAIN DANCE': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('rain-dance', ctx);
             await battle.setWeather('rain');
             return true;
         }
@@ -569,6 +631,8 @@ const MOVE_DEX = {
     'SUNNY DAY': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('sunny-day', ctx);
             await battle.setWeather('sun');
             return true;
         }
@@ -576,6 +640,8 @@ const MOVE_DEX = {
     'SANDSTORM': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('sandstorm', ctx);
             await battle.setWeather('sand');
             return true;
         }
@@ -583,6 +649,8 @@ const MOVE_DEX = {
     'HAIL': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('hail', ctx);
             await battle.setWeather('hail');
             return true;
         }
@@ -600,6 +668,9 @@ const MOVE_LOGIC = {
     'skull-bash': { type: 'charge', msg: "lowered its head!", invuln: null, hide: false, buff: { stat: 'def', val: 1 } },
     'hyper-beam': { type: 'recharge' },
     'giga-impact': { type: 'recharge' },
+    'outrage': { type: 'lock-in' },
+    'thrash': { type: 'lock-in' },
+    'petal-dance': { type: 'lock-in' },
     'protect': { type: 'protect' },
     'detect': { type: 'protect' },
     'endure': { type: 'protect' }

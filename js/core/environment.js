@@ -32,7 +32,11 @@ const EnvironmentManager = {
             if (this.weather.type === 'hail' && mon.types.includes('ice')) takesDamage = false;
 
             if (takesDamage) {
-                await wait(400);
+                // Trigger Visuals
+                const animKey = `weather-${this.weather.type === 'sand' ? 'sandstorm' : 'hail'}`;
+                const ctx = { defender: mon, isPlayerAttacker: (mon !== battle.p) };
+                await AnimFramework.play(animKey, ctx);
+
                 const msg = this.weather.type === 'sand' ? "is buffeted\nby the sandstorm!" : "is pelted\nby hail!";
                 await UI.typeText(`${mon.name} ${msg}`);
 
@@ -45,11 +49,18 @@ const EnvironmentManager = {
 
     async tickWeather() {
         if (this.weather.type !== 'none') {
+            const currentType = this.weather.type;
             this.weather.turns--;
             if (this.weather.turns <= 0) {
                 await this.setWeather('none');
             } else {
-                const fx = WEATHER_FX[this.weather.type];
+                // Trigger background visual tick
+                const animKey = `weather-${currentType}`;
+                if (AnimFramework.has(animKey)) {
+                    await AnimFramework.play(animKey, {});
+                }
+
+                const fx = WEATHER_FX[currentType];
                 if (fx && fx.continue) await UI.typeText(fx.continue);
             }
         }

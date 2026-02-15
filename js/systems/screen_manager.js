@@ -108,6 +108,7 @@ const ScreenManager = {
             case 'NAME_INPUT': return NameInputScreen;
             case 'BAG': return typeof PackScreen !== 'undefined' ? PackScreen : null; // Future proof
             case 'EVOLUTION': return EvolutionScreen;
+            case 'MOVE_LEARN': return MoveLearnScreen;
             // Add others...
             default: return null;
         }
@@ -124,7 +125,8 @@ const ScreenManager = {
             'TITLE': 'start-screen',
             'CONTINUE': 'continue-screen',
             'NAME_INPUT': 'name-screen',
-            'EVOLUTION': 'evolution-screen'
+            'EVOLUTION': 'evolution-screen',
+            'MOVE_LEARN': 'move-learn-screen'
         };
         const domId = map[id] || id; // Fallback
         if (action === 'show') UI.show(domId);

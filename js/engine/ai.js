@@ -13,6 +13,9 @@ const BattleAI = {
         if (enemy.volatiles.charging && enemy.volatiles.queuedMove) {
             return enemy.volatiles.queuedMove;
         }
+        if (enemy.volatiles.encored) {
+            return enemy.volatiles.encored.move;
+        }
 
         // 2. Base Move Selection
         if (!enemy.moves || enemy.moves.length === 0) {

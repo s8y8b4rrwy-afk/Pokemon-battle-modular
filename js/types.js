@@ -67,6 +67,14 @@
  * @property {boolean} [nightmare]
  * @property {boolean} [attract]
  * @property {boolean} [focusEnergy]
+ * @property {number} [toxicCounter]
+ * @property {number} [drowsy]
+ * @property {Object} [encored]
+ * @property {Move} encored.move
+ * @property {number} encored.turns
+ * @property {Object} [lockIn]
+ * @property {Move} lockIn.move
+ * @property {number} lockIn.turns
  * @property {any} [index]
  */
 

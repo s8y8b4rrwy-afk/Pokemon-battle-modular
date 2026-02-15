@@ -20,13 +20,14 @@ const DialogManager = {
     },
 
     // Ask a question (returns choice string)
-    async ask(text, choices = ['Yes', 'No']) {
+    async ask(text, choices = ['Yes', 'No'], options = {}) {
         return new Promise(resolve => {
             this.queue.push({
                 type: 'choice',
                 text: text,
                 choices: choices,
-                resolve: resolve
+                resolve: resolve,
+                options: options
             });
             this.processQueue();
         });
@@ -40,40 +41,67 @@ const DialogManager = {
 
         if (task.type === 'text') {
             this.isTyping = true;
-            await UI.typeText(task.text, () => {
-                // Determine wait behavior. 
-                // Default: Helper wait (user presses A), or auto-advance?
-                // Current UI.typeText handles typing. 
-                // We need to wait for user confirmation if it's a dialog box.
 
-                // For now, auto-resolve to keep existing fast flow, 
-                // OR implement a "wait for key" state.
+            if (task.options.lock && typeof Battle !== 'undefined') {
+                Battle.uiLocked = true;
+            }
 
-                // Let's stick to existing behavior for now:
+            await UI.typeText(task.text, async () => {
+                // Wait behavior: auto-advance OR wait-for-input
+                if (task.options.delay) {
+                    if (task.options.noSkip) {
+                        await new Promise(r => setTimeout(r, task.options.delay));
+                    } else {
+                        await Promise.race([
+                            new Promise(r => setTimeout(r, task.options.delay)),
+                            this.waitForInput()
+                        ]);
+                    }
+                } else {
+                    await this.waitForInput();
+                }
+
+                this._cleanupInputHandler();
+
+                if (task.options.lock && typeof Battle !== 'undefined') {
+                    Battle.uiLocked = false;
+                }
+
                 this.isTyping = false;
                 this.queue.shift();
                 if (task.resolve) task.resolve();
                 this.processQueue();
-            }, task.options.fast);
+            }, task.options.fast, 'text-content', 0);
 
         } else if (task.type === 'choice') {
             this.isTyping = true;
+
+            if (task.options.lock && typeof Battle !== 'undefined') {
+                Battle.uiLocked = true;
+            }
+
             // 1. Show Text
-            await UI.typeText(task.text);
+            await UI.typeText(task.text, () => {
+                // 2. Render Choices ONLY after typing finishes
+                this.renderChoices(task.choices);
 
-            // 2. Render Choices
-            this.renderChoices(task.choices);
+                // 3. Wait for Input
+                Input.setMode('DIALOG_CHOICE');
+                this.isTyping = false;
 
-            // 3. Wait for Input (Delegated to Input System via 'DIALOG' mode)
-            Input.setMode('DIALOG_CHOICE');
-            this.isTyping = false; // Ready for input
-            this.activeResolver = (choice) => {
-                this.hideChoices();
-                this.queue.shift();
-                if (task.resolve) task.resolve(choice);
-                this.activeResolver = null;
-                this.processQueue();
-            };
+                this.activeResolver = (choice) => {
+                    this.hideChoices();
+
+                    if (task.options.lock && typeof Battle !== 'undefined') {
+                        Battle.uiLocked = false;
+                    }
+
+                    this.queue.shift();
+                    if (task.resolve) task.resolve(choice);
+                    this.activeResolver = null;
+                    this.processQueue();
+                };
+            }, task.options.fast, 'text-content', 0);
         }
     },
 
@@ -129,7 +157,7 @@ const DialogManager = {
             return true;
         }
         if (['z', 'Z', 'Enter'].includes(key)) {
-            const choice = choices[Input.focus].innerText;
+            const choice = choices[Input.focus].textContent;
             this.activeResolver(choice);
             AudioEngine.playSfx('select');
             return true;
@@ -142,5 +170,34 @@ const DialogManager = {
         choices.forEach(c => c.classList.remove('focused'));
         if (choices[Input.focus]) choices[Input.focus].classList.add('focused');
         else if (choices.length > 0) choices[0].classList.add('focused');
+    },
+
+    waitForInput() {
+        const arrow = document.getElementById('advance-arrow');
+        if (arrow) arrow.classList.remove('hidden');
+
+        return new Promise(resolve => {
+            const handler = (e) => {
+                const k = e.key.toLowerCase();
+                if (k === 'z' || k === 'enter' || k === 'x') {
+                    this._cleanupInputHandler();
+                    AudioEngine.playSfx('select');
+                    resolve();
+                }
+            };
+            this._currentHandler = handler;
+            this._currentResolver = resolve;
+            window.addEventListener('keydown', handler);
+        });
+    },
+
+    _cleanupInputHandler() {
+        if (this._currentHandler) {
+            window.removeEventListener('keydown', this._currentHandler);
+            this._currentHandler = null;
+        }
+        const arrow = document.getElementById('advance-arrow');
+        if (arrow) arrow.classList.add('hidden');
+        this._currentResolver = null;
     }
 };

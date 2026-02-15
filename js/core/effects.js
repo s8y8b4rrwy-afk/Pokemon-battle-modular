@@ -40,6 +40,12 @@ const EffectsManager = {
 
         // 2. SLEEP
         if (mon.status === 'slp') {
+            // Allows moves like Snore or Sleep Talk to skip the sleep check
+            const currentMove = mon.lastMoveUsed;
+            if (currentMove && ['SNORE', 'SLEEP TALK'].includes(currentMove.name)) {
+                return true;
+            }
+
             mon.volatiles.sleepTurns = (mon.volatiles.sleepTurns || Math.floor(Math.random() * 3) + 1) - 1;
             if (mon.volatiles.sleepTurns <= 0) {
                 mon.status = null;
@@ -175,7 +181,7 @@ const EffectsManager = {
         }
 
         // Immunity Checks
-        const typeMatch = (ailment === 'psn' && (target.types.includes('poison') || target.types.includes('steel'))) ||
+        const typeMatch = ((ailment === 'psn' || ailment === 'tox') && (target.types.includes('poison') || target.types.includes('steel'))) ||
             (ailment === 'brn' && target.types.includes('fire')) ||
             (ailment === 'par' && target.types.includes('electric')) ||
             (ailment === 'frz' && target.types.includes('ice'));
@@ -186,12 +192,15 @@ const EffectsManager = {
         }
 
         target.status = ailment;
+        if (ailment === 'tox') {
+            target.volatiles.toxicCounter = 1;
+        }
         UI.updateHUD(target, isPlayerTarget ? 'player' : 'enemy');
 
         // Sprite Flash & Sound
         const sprite = isPlayerTarget ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-        const animClass = `status-anim-${ailment}`;
-        const sfxMap = { 'par': 'electric', 'psn': 'poison', 'brn': 'burn', 'frz': 'ice', 'slp': 'sleep' };
+        const animClass = `status-anim-${ailment === 'tox' ? 'psn' : ailment}`;
+        const sfxMap = { 'par': 'electric', 'psn': 'poison', 'tox': 'poison', 'brn': 'burn', 'frz': 'ice', 'slp': 'sleep' };
 
         if (animClass) sprite.classList.add(animClass);
         AudioEngine.playSfx(sfxMap[ailment] || 'damage');
@@ -221,8 +230,8 @@ const EffectsManager = {
             return;
         }
 
-        // A. STATUS DAMAGE (Burn/Poison)
-        if (mon.status === 'brn' || mon.status === 'psn') {
+        // A. STATUS DAMAGE (Burn/Poison/Toxic)
+        if (mon.status === 'brn' || mon.status === 'psn' || mon.status === 'tox') {
             await wait(400);
             if (!isInvisible) {
                 const animClass = mon.status === 'brn' ? 'status-anim-brn' : 'status-anim-psn';
@@ -234,13 +243,28 @@ const EffectsManager = {
             }
             const tickMsg = STATUS_DATA[mon.status].tickMsg || STATUS_DATA[mon.status].msg || 'is affected!';
             await UI.typeText(`${mon.name} ${tickMsg}`);
-            const dmg = Math.floor(mon.maxHp / 8);
+
+            let dmg;
+            if (mon.status === 'tox') {
+                const n = mon.volatiles.toxicCounter || 1;
+                dmg = Math.floor((mon.maxHp / 16) * n);
+                mon.volatiles.toxicCounter++;
+            } else {
+                dmg = Math.floor(mon.maxHp / 8);
+            }
+
             await battle.applyDamage(mon, Math.max(1, dmg), mon.status === 'brn' ? 'burn' : 'poison');
             if (mon.currentHp <= 0) return;
         }
 
         // B. PERISH SONG
         if (mon.volatiles.perishCount !== undefined) {
+            // Trigger Visuals
+            const ctx = { defender: mon, isPlayerAttacker: (mon !== battle.p) };
+            if (AnimFramework.has('tick-perish-song')) {
+                await AnimFramework.play('tick-perish-song', ctx);
+            }
+
             mon.volatiles.perishCount--;
             await UI.typeText(`${mon.name}'s perish count\nfell to ${mon.volatiles.perishCount}!`);
             if (mon.volatiles.perishCount <= 0) {
@@ -252,7 +276,12 @@ const EffectsManager = {
 
         // C. CURSE
         if (mon.volatiles.cursed) {
-            await wait(400);
+            // Trigger Visuals
+            const ctx = { defender: mon, isPlayerAttacker: (mon !== battle.p) };
+            if (AnimFramework.has('tick-curse')) {
+                await AnimFramework.play('tick-curse', ctx);
+            }
+
             await UI.typeText(`${mon.name} is afflicted\nby the CURSE!`);
             const dmg = Math.floor(mon.maxHp / 4);
             await battle.applyDamage(mon, Math.max(1, dmg), 'poison');
@@ -277,7 +306,12 @@ const EffectsManager = {
 
         // E. LEECH SEED
         if (mon.volatiles.seeded) {
-            await wait(400);
+            // Trigger Visuals
+            const ctx = { defender: mon, isPlayerAttacker: (mon !== battle.p) };
+            if (AnimFramework.has('tick-leech-seed')) {
+                await AnimFramework.play('tick-leech-seed', ctx);
+            }
+
             const dmg = Math.floor(mon.maxHp / 8);
             await UI.typeText(`${mon.name}'s health\nis sapped by LEECH SEED!`);
             await battle.applyDamage(mon, Math.max(1, dmg), 'grass');
@@ -298,6 +332,26 @@ const EffectsManager = {
                 const moveName = mon.volatiles.disabled.moveName;
                 delete mon.volatiles.disabled;
                 await UI.typeText(`${mon.name}'s ${moveName}\nis no longer disabled!`);
+            }
+        }
+
+        // G. DROWSY (Yawn)
+        if (mon.volatiles.drowsy !== undefined) {
+            mon.volatiles.drowsy--;
+            if (mon.volatiles.drowsy <= 0) {
+                delete mon.volatiles.drowsy;
+                await this.applyStatus(battle, mon, 'slp', isPlayer);
+            } else {
+                await UI.typeText(`${mon.name} is\ngetting drowsy!`);
+            }
+        }
+
+        // H. ENCORE
+        if (mon.volatiles.encored) {
+            mon.volatiles.encored.turns--;
+            if (mon.volatiles.encored.turns <= 0) {
+                delete mon.volatiles.encored;
+                await UI.typeText(`${mon.name}'s ENCORE\nended!`);
             }
         }
     }

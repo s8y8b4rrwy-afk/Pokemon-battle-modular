@@ -506,3 +506,42 @@ AnimFramework.register('thrash', [
     { type: 'wait', ms: 200 },
     { type: 'spriteMove', target: 'attacker', preset: 'tackle', duration: 300 } // Final hit
 ]);
+
+AnimFramework.register('snore', [
+    { type: 'sfx', sound: 'normal' },
+    {
+        type: 'stream', from: 'attacker', to: 'defender',
+        count: 3, interval: 300, spread: 20, travelTime: 600,
+        size: 20, color: '#87ceeb', outline: '#000080', svgShape: 'zzz'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('yawn', [
+    { type: 'sfx', sound: 'normal' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'attacker', shape: 'bubble',
+                color: '#ffffff', outline: '#a9a9a9', width: 40, height: 40,
+                duration: 600, animation: 'grow'
+            },
+            { type: 'wave', intensity: 2, duration: 1000, speed: 50 },
+            {
+                type: 'overlay', target: 'defender', shape: 'zzz',
+                color: '#ffffff', outline: '#000000', width: 30, height: 30,
+                duration: 800, animation: 'float'
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('sleep-talk', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'spriteShake', target: 'attacker', duration: 300 },
+    {
+        type: 'overlay', target: 'attacker', shape: 'bubble',
+        color: '#ffffff', outline: '#000000', width: 30, height: 20,
+        duration: 400, animation: 'fade'
+    }
+]);

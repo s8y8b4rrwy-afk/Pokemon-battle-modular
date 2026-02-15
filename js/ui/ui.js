@@ -18,9 +18,15 @@ const UI = {
     hideAll(ids) { ids.forEach(id => this.hide(id)); },
 
     // --- TEXT ENGINE ---
-    typeText(text, cb, fast = false, targetId = 'text-content') {
+    typeText(text, cb, fast = false, targetId = 'text-content', delay = -1) {
         const el = document.getElementById(targetId);
         if (!el) return Promise.resolve();
+
+        // Standard battle delay is 1000ms unless overridden
+        let postDelay = delay;
+        if (postDelay === -1) {
+            postDelay = (targetId === 'text-content' && !fast) ? 1000 : 0;
+        }
 
         // Modular Battle Logging (only log main battle text)
         if (targetId === 'text-content' && typeof BattleLogger !== 'undefined') {
@@ -48,7 +54,7 @@ const UI = {
                     setTimeout(() => {
                         if (cb && typeof cb === 'function') cb();
                         resolve();
-                    }, 1000); // Wait 1s after finishing
+                    }, postDelay);
                 }
             }, fast ? 10 : 20);
         });

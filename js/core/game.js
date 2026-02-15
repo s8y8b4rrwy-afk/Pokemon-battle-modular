@@ -322,10 +322,10 @@ const Game = {
             const p = this.party[index];
             if (!p || p.currentHp <= 0) continue;
             if (index === this.activeSlot) {
-                if (!isBossReward) await UI.typeText(`${p.name} gained\n${amount} EXP. Points!`);
+                if (!isBossReward) await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
                 await this.gainExpAnim(amount, p);
             } else {
-                if (!isBossReward) await UI.typeText(`${p.name} gained\n${amount} EXP. Points!`);
+                if (!isBossReward) await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
                 p.exp += amount;
                 if (p.exp >= p.nextLvlExp) await this.processLevelUp(p);
             }
@@ -355,7 +355,16 @@ const Game = {
                 hud.classList.remove('hud-flash-blue'); void hud.offsetWidth; hud.classList.add('hud-flash-blue');
                 UI.updateHUD(p, 'player');
             }
-            await UI.typeText(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to Level ${p.level}!`);
+            await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to Level ${p.level}!`, { lock: true });
+
+            // NEW: Learn Moves Check
+            if (typeof API.getLearnableMoves === 'function' && typeof MoveLearnScreen !== 'undefined' && typeof DialogManager !== 'undefined') {
+                const newMoves = await API.getLearnableMoves(p.id, p.level);
+                for (const move of newMoves) {
+                    if (p.moves.find(m => m.name === move.toUpperCase())) continue;
+                    await MoveLearnScreen.tryLearn(p, move);
+                }
+            }
 
             // Evolution Check
             if (typeof Evolution !== 'undefined') {
@@ -396,7 +405,7 @@ const Game = {
                 AudioEngine.playSfx('swoosh');
                 setTimeout(() => hud.classList.remove('hud-active'), ANIM.HUD_SLIDE_DELAY);
 
-                await UI.typeText(`${p.name}\nfainted!`);
+                await DialogManager.show(`${p.name}\nfainted!`, { lock: true });
                 await wait(ANIM.FAINT_POST_DELAY);
 
                 const hasOthers = this.party.some(mon => mon.currentHp > 0);
@@ -419,7 +428,8 @@ const Game = {
             }
 
             this.save();
-            setTimeout(() => this.startNewBattle(false), 1000);
+            await wait(1000);
+            this.startNewBattle(false);
         };
 
         const checkTransform = async () => {
@@ -429,7 +439,7 @@ const Game = {
                 Battle.revertTransform(p);
                 s.src = p.backSprite; s.classList.remove('transformed-sprite'); s.style.filter = "none";
                 UI.updateHUD(p, 'player');
-                await UI.typeText(`${p.name} transformed\nback!`);
+                await DialogManager.show(`${p.name} transformed\nback!`, { lock: true });
             }
             await finalize();
         };
@@ -438,7 +448,7 @@ const Game = {
             if (p.rageLevel > 0) {
                 p.rageLevel = 0;
                 UI.updateHUD(p, 'player');
-                await UI.typeText(`${p.name} became\ncalm again!`);
+                await DialogManager.show(`${p.name} became\ncalm again!`, { lock: true });
                 await checkTransform();
             } else await checkTransform();
         };
@@ -449,7 +459,7 @@ const Game = {
             if (levelDiff > 0) rate += (levelDiff * 0.05);
             if (RNG.roll(rate)) {
                 const key = Mechanics.getLoot(this.enemyMon, this.wins, levelDiff); this.inventory[key]++; AudioEngine.playSfx('funfair');
-                await UI.typeText(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`);
+                await DialogManager.show(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`, { lock: true });
                 await checkRage();
             } else await checkRage();
         };
@@ -458,7 +468,7 @@ const Game = {
             if (p.volatiles.originalSprite) document.getElementById('player-sprite').src = p.volatiles.originalSprite;
             p.volatiles.substituteHP = 0; p.volatiles.originalSprite = null;
             AudioEngine.playSfx('swoosh');
-            await UI.typeText("The SUBSTITUTE\\nfaded away!");
+            await DialogManager.show("The SUBSTITUTE\\nfaded away!", { lock: true });
             await checkLoot();
         } else await checkLoot();
     },

@@ -222,14 +222,14 @@
 
 #text-content {
     width: 60%;
-    font-size: 12px;
+    font-size: 11px;
     line-height: 18px;
     text-transform: uppercase;
     white-space: pre-wrap;
 }
 
 #text-content.full-width {
-    width: 292px;
+    width: 100%;
 }
 
 /* --- ACTION MENU --- */
