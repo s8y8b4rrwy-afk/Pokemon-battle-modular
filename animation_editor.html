@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Editor - G/S Battle Engine</title>
+
+    <!-- Game Styling (for Preview) -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/utils.css">
+    <link rel="stylesheet" href="css/battle.css">
+    <link rel="stylesheet" href="css/animations.css">
+
+    <!-- Editor Styling -->
+    <link rel="stylesheet" href="css/editor.css">
+</head>
+
+<body>
+
+    <div id="editor-app">
+        <!-- LEFT: Sidebar (Library) -->
+        <div id="editor-sidebar">
+            <div class="panel-header">
+                <span>ANIMATIONS</span>
+                <button id="btn-new-anim" class="icon-btn">+</button>
+            </div>
+            <div class="search-box">
+                <input type="text" id="anim-search" placeholder="Search...">
+            </div>
+            <div id="anim-list" class="scroll-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- CENTER: Preview & Timeline -->
+        <div id="editor-main">
+
+            <!-- Preview Area -->
+            <div id="preview-area">
+                <div id="game-boy">
+                    <div id="lcd-overlay"></div>
+
+                    <!-- Faithful Battle Scene for Preview -->
+                    <div class="scene" id="scene" style="display:block;">
+                        <div id="fx-container"></div>
+
+                        <!-- Enemy -->
+                        <div class="hud hud-active" id="enemy-hud">
+                            <div class="name">
+                                <span id="enemy-name">ENEMY</span>
+                                <span id="enemy-status-icon" style="display:none;"></span>
+                                <span id="enemy-rage-icon" class="aggro-icon" style="display:none;"></span>
+                            </div>
+                            <div class="level" id="enemy-lvl">Lv50</div>
+                            <div class="hp-box">
+                                <span style="margin-right:2px; color:#e6ae27;">HP</span>
+                                <div class="hp-bar-bg">
+                                    <div class="hp-fill" style="width:100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <img id="enemy-sprite" class="sprite"
+                            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ii/crystal/transparent/249.png">
+
+                        <!-- Player -->
+                        <img id="player-sprite" class="sprite"
+                            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ii/crystal/transparent/back/250.png">
+                        <div class="hud hud-active" id="player-hud">
+                            <div class="name">
+                                <span id="player-name">PLAYER</span>
+                                <span id="player-status-icon" style="display:none;"></span>
+                                <span id="player-rage-icon" class="aggro-icon" style="display:none;"></span>
+                            </div>
+                            <div class="level" id="player-lvl">Lv50</div>
+                            <div class="hp-box">
+                                <span style="margin-right:2px; color:#e6ae27;">HP</span>
+                                <div class="hp-bar-bg">
+                                    <div class="hp-fill" style="width:100%"></div>
+                                </div>
+                            </div>
+                            <div id="player-hp-text">100/100</div>
+                            <div class="exp-box">
+                                <span style="font-size:6px; margin-right:1px;">EXP</span>
+                                <div class="exp-bar-bg">
+                                    <div class="exp-fill" style="width:0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Dialog Placeholder -->
+                    <div id="dialog-box"
+                        style="display:flex; border-top: 4px solid #a0a0a0; background:#282828; height:88px; padding:10px; box-sizing:border-box;">
+                        <div style="color:white; font-size:11px; font-family:'Press Start 2P'; line-height:1.5;">
+                            USE THE TIMELINE BELOW TO EDIT ANIMATIONS...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-controls">
+                    <button id="btn-play" class="primary-btn">▶ PLAY</button>
+                    <button id="btn-stop" class="secondary-btn">■ STOP</button>
+                    <div class="divider"></div>
+                    <label><input type="checkbox" id="chk-player-atk" checked> Player Attacking</label>
+                </div>
+            </div>
+
+            <!-- Timeline Area -->
+            <div id="timeline-area">
+                <div class="panel-header">
+                    <span>TIMELINE</span>
+                    <div class="timeline-tools">
+                        <button id="btn-add-step" class="action-btn">ADD STEP</button>
+                    </div>
+                </div>
+                <div id="timeline-steps" class="scroll-list">
+                    <!-- Steps go here -->
+                    <div class="empty-state">Select an animation to edit</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Properties Panel -->
+        <div id="editor-props">
+            <div class="panel-header">
+                <span>PROPERTIES</span>
+                <button id="btn-export" class="save-btn">EXPORT CODE</button>
+            </div>
+
+            <div id="props-form" class="scroll-list">
+                <!-- Dynamic Form -->
+                <div class="empty-state">Select a step to edit</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Core Game Systems (Mocked or Real) -->
+    <script>
+        // Minimal mock for dependencies if needed, or load real files
+        const Game = { state: 'BATTLE' };
+        const Settings = { get: () => 1 };
+
+        // Polyfill simple sound engine if needed, otherwise we load real audio.js
+        // We will attempt to load real modules.
+    </script>
+
+    <script src="js/data/constants.js"></script>
+    <script src="js/systems/utils.js"></script>
+    <script src="js/systems/audio.js"></script>
+    <script src="js/ui/ui.js"></script>
+
+    <!-- Animation Engine -->
+    <script src="js/anim/anim_framework.js"></script>
+    <!-- Registries -->
+    <script src="js/anim/registry/core.js"></script>
+    <script src="js/anim/registry/elemental.js"></script>
+    <script src="js/anim/registry/physical.js"></script>
+    <script src="js/anim/registry/nature.js"></script>
+    <script src="js/anim/registry/mystic.js"></script>
+
+    <!-- Editor Logic -->
+    <script src="js/editor/editor.js"></script>
+
+</body>
+
+</html>

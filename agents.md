@@ -45,9 +45,9 @@ pokemon-battle-modular/
     │   └── settings.js   # User Preferences (Keybinds, etc)
     ├── engine/           # Procedural Generators
     │   ├── ai.js         # Enemy AI Logic
-    │   └── encounter.js  # Wild Pokemon Generator
+    │   └── encounter.js  # Wild Pokemon Generator (Validation & Scaling)
     ├── systems/          # Low-Level Utilities (The Plumbing)
-    │   ├── api.js        # PokeAPI Interface
+    │   ├── api.js        # PokeAPI Interface (Smart Selection & Caching)
     │   ├── audio.js      # Web Audio API Wrapper
     │   ├── input.js      # Keyboard Input Handler
     │   ├── logger.js     # Battle Logger (Console output)

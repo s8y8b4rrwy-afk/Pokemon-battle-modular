@@ -85,9 +85,21 @@ const SelectionScreen = {
         UI.hide('sel-preview-img');
         UI.hide('sel-preview-shiny');
 
-        // Determine Selection IDs
+        // Determine Selection IDs (First Stage Only)
         const ids = [];
         if (DEBUG.ENABLED && DEBUG.PLAYER.ID) ids.push(DEBUG.PLAYER.ID);
+
+        let attempts = 0;
+        while (ids.length < 3 && attempts < 20) {
+            attempts++;
+            const r = RNG.int(1, 251);
+            if (!ids.includes(r)) {
+                const isFirst = await API.checkFirstStage(r);
+                if (isFirst) ids.push(r);
+            }
+        }
+
+        // Final fallback if check failed or took too long
         while (ids.length < 3) {
             const r = RNG.int(1, 251);
             if (!ids.includes(r)) ids.push(r);

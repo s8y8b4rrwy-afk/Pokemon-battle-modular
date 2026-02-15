@@ -27,7 +27,7 @@ const EncounterManager = {
             id: RNG.int(1, 251),
             level: RNG.int(min, max),
             isBoss: isBoss,
-            overrides: {}
+            overrides: { isBoss: isBoss }
         };
 
         // 5. Apply DEBUG Overrides (Cleanly separated)
@@ -51,10 +51,55 @@ const EncounterManager = {
     },
 
     async generate(party, wins) {
-        const specs = this.determineSpecs(party, wins);
+        let specs = this.determineSpecs(party, wins);
+        let enemy = null;
+        let attempts = 0;
 
-        // Fetch
-        let enemy = await API.getPokemon(specs.id, specs.level, specs.overrides);
+        while (attempts < 15) {
+            attempts++;
+
+            // 1. Level-Up/Evolution Integrity Check
+            if (!specs.isBoss) {
+                const minLvl = await API.getMinLevel(specs.id);
+                if (specs.level < minLvl) {
+                    specs.id = RNG.int(1, 251);
+                    continue;
+                }
+            }
+
+            // 2. Base Stat Total (BST) Scaling & Boss Weighting
+            const bst = await API.getBST(specs.id);
+            const isHighTier = bst >= ENCOUNTER_CONFIG.HI_TIER_BST_THRESHOLD;
+
+            if (specs.isBoss) {
+                // If this is a boss but we rolled a "weak" pokemon, try to find a stronger one
+                if (!isHighTier && Math.random() < ENCOUNTER_CONFIG.HI_TIER_BOSS_PROBABILITY) {
+                    specs.id = RNG.int(1, 251);
+                    continue;
+                }
+            } else {
+                // For wild encounters, legendaries/high-tier are restricted
+                if (isHighTier) {
+                    const earlyGame = (wins < ENCOUNTER_CONFIG.HI_TIER_MIN_WINS && specs.level < ENCOUNTER_CONFIG.HI_TIER_MIN_LEVEL);
+
+                    // Too early for legendaries or just failed the rarity roll (Wild high-tiers are 10% rare)
+                    if (earlyGame || Math.random() < 0.90) {
+                        specs.id = RNG.int(1, 251);
+                        continue;
+                    }
+                }
+            }
+
+            // Respect forced debug IDs (safety exit)
+            if (typeof DEBUG !== 'undefined' && DEBUG.ENABLED && DEBUG.ENEMY.ID) {
+                specs.id = DEBUG.ENEMY.ID;
+                enemy = await API.getPokemon(specs.id, specs.level, specs.overrides);
+                break;
+            }
+
+            enemy = await API.getPokemon(specs.id, specs.level, specs.overrides);
+            if (enemy) break;
+        }
 
         // Fallback
         if (!enemy) enemy = await API.getPokemon(25, 5, {});

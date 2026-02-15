@@ -424,6 +424,12 @@ const Battle = {
         try {
             this.uiLocked = true;
             Input.setMode('NONE');
+
+            // Clear any lingering menu screens (Bag/Party) IMMEDIATELY to stop inputs
+            if (typeof ScreenManager !== 'undefined') ScreenManager.clear();
+
+            Game.state = 'BATTLE';
+
             document.getElementById('pack-screen').classList.add('hidden');
             document.getElementById('action-menu').classList.add('hidden');
 
@@ -434,9 +440,6 @@ const Battle = {
                 speed: this.e.stats.spe, priority: 0, isPlayer: false
             };
             const result = await this.runQueue([itemAction, eAction]);
-
-            // Clear any lingering menu screens (Bag/Party) that were open
-            if (typeof ScreenManager !== 'undefined') ScreenManager.clear();
 
             if (result === 'STOP_BATTLE') {
                 this.uiLocked = false;
@@ -458,12 +461,18 @@ const Battle = {
 
     async performRun() {
         this.uiLocked = true;
+        // Hide only the main box to let text show
         document.getElementById('action-menu').classList.add('hidden');
+
         AudioEngine.playSfx('run');
         await UI.typeText('Got away safely!');
-        Game.save();
+
+        // CRITICAL: Clear battle state so "Continue" doesn't reload it
         Game.state = 'START';
-        await wait(500);
+        Game.enemyMon = null;
+        Game.save();
+
+        await wait(600);
         Game.returnToTitle();
     },
 

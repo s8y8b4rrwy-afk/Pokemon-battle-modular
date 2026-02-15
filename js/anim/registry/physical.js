@@ -142,11 +142,33 @@ AnimFramework.register('double-edge', [
 
 AnimFramework.register('quick-attack', [
     { type: 'sfx', sound: 'normal' },
-    { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 100 },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 150 },
+            { type: 'spriteGhost', target: 'attacker', color: '#ffffff', duration: 400 }
+        ]
+    },
     {
         type: 'parallel', steps: [
             { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', width: 24, height: 24, duration: 200, animation: 'grow' },
             { type: 'spriteShake', target: 'defender', duration: 200 }
+        ]
+    }
+]);
+
+AnimFramework.register('extreme-speed', [
+    { type: 'sfx', sound: 'normal' },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 80 },
+            { type: 'spriteGhost', target: 'attacker', color: '#ffffff', duration: 300, hold: 50 },
+            { type: 'flash', color: '#ffffff', duration: 200, opacity: 0.3 }
+        ]
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', width: 40, height: 40, duration: 200, animation: 'strike' },
+            { type: 'spriteShake', target: 'defender', duration: 300 }
         ]
     }
 ]);
@@ -215,27 +237,114 @@ AnimFramework.register('crabhammer', [
 
 AnimFramework.register('close-combat', [
     {
-        type: 'parallel', steps: [
-            { type: 'sfx', sound: 'fighting' },
-            { type: 'spriteMove', target: 'attacker', preset: 'lunge' }
+        type: "wave",
+        ms: 200,
+        class: "fx-flash",
+        duration: 500,
+        color: "#ffffff",
+        opacity: 0.8,
+        from: "attacker",
+        to: "defender",
+        className: "beam-projectile",
+        width: 6,
+        height: 6,
+        beamStyles: "",
+        selector: "#attacker",
+        x: 0,
+        y: 0,
+        easing: "ease-out",
+        reset: true,
+        cry: "",
+        target: "attacker",
+        wait: 0,
+        sound: "faint",
+        parent: "fxContainer",
+        tag: "div",
+        text: "",
+        intensity: 2,
+        speed: 10
+    },
+    {
+        type: "parallel",
+        steps: [
+            {
+                type: "sfx",
+                sound: "fighting"
+            },
+            {
+                type: "spriteMove",
+                target: "attacker",
+                preset: "lunge"
+            }
         ]
     },
     {
-        type: 'parallel', steps: [
-            { type: 'overlay', target: 'defender', shape: 'fist', color: '#ff0000', width: 30, height: 30, duration: 200, animation: 'slam', count: 3, spread: 20 },
-            { type: 'spriteShake', target: 'defender', duration: 200 }
+        type: "parallel",
+        steps: [
+            {
+                type: "tilt",
+                target: "defender",
+                shape: "fist",
+                color: "#ff0000",
+                width: 30,
+                height: 30,
+                duration: 200,
+                animation: "slam",
+                count: 3,
+                spread: 20,
+                angle: 15
+            },
+            {
+                type: "spriteShake",
+                target: "defender",
+                duration: 200
+            }
         ]
     },
     {
-        type: 'parallel', steps: [
-            { type: 'sfx', sound: 'fighting' },
-            { type: 'spriteMove', target: 'attacker', preset: 'lunge' }
+        type: "parallel",
+        steps: [
+            {
+                type: "sfx",
+                sound: "fighting"
+            },
+            {
+                type: "spriteMove",
+                target: "defender",
+                preset: "dodge",
+                duration: 100
+            }
         ]
     },
     {
-        type: 'parallel', steps: [
-            { type: 'overlay', target: 'defender', shape: 'fist', color: '#ff0000', width: 30, height: 30, duration: 200, animation: 'slam', count: 3, spread: 20 },
-            { type: 'spriteShake', target: 'defender', duration: 200 }
+        type: "parallel",
+        steps: [
+            {
+                type: "sfx",
+                sound: "fighting",
+                wait: 10
+            },
+            {
+                type: "spriteMove",
+                target: "defender",
+                preset: "dodge",
+                duration: 100
+            }
+        ]
+    },
+    {
+        type: "parallel",
+        steps: [
+            {
+                type: "sfx",
+                sound: "fighting"
+            },
+            {
+                type: "spriteMove",
+                target: "defender",
+                preset: "dodge",
+                duration: 100
+            }
         ]
     }
 ]);
@@ -267,6 +376,7 @@ AnimFramework.register('dynamic-punch', [
         type: 'parallel', steps: [
             { type: 'overlay', target: 'defender', shape: 'fist', color: '#ff4500', width: 48, height: 48, duration: 400, animation: 'slam' },
             { type: 'wave', intensity: 4, duration: 800, speed: 100 },
+            { type: 'spriteWave', target: 'defender', intensity: 12, duration: 800, speed: 60 },
             { type: 'spriteShake', target: 'defender', duration: 400 }
         ]
     }

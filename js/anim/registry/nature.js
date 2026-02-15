@@ -6,6 +6,8 @@ AnimFramework.register('earthquake', [
         type: 'parallel', steps: [
             { type: 'screenFx', class: 'fx-ground', duration: 1000 },
             { type: 'tilt', angle: 5, duration: 200 },
+            { type: 'spriteWave', target: 'defender', intensity: 4, duration: 1000, speed: 100 },
+            { type: 'spriteWave', target: 'attacker', intensity: 2, duration: 1000, speed: 150 },
             { type: 'spriteShake', target: 'defender', duration: 1000 },
             { type: 'spriteShake', target: 'attacker', duration: 1000 }
         ]
@@ -34,10 +36,31 @@ AnimFramework.register('sandstorm', [
     {
         type: 'parallel', steps: [
             { type: 'wave', intensity: 2, duration: 1500, speed: 180 },
+            { type: 'spriteWave', target: 'attacker', intensity: 2, duration: 1500, speed: 120 },
+            { type: 'spriteWave', target: 'defender', intensity: 2, duration: 1500, speed: 120 },
             {
                 type: 'stream', from: { x: -20, y: 100 }, to: { x: 340, y: 100 },
                 count: 40, interval: 20, spread: 200, travelTime: 800,
                 size: 3, color: '#d2b48c', outline: '#8b4513'
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('double-team', [
+    { type: 'sfx', sound: 'psychic' },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteWave', target: 'attacker', intensity: 10, duration: 1000, speed: 80 },
+            {
+                type: 'sequence', steps: [
+                    { type: 'spriteMove', target: 'attacker', x: -40, y: 0, duration: 100 },
+                    { type: 'spriteGhost', target: 'attacker', color: '#ffffff', duration: 400, hold: 50 },
+                    { type: 'spriteMove', target: 'attacker', x: 80, y: 0, duration: 100 },
+                    { type: 'spriteGhost', target: 'attacker', color: '#ffffff', duration: 400, hold: 50 },
+                    { type: 'spriteMove', target: 'attacker', x: -40, y: 0, duration: 100 },
+                    { type: 'spriteGhost', target: 'attacker', color: '#ffffff', duration: 400, hold: 50 }
+                ]
             }
         ]
     }

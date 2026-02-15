@@ -46,6 +46,7 @@ A fully-featured Pokémon battle simulator inspired by **Pokémon Gold & Silver*
 - 🎵 Synthesized 8-bit sound effects via Web Audio API
 - 💾 localStorage save/load system
 - 🎨 Retro pixel art aesthetic with LCD filter option
+- 🐣 **Smart Generation** — Pokémon spawn with level-appropriate moves and evolution-stage validation
 
 ---
 
@@ -111,7 +112,15 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 - **1.5× HP** multiplier with "BOSS" prefix
 - Start at **max rage** (level 3)
 - **Cinematic intro** with screen shake and silhouette reveal
+- **Guaranteed Elite Moves** — Bosses always have 2 rare/egg/high-level moves
 - Team-wide EXP distribution on defeat
+
+### 🐣 Generation & Selection
+- **Level-Appropriate Moves** — Movesets favor recently learned moves over generic level 1 moves.
+- **Elite/Egg Moves** — 10% chance for wild Pokémon (100% for bosses) to know moves above their level or egg-only moves.
+- **Evolution Validation** — Evolved Pokémon (e.g. Charizard) will not appear in the wild below their natural evolution level (Level 36).
+- **First-Stage Starters** — Starter selection screen is filtered to only show basic forms (no middle or final evolutions).
+- **Performance Optimized** — Full caching system for species and evolution data to minimize API latency.
 
 ### 🎰 Loot System
 - Items drop from defeated/caught Pokémon
@@ -322,6 +331,18 @@ const DEBUG = {
 ---
 
 ## 📝 Recent Updates
+
+### v1.3.0 - Smart Generation System (Feb 2026)
+**Natural Pokemon Generation:**
+- 🐣 **Level-Appropriate Moves**: Movesets weighted to prefer recently learned moves.
+- 🐣 **Elite Moves**: Implemented 10% chance for egg/high-level moves in the wild.
+- 🐣 **Natural Movesets**: No longer forcing 4 moves; Pokemon show up with their natural move count for their level.
+- 🐣 **Evolution Integrity**: Wild evolved Pokemon now only spawn at or above their official evolution levels.
+
+**Refined Selection:**
+- 🛡️ **Starter Filtering**: Selection screen now strictly offers first-stage Pokemon only.
+- ⚡ **API Optimization**: Introduced persistence cache for PokeAPI data (Species, Evolution, Stats).
+- ⚡ **Lazy Validation**: Evolution checks performed before heavy move-fetching to improve encounter speed.
 
 ### v1.2.0 - Modularization & Animation Framework (Feb 2026)
 **CSS Modularization:**

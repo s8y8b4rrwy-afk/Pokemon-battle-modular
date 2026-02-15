@@ -216,13 +216,24 @@ const AnimFramework = {
                 }
                 break;
 
+            case 'sequence':
+                if (Array.isArray(step.steps)) {
+                    for (const s of step.steps) {
+                        await this._executeStep(s, ctx);
+                    }
+                }
+                break;
+
             case 'overlay': await this._doOverlay(step, ctx); break;
             case 'formation': await this._doFormation(step, ctx); break;
             case 'spriteMove': await this._doSpriteMove(step, ctx); break;
             case 'tilt': await this._doTilt(step, ctx); break;
             case 'bgColor': await this._doBgColor(step, ctx); break;
             case 'invert': await this._doInvert(step, ctx); break;
+            case 'spriteSilhouette': await this._doSpriteSilhouette(step, ctx); break;
+            case 'spriteGhost': await this._doSpriteGhost(step, ctx); break;
             case 'wave': await this._doWave(step, ctx); break;
+            case 'spriteWave': await this._doSpriteWave(step, ctx); break;
 
             default:
                 console.warn(`[AnimFramework] Unknown step type: "${step.type}"`);
@@ -885,5 +896,131 @@ const AnimFramework = {
         scene.style.animation = `anim-wave ${speed}ms ease-in-out ${cycles}`;
         await wait(dur);
         scene.style.animation = '';
+    },
+
+    // --- SPRITE SILHOUETTE (Solid Color Overlay) ---
+    async _doSpriteSilhouette(step, ctx) {
+        const targetName = step.target || 'defender';
+        const sprite = (targetName === 'attacker') ? ctx.attackerSprite : ctx.defenderSprite;
+        if (!sprite) return;
+
+        const color = step.color || '#ffffff';
+        const duration = step.duration || 600;
+        const hold = step.hold || 0;
+        const follow = step.follow !== false; // Default to true
+
+        // Ensure we have an SVG filter for this color
+        const filterId = this._ensureSilhouetteFilter(color);
+
+        const clone = sprite.cloneNode(true);
+
+        // Setup clone
+        clone.id = `silhouette-clone-${Date.now()}`;
+
+        // Function to copy EXACT layout and transforms
+        const syncStyles = () => {
+            const currentStyle = window.getComputedStyle(sprite);
+            const props = ['position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'transform', 'transformOrigin', 'margin', 'display'];
+            props.forEach(prop => clone.style[prop] = currentStyle[prop]);
+        };
+        syncStyles();
+
+        clone.style.filter = `url(#${filterId})`;
+        clone.style.opacity = '1';
+        clone.style.transition = `opacity ${duration}ms ease-out`;
+        clone.style.zIndex = '11';
+        clone.style.pointerEvents = 'none';
+
+        // Add to parent
+        sprite.parentNode.appendChild(clone);
+
+        // Keep synced if follow is enabled
+        let active = true;
+        if (follow) {
+            const followLoop = () => {
+                if (!active) return;
+                syncStyles();
+                requestAnimationFrame(followLoop);
+            };
+            followLoop();
+        }
+
+        if (hold > 0) await wait(hold);
+
+        // Start fade
+        requestAnimationFrame(() => {
+            clone.style.opacity = '0';
+        });
+
+        await wait(duration);
+        active = false;
+        clone.remove();
+    },
+
+    // --- SPRITE GHOST (Stationary Snapshot) ---
+    async _doSpriteGhost(step, ctx) {
+        // Reuse silhouette logic but forced follow:false
+        return this._doSpriteSilhouette({ ...step, follow: false }, ctx);
+    },
+
+    // Helper: Ensure a solid color filter exists in the DOM
+    _ensureSilhouetteFilter(color) {
+        const cleanColor = color.replace('#', '');
+        const id = `glow-${cleanColor}`;
+        if (document.getElementById(id)) return id;
+
+        let container = document.getElementById('anim-filters');
+        if (!container) {
+            // Create hidden SVG container for filters
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.id = 'anim-filters';
+            svg.setAttribute('style', 'position:absolute; width:0; height:0; pointer-events:none;');
+
+            // Need to append to body but SVG elements aren't HTMLElements in TS/Lint
+            document.body.appendChild(svg);
+            container = svg;
+        }
+
+        const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+        filter.id = id;
+
+        // Solid silhouette logic: SourceAlpha -> Colored Flood -> Combined
+        filter.innerHTML = `
+            <feFlood flood-color="${color}" flood-opacity="1" result="flood" />
+            <feComposite in="flood" in2="SourceAlpha" operator="in" />
+        `;
+
+        container.appendChild(filter);
+        return id;
+    },
+
+    // --- SPRITE WAVE (Distortion/Wiggle) ---
+    async _doSpriteWave(step, ctx) {
+        const sprite = (step.target === 'attacker') ? ctx.attackerSprite : ctx.defenderSprite;
+        if (!sprite) return;
+
+        const intensity = step.intensity || 3;
+        const dur = step.duration || 600;
+        const speed = step.speed || 100;
+        const cycles = Math.ceil(dur / speed);
+
+        const keyframeName = `anim-sprite-wave-${Date.now()}`;
+        let styleEl = document.getElementById('anim-sprite-wave-style');
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = 'anim-sprite-wave-style';
+            document.head.appendChild(styleEl);
+        }
+
+        styleEl.textContent += `\n@keyframes ${keyframeName} {
+            0%, 100% { transform: skewX(0deg) skewY(0deg); }
+            25% { transform: skewX(${intensity}deg) skewY(${intensity * 0.3}deg); }
+            75% { transform: skewX(-${intensity}deg) skewY(-${intensity * 0.3}deg); }
+        }`;
+
+        sprite.style.animation = `${keyframeName} ${speed}ms ease-in-out ${cycles}`;
+        await wait(dur);
+        sprite.style.animation = '';
     }
 };

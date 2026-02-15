@@ -86,19 +86,39 @@ AnimFramework.register('synthesis', [
 // --- TYPE-BASED SCREEN FX ---
 
 AnimFramework.register('fx-fire', [
-    { type: 'sfx', sound: 'fire' },
     {
-        type: 'parallel', steps: [
-            { type: 'screenFx', class: 'fx-fire', duration: 500 },
-            { type: 'spriteShake', target: 'defender', duration: 400 },
+        type: "sfx",
+        sound: "explosion"
+    },
+    {
+        type: "parallel",
+        steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'fire',
-                color: '#ff4500', outline: '#8b0000',
-                width: 24, height: 24, duration: 400, animation: 'grow'
+                type: "screenFx",
+                class: "fx-fire",
+                duration: 500
             },
             {
-                type: 'particles', position: 'defender', count: 8, spread: 25, duration: 500,
-                particleStyles: { background: '#ffd700', border: '1px solid #ff4500' }
+                type: "spriteSilhouette",
+                target: "defender",
+                color: "#ff4500",
+                duration: 400
+            },
+            {
+                type: "spriteShake",
+                target: "defender",
+                duration: 400
+            },
+            {
+                type: "particles",
+                position: "defender",
+                count: 8,
+                spread: 25,
+                duration: 500,
+                particleStyles: {
+                    background: "#ffd700",
+                    border: "1px solid #ff4500"
+                }
             }
         ]
     }
@@ -128,8 +148,9 @@ AnimFramework.register('fx-ice', [
     {
         type: 'parallel', steps: [
             { type: 'screenFx', class: 'fx-ice', duration: 500 },
-            { type: 'spriteShake', target: 'defender', duration: 400 },
-            { type: 'invert', target: 'defender', duration: 300 },
+            { type: "spriteSilhouette", target: "defender", color: "#e0ffff", duration: 500 },
+            { type: "spriteShake", target: "defender", duration: 400 },
+            { type: "invert", target: "defender", duration: 300 },
             {
                 type: 'particles', position: 'defender', count: 12, spread: 20, duration: 600,
                 particleStyles: { background: '#e0ffff', border: '1px solid #87ceeb' }
@@ -173,9 +194,9 @@ AnimFramework.register('fx-psychic', [
     { type: 'sfx', sound: 'psychic' },
     {
         type: 'parallel', steps: [
-            { type: 'screenFx', class: 'fx-psychic', duration: 600 },
-            { type: 'spriteShake', target: 'defender', duration: 400 },
-            { type: 'wave', intensity: 3, duration: 600, speed: 120 },
+            { type: "spriteSilhouette", target: "defender", color: "#ff69b4", duration: 600 },
+            { type: "spriteShake", target: "defender", duration: 400 },
+            { type: "wave", intensity: 3, duration: 600, speed: 120 },
             {
                 type: 'overlay', target: 'defender', shape: 'spiral',
                 color: '#ff69b4', outline: '#c71585',
@@ -189,8 +210,8 @@ AnimFramework.register('fx-poison', [
     { type: 'sfx', sound: 'poison' },
     {
         type: 'parallel', steps: [
-            { type: 'screenFx', class: 'fx-poison', duration: 500 },
-            { type: 'spriteShake', target: 'defender', duration: 400 },
+            { type: "spriteSilhouette", target: "defender", color: "#a040a0", duration: 500 },
+            { type: "spriteShake", target: "defender", duration: 400 },
             {
                 type: 'overlay', target: 'defender', shape: 'skull',
                 color: '#a040a0', outline: '#4b0082',
@@ -320,9 +341,9 @@ AnimFramework.register('fx-dark', [
     { type: 'sfx', sound: 'dark' },
     {
         type: 'parallel', steps: [
-            { type: 'screenFx', class: 'fx-dark', duration: 500 },
-            { type: 'spriteShake', target: 'defender', duration: 400 },
-            { type: 'invert', target: 'defender', duration: 300 }
+            { type: "spriteSilhouette", target: "defender", color: "#000000", duration: 500 },
+            { type: "spriteShake", target: "defender", duration: 400 },
+            { type: "invert", target: "defender", duration: 300 }
         ]
     }
 ]);
@@ -356,6 +377,7 @@ AnimFramework.register('confused', [
     {
         type: 'parallel', steps: [
             { type: 'wave', intensity: 2, duration: 1000, speed: 100 },
+            { type: 'spriteWave', target: 'defender', intensity: 10, duration: 1000, speed: 80 },
             {
                 type: 'overlay', target: 'defender', shape: 'duck',
                 color: '#ffd700', outline: '#b8860b',
@@ -403,6 +425,7 @@ AnimFramework.register('status-brn', [
     { type: 'sfx', sound: 'fire' },
     {
         type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#ff4500', duration: 600 },
             { type: 'cssClass', el: 'defender', class: 'status-anim-brn', duration: 600 },
             {
                 type: 'particles', position: 'defender', count: 6, spread: 20, duration: 600,
@@ -416,6 +439,8 @@ AnimFramework.register('status-par', [
     { type: 'sfx', sound: 'electric' },
     {
         type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#ffd700', duration: 600, hold: 100 },
+            { type: 'spriteWave', target: 'defender', intensity: 8, duration: 600, speed: 50 },
             { type: 'cssClass', el: 'defender', class: 'status-anim-par', duration: 600 },
             {
                 type: 'overlay', target: 'defender', shape: 'lightning',
@@ -432,6 +457,7 @@ AnimFramework.register('status-psn', [
     { type: 'sfx', sound: 'poison' },
     {
         type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#a040a0', duration: 600 },
             { type: 'cssClass', el: 'defender', class: 'status-anim-psn', duration: 600 },
             {
                 type: 'overlay', target: 'defender', shape: 'bubble',
@@ -446,6 +472,7 @@ AnimFramework.register('status-frz', [
     { type: 'sfx', sound: 'ice' },
     {
         type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#ffffff', duration: 600, hold: 200 },
             { type: 'cssClass', el: 'defender', class: 'status-anim-frz', duration: 600 },
             { type: 'filter', target: 'defender', filter: 'brightness(1.5) hue-rotate(180deg)', duration: 600 },
             {
@@ -492,11 +519,12 @@ AnimFramework.register('growl', (ctx) => {
         { type: 'sfx', sound: 'normal' },
         {
             type: 'parallel', steps: [
-                { type: 'wave', intensity: 2, duration: 600, speed: 150 },
+                { type: 'wave', intensity: 4, duration: 800, speed: 100 },
+                { type: 'spriteWave', target: 'defender', intensity: 8, duration: 800, speed: 50 },
                 {
-                    type: 'overlay', target: 'defender', shape: 'spiral', // visual "sound waves"
-                    color: '#fff', outline: '#000', width: 60, height: 60,
-                    duration: 600, animation: 'grow'
+                    type: 'overlay', target: 'defender', shape: 'spiral',
+                    color: '#fff', outline: '#000', width: 40, height: 40,
+                    duration: 800, animation: 'grow'
                 }
             ]
         },
@@ -541,9 +569,8 @@ AnimFramework.register('splash', [
 
 AnimFramework.register('transform', [
     { type: 'sfx', sound: 'psychic' },
-    { type: 'filter', target: 'attacker', filter: 'brightness(0) invert(1)', duration: 300 }, // Flash white
-    { type: 'wait', ms: 300 },
-    { type: 'filter', target: 'attacker', filter: '', duration: 100 }
+    { type: 'spriteSilhouette', target: 'attacker', color: '#ffffff', duration: 300, hold: 100 },
+    { type: 'wait', ms: 300 }
 ]);
 
 AnimFramework.register('substitute', [
@@ -625,6 +652,7 @@ AnimFramework.register('screech', (ctx) => {
         {
             type: 'parallel', steps: [
                 { type: 'wave', intensity: 5, duration: 800, speed: 200 }, // Intense shaking
+                { type: 'spriteWave', target: 'defender', intensity: 10, duration: 800, speed: 50 },
                 {
                     type: 'overlay', target: 'defender', shape: 'spiral',
                     color: '#8b008b', outline: '#000', width: 80, height: 80,
@@ -773,7 +801,12 @@ AnimFramework.register('yawn', [
 
 AnimFramework.register('tail-whip', [
     { type: 'sfx', sound: 'normal' },
-    { type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 400 },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 400 },
+            { type: 'spriteWave', target: 'defender', intensity: 2, duration: 400, speed: 200 }
+        ]
+    },
     { type: 'wait', ms: 200 }
 ]);
 
@@ -781,8 +814,13 @@ AnimFramework.register('leer', [
     { type: 'sfx', sound: 'normal' },
     { type: 'flash', color: '#ff0000', duration: 200, opacity: 0.3 },
     {
-        type: 'beam', from: 'attacker', to: 'defender', duration: 400,
-        width: 10, height: 2, beamStyles: { background: '#ff0000', boxShadow: '0 0 5px red' }
+        type: 'parallel', steps: [
+            {
+                type: 'beam', from: 'attacker', to: 'defender', duration: 400,
+                width: 10, height: 2, beamStyles: { background: '#ff0000', boxShadow: '0 0 5px red' }
+            },
+            { type: 'spriteWave', target: 'defender', intensity: 3, duration: 400, speed: 100 }
+        ]
     },
     { type: 'wait', ms: 200 }
 ]);

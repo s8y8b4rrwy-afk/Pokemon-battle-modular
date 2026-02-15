@@ -80,7 +80,7 @@
 
 /**
  * @typedef {Object} AnimStep
- * @property {'sfx'|'cry'|'wait'|'screenFx'|'spriteShake'|'cssClass'|'move'|'spawn'|'particles'|'beam'|'stream'|'volley'|'flash'|'overlay'|'formation'|'spriteMove'|'tilt'|'bgColor'|'invert'|'wave'|'callback'|'parallel'} type
+ * @property {'sfx'|'cry'|'wait'|'screenFx'|'spriteShake'|'cssClass'|'move'|'spawn'|'particles'|'beam'|'stream'|'volley'|'flash'|'overlay'|'formation'|'spriteMove'|'tilt'|'bgColor'|'invert'|'spriteSilhouette'|'spriteGhost'|'wave'|'spriteWave'|'callback'|'parallel'} type
  * @property {string} [sound] For 'sfx'
  * @property {string} [cry] For 'cry'
  * @property {number} [ms] For 'wait'
@@ -131,6 +131,8 @@
  * @property {number} [speed]
  * @property {Function} [fn]
  * @property {AnimStep[]} [steps] For 'parallel'
+ * @property {number} [hold] For 'spriteSilhouette'
+ * @property {boolean} [follow] For 'spriteSilhouette'
  * @property {any} [index]
  */
 
@@ -162,7 +164,11 @@
  * @property {Function} [_doTilt]
  * @property {Function} [_doBgColor]
  * @property {Function} [_doInvert]
+ * @property {Function} [_doSpriteSilhouette]
+ * @property {Function} [_doSpriteGhost]
+ * @property {Function} [_ensureSilhouetteFilter]
  * @property {Function} [_doWave]
+ * @property {Function} [_doSpriteWave]
  * @property {Function} [_createShapeEl]
  * @property {Function} [_getMovePreset]
  * @property {any} [x]

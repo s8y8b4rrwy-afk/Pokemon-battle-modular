@@ -634,6 +634,10 @@
     animation: flashPurple 0.5s steps(5);
 }
 
+.fx-invert {
+    filter: invert(1);
+}
+
 /* --- JUMP (Party icon bounce) --- */
 @keyframes jump {
 

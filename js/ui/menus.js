@@ -16,14 +16,15 @@ const PackScreen = {
     },
     handleInput(key) {
         const len = document.querySelectorAll('.pack-item').length;
-        if (key === 'ArrowDown') { Input.focus = Math.min(len - 1, Input.focus + 1); Input.updateVisuals(); return true; }
-        if (key === 'ArrowUp') { Input.focus = Math.max(0, Input.focus - 1); Input.updateVisuals(); return true; }
+        if (key === 'ArrowDown') { Input.focus = Math.min(len - 1, Input.focus + 1); Input.updateVisuals(); AudioEngine.playSfx('select'); return true; }
+        if (key === 'ArrowUp') { Input.focus = Math.max(0, Input.focus - 1); Input.updateVisuals(); AudioEngine.playSfx('select'); return true; }
         if (['z', 'Z', 'Enter'].includes(key)) {
             const btns = document.querySelectorAll('.pack-item');
             if (btns[Input.focus]) btns[Input.focus].click();
             return true;
         }
         if (key === 'x' || key === 'X') {
+            AudioEngine.playSfx('select');
             BattleMenus.uiToMenu();
             return true;
         }
@@ -83,28 +84,28 @@ const BattleMenus = {
         Input.setMode('BATTLE', Battle.lastMenuIndex);
     },
 
-    askRun() {
+    async askRun() {
         if (Battle.e.isBoss) {
             UI.typeText("Can't escape a BOSS!");
             setTimeout(() => this.uiToMenu(), 1000);
             return;
         }
 
-        Battle.lastMenuIndex = Input.focus;
-        const menu = document.getElementById('action-menu');
+        UI.hide('action-menu');
+        const choice = await DialogManager.ask("Give up and\nrestart?", ["Yes", "No"], { lock: true });
 
-        menu.innerHTML = `
-            <div class="menu-item centered" id="run-yes" onclick="Battle.performRun()" onmouseenter="Input.focus=0;Input.updateVisuals()">YES</div>
-            <div class="menu-item centered" id="run-no" onclick="BattleMenus.uiToMenu()" onmouseenter="Input.focus=1;Input.updateVisuals()">NO</div>
-        `;
-        UI.textEl.innerHTML = "Give up and\nrestart?";
-        Input.setMode('CONFIRM_RUN');
+        if (choice === "Yes") {
+            Battle.performRun();
+        } else {
+            this.uiToMenu();
+        }
     },
 
     openPack() {
         if (Battle.uiLocked) return;
         Battle.lastMenuIndex = Input.focus;
         UI.hide('action-menu');
+        Game.state = 'BAG';
         ScreenManager.push('BAG');
     },
 
@@ -151,6 +152,7 @@ const BattleMenus = {
                     Input.focus = currentIdx;
                     Input.updateVisuals();
                     showDesc();
+                    AudioEngine.playSfx('select');
                 };
                 div.onclick = () => {
                     if (data.type === 'heal' || data.type === 'revive') {
@@ -158,6 +160,7 @@ const BattleMenus = {
                         Game.state = 'HEAL';
                         ScreenManager.push('PARTY', { mode: 'HEAL' });
                     } else {
+                        AudioEngine.playSfx('select');
                         Battle.performItem(key);
                     }
                 };
@@ -172,11 +175,13 @@ const BattleMenus = {
         cancelBtn.onmouseenter = () => {
             Input.focus = idxCounter;
             Input.updateVisuals();
+            AudioEngine.playSfx('select');
         };
         cancelBtn.onmouseover = () => {
             document.getElementById('pack-desc').innerText = "Close the Pack.";
         };
         cancelBtn.onclick = () => {
+            AudioEngine.playSfx('select');
             BattleMenus.uiToMenu();
         };
         list.appendChild(cancelBtn);

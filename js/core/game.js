@@ -5,12 +5,12 @@ const Game = {
     playerName: 'PLAYER', currentSummaryIndex: 0, savedBattleState: null,
 
     // --- SCREEN SHIMS ---
-    showSelectionScreen(...args) { return SelectionScreen.open(...args); },
-    openSummary(...args) { return SummaryScreen.open(...args); },
-    renderSummaryData(...args) { return SummaryScreen.render(...args); },
-    navSummary(...args) { return SummaryScreen.nav(...args); },
-    closeSummary(...args) { return SummaryScreen.close(...args); },
-    confirmSelection(...args) { return SelectionScreen.confirm(...args); },
+    showSelectionScreen(params) { return SelectionScreen.open(params); },
+    openSummary(mon) { return SummaryScreen.open(mon); },
+    renderSummaryData(mon) { return SummaryScreen.render(mon); },
+    navSummary(dir) { return SummaryScreen.nav(dir); },
+    closeSummary() { return SummaryScreen.close(); },
+    confirmSelection() { return SelectionScreen.confirm(); },
     openParty(forced = false) {
         if (typeof ScreenManager !== 'undefined') {
             ScreenManager.push('PARTY', { forced: forced });
@@ -18,12 +18,12 @@ const Game = {
             return PartyScreen.open(forced);
         }
     },
-    renderParty(...args) { return PartyScreen.render(...args); },
-    openContext(...args) { return PartyScreen.openContext(...args); },
-    closeContext(...args) { return PartyScreen.closeContext(...args); },
-    releasePokemon(...args) { return PartyScreen.release(...args); },
-    applyItemToPokemon(...args) { return PartyScreen.applyItem(...args); },
-    partySwitch(...args) { return PartyScreen.shift(...args); },
+    renderParty() { return PartyScreen.render(); },
+    openContext(index) { return PartyScreen.openContext(index); },
+    closeContext() { return PartyScreen.closeContext(); },
+    releasePokemon(index) { return PartyScreen.release(index); },
+    applyItemToPokemon(index) { return PartyScreen.applyItem(index); },
+    partySwitch() { return PartyScreen.shift(); },
 
     toggleLcd() {
         Input.lcdEnabled = !Input.lcdEnabled;
@@ -159,7 +159,9 @@ const Game = {
                 img.onerror = resumeStart;
                 img.src = this.enemyMon.frontSprite;
             } else {
-                this.startNewBattle(true);
+                // Ensure we don't wipe progress on a simple continue
+                const isBrandNew = (this.party.length === 0);
+                this.startNewBattle(isBrandNew);
             }
         }
     },
@@ -347,26 +349,46 @@ const Game = {
     processLevelUp(p) {
         return new Promise(async (resolve) => {
             const startLvl = p.level;
-            while (p.exp >= p.nextLvlExp) { p.exp -= p.nextLvlExp; p.level++; p.nextLvlExp = Math.pow(p.level + 1, 3) - Math.pow(p.level, 3); }
+            const levelsGained = [];
+
+            // 1. Calculate how many levels were gained
+            while (p.exp >= p.nextLvlExp) {
+                p.exp -= p.nextLvlExp;
+                p.level++;
+                levelsGained.push(p.level);
+                p.nextLvlExp = Math.pow(p.level + 1, 3) - Math.pow(p.level, 3);
+            }
+
             StatCalc.recalculate(p);
             AudioEngine.playSfx('levelup');
+
             if (this.activeSlot === this.party.indexOf(p)) {
                 const hud = document.getElementById('player-hud');
                 hud.classList.remove('hud-flash-blue'); void hud.offsetWidth; hud.classList.add('hud-flash-blue');
                 UI.updateHUD(p, 'player');
             }
-            await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to Level ${p.level}!`, { lock: true });
 
-            // NEW: Learn Moves Check
+            await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to\nLevel ${p.level}!`, { lock: true });
+
+            // 2. CHECK MOVES FOR EVERY LEVEL GAINED
             if (typeof API.getLearnableMoves === 'function' && typeof MoveLearnScreen !== 'undefined' && typeof DialogManager !== 'undefined') {
-                const newMoves = await API.getLearnableMoves(p.id, p.level);
-                for (const move of newMoves) {
-                    if (p.moves.find(m => m.name === move.toUpperCase())) continue;
-                    await MoveLearnScreen.tryLearn(p, move);
+                for (const lvl of levelsGained) {
+                    const newMoves = await API.getLearnableMoves(p.id, lvl);
+                    for (const moveName of newMoves) {
+                        // Check if already known (By ID or normalized Name)
+                        const isKnown = p.moves.some(m =>
+                            m.id === moveName ||
+                            m.name === moveName.replace(/-/g, ' ').toUpperCase()
+                        );
+
+                        if (!isKnown) {
+                            await MoveLearnScreen.tryLearn(p, moveName);
+                        }
+                    }
                 }
             }
 
-            // Evolution Check
+            // 3. Evolution Check (Only once at the end)
             if (typeof Evolution !== 'undefined') {
                 const evo = await Evolution.check(p);
                 if (evo) await Evolution.execute(p, evo);
@@ -510,7 +532,19 @@ const Game = {
     async handleLoss() {
         UI.textEl.classList.remove('full-width');
         if (this.party.some(p => p.currentHp > 0)) {
-            PartyScreen.open(true);
+            const selectedIndex = await new Promise(resolve => {
+                const wasForced = this.forcedSwitch;
+                this.forcedSwitch = true;
+                Battle.userInputPromise = resolve;
+                this.openParty(true);
+            });
+            Battle.userInputPromise = null;
+            this.activeSlot = selectedIndex;
+
+            // Trigger switch animation for the new mon
+            await Battle.processSwitch(this.party[selectedIndex], true);
+            Battle.uiLocked = false;
+            BattleMenus.uiToMenu();
         } else {
             // document.getElementById('game-boy').style.animation = "flashWhite 0.5s";
 

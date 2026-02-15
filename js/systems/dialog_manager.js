@@ -38,6 +38,7 @@ const DialogManager = {
         if (this.isTyping || this.queue.length === 0) return;
 
         const task = this.queue[0];
+        const prevLockState = (typeof Battle !== 'undefined') ? Battle.uiLocked : false;
 
         if (task.type === 'text') {
             this.isTyping = true;
@@ -63,7 +64,7 @@ const DialogManager = {
 
                 this._cleanupInputHandler();
 
-                if (task.options.lock && typeof Battle !== 'undefined') {
+                if (task.options.lock && typeof Battle !== 'undefined' && !prevLockState) {
                     Battle.uiLocked = false;
                 }
 
@@ -92,7 +93,7 @@ const DialogManager = {
                 this.activeResolver = (choice) => {
                     this.hideChoices();
 
-                    if (task.options.lock && typeof Battle !== 'undefined') {
+                    if (task.options.lock && typeof Battle !== 'undefined' && !prevLockState) {
                         Battle.uiLocked = false;
                     }
 
@@ -162,6 +163,15 @@ const DialogManager = {
             AudioEngine.playSfx('select');
             return true;
         }
+        if (['x', 'X', 'Escape'].includes(key)) {
+            // Find "No" or use last option
+            let noIdx = -1;
+            choices.forEach((c, i) => { if (c.textContent.toLowerCase() === 'no') noIdx = i; });
+            const finalIdx = noIdx !== -1 ? noIdx : choices.length - 1;
+            this.activeResolver(choices[finalIdx].textContent);
+            AudioEngine.playSfx('select');
+            return true;
+        }
 
         return true; // Block other inputs
     },
@@ -178,8 +188,15 @@ const DialogManager = {
 
         return new Promise(resolve => {
             const handler = (e) => {
-                const k = e.key.toLowerCase();
-                if (k === 'z' || k === 'enter' || k === 'x') {
+                let trigger = false;
+                if (e.type === 'keydown') {
+                    const k = e.key.toLowerCase();
+                    if (k === 'z' || k === 'enter' || k === 'x') trigger = true;
+                } else if (e.type === 'click') {
+                    trigger = true;
+                }
+
+                if (trigger) {
                     this._cleanupInputHandler();
                     AudioEngine.playSfx('select');
                     resolve();
@@ -188,12 +205,14 @@ const DialogManager = {
             this._currentHandler = handler;
             this._currentResolver = resolve;
             window.addEventListener('keydown', handler);
+            window.addEventListener('click', handler);
         });
     },
 
     _cleanupInputHandler() {
         if (this._currentHandler) {
             window.removeEventListener('keydown', this._currentHandler);
+            window.removeEventListener('click', this._currentHandler);
             this._currentHandler = null;
         }
         const arrow = document.getElementById('advance-arrow');

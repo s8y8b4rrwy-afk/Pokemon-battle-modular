@@ -25,7 +25,13 @@ const GAME_BALANCE = {
 
     // Post-Battle
     HEAL_WIN_MIN_PCT: 0.15,     // Heal at least 15% HP after win
-    HEAL_WIN_MAX_PCT: 0.35      // Heal up to 35% HP
+    HEAL_WIN_MAX_PCT: 0.35,      // Heal up to 35% HP
+
+    // Move Generation (New)
+    MOVE_GEN_SMART: true,       // Enable level-appropriate move selection
+    MOVE_GEN_SPECIAL_CHANCE: 0.10, // 10% chance to have an egg move or higher level move
+    MOVE_GEN_SPECIAL_COUNT_2_CHANCE: 0.30, // Of that 10%, 30% chance to have 2 special moves instead of 1
+    MOVE_GEN_HIGHER_LEVEL_REACH: 10 // How many levels above current level to look for "special" moves
 };
 
 // --- ENCOUNTER CONFIGURATION ---
@@ -41,5 +47,11 @@ const ENCOUNTER_CONFIG = {
     WILD_LEVEL_MIN: -5,         // Player Level - 5
     WILD_LEVEL_MAX: -2,         // Player Level - 2
     BOSS_LEVEL_MIN: 1,          // Player Level + 1
-    BOSS_LEVEL_MAX: 5           // Player Level + 5
+    BOSS_LEVEL_MAX: 5,           // Player Level + 5
+
+    // High Tier (Legendary/Pseudo-Legendary) Scaling
+    HI_TIER_BST_THRESHOLD: 520,  // Threshold for "Powerful" Pokemon
+    HI_TIER_MIN_WINS: 10,        // Wins required to see naturally in wild
+    HI_TIER_MIN_LEVEL: 30,       // Level required to see naturally in wild
+    HI_TIER_BOSS_PROBABILITY: 0.60 // Chance a boss re-rolls to find a high-tier candidate
 };

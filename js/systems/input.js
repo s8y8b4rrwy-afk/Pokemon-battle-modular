@@ -14,7 +14,6 @@ const Input = {
     visuals: {
         'BATTLE': () => document.getElementById(['opt-fight', 'opt-pkmn', 'opt-pack', 'opt-run'][Input.focus]),
         'CONTINUE': () => document.getElementById(['opt-continue', 'opt-newgame'][Input.focus]),
-        'CONFIRM_RUN': () => document.querySelectorAll('#action-menu .menu-item')[Input.focus],
         'DIALOG_CHOICE': () => document.querySelectorAll('#dialog-choice-box .choice-item')[Input.focus],
 
         'MOVES': () => {
@@ -98,11 +97,6 @@ const Input = {
             if (k === 'ArrowUp' && Input.focus > 1) Input.focus -= 2;
             if (['z', 'Z', 'Enter'].includes(k)) document.getElementById(['opt-fight', 'opt-pkmn', 'opt-pack', 'opt-run'][Input.focus]).click();
         },
-        'CONFIRM_RUN': (k) => {
-            if (k === 'ArrowRight' || k === 'ArrowDown') Input.focus = 1;
-            if (k === 'ArrowLeft' || k === 'ArrowUp') Input.focus = 0;
-            if (['z', 'Z', 'Enter'].includes(k)) document.querySelectorAll('#action-menu .menu-item')[Input.focus].click();
-        },
         'MOVES': (k) => {
             const len = document.querySelectorAll('.move-btn').length;
             if (k === 'ArrowRight' && Input.focus % 2 === 0 && Input.focus < len - 1) Input.focus++;
@@ -147,9 +141,6 @@ const Input = {
         // Prime audio on first interaction
         AudioEngine.init();
 
-        // Global Lock Check (Except for Title Screens)
-        if (Battle.uiLocked && !['START', 'CONTINUE', 'NAME', 'DIALOG_CHOICE'].includes(this.mode)) return;
-
         const k = e.key;
 
         // 0. Priority: Dialog System
@@ -164,17 +155,18 @@ const Input = {
 
         // 1. Priority: Screen Manager
         if (typeof ScreenManager !== 'undefined' && ScreenManager.activeScreen) {
-            // If ScreenManager handles it, stop propagation.
-            // Note: Screens might return false if they want default behavior (like global back button).
             if (ScreenManager.handleInput(k)) {
                 this.updateVisuals();
                 return;
             }
         }
 
+        // Global Lock Check (Allows specific system menus to remain interactive)
+        if (Battle.uiLocked && !['START', 'CONTINUE', 'NAME', 'DIALOG_CHOICE', 'PARTY', 'CONTEXT', 'SUMMARY'].includes(this.mode)) return;
+
         // 2. Global Back Button (X)
         if (k === 'x' || k === 'X') {
-            if (['MOVES', 'BAG', 'CONFIRM_RUN'].includes(this.mode)) { BattleMenus.uiToMenu(); return; }
+            if (['MOVES', 'BAG'].includes(this.mode)) { BattleMenus.uiToMenu(); return; }
             if (this.mode === 'PARTY') { if (document.getElementById('party-close-btn').innerText !== "CHOOSE A POKEMON") BattleMenus.uiToMenu(); return; }
             if (this.mode === 'CONTEXT') { PartyScreen.closeContext(); return; }
             if (this.mode === 'SUMMARY') { SummaryScreen.close(); return; }

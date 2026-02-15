@@ -66,7 +66,7 @@ const CaptureManager = {
             ball.classList.add('pokeball-caught');
 
             Game.state = 'CAUGHT_ANIM';
-            await UI.typeText(`Gotcha! ${enemy.name} was caught!`);
+            await UI.typeText(`Gotcha!\n${enemy.name} was caught!`);
             const scene = document.getElementById('scene');
             if (scene.contains(ball)) scene.removeChild(ball);
 
@@ -80,7 +80,14 @@ const CaptureManager = {
                 Game.state = 'OVERFLOW';
                 await UI.typeText(`Party is full!\nSelect PKMN to release.`);
                 await sleep(ANIM.OVERFLOW_WARNING);
-                Game.openParty(true);
+
+                await new Promise(resolve => {
+                    Battle.userInputPromise = resolve;
+                    Game.openParty(true);
+                });
+                Battle.userInputPromise = null;
+
+                Game.handleWin(true);
             }
             else {
                 await UI.typeText(`${enemy.name} was added\nto the party!`);

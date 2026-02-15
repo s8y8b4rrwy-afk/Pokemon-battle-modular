@@ -23,6 +23,7 @@ const MoveLearnScreen = {
         if (pokemon.moves.length < 4) {
             pokemon.moves.push(mData);
             // Wait for input for simple learn
+            AudioEngine.playSfx('funfair');
             await DialogManager.show(`${pokemon.name} learned\n${mData.name}!`, { lock: true });
             this._cleanup();
             return true;
@@ -61,6 +62,7 @@ const MoveLearnScreen = {
                     // Actually swap
                     pokemon.moves[forgetIndex] = mData;
 
+                    AudioEngine.playSfx('funfair');
                     await DialogManager.show(`${pokemon.name} learned\n${mData.name}!`, { lock: true });
                     this._cleanup();
                     return true;
@@ -77,14 +79,8 @@ const MoveLearnScreen = {
     },
 
     _cleanup() {
-        // Only restore menus if the battle is active AND not currently in a win/faint sequence
-        if (typeof Game !== 'undefined' && Game.state === 'BATTLE') {
-            // If the battle is already in 'CLEANUP/WIN' mode, Battle.uiLocked will be true.
-            // We only restore menus if it wasn't locked by the win sequence.
-            if (typeof Battle !== 'undefined' && !Battle.uiLocked) {
-                UI.show('action-menu');
-            }
-        }
+        // No-op: The battle flow (e.g., TurnManager or handleWin) handles menu restoration.
+        // Showing it here can cause it to pop up prematurely during win sequences.
     },
 
     // --- ScreenManager Interface ---

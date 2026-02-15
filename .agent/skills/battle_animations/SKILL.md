@@ -52,6 +52,7 @@ const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'phy
 | `wait` | `ms` | Pause execution |
 | `callback` | `fn(ctx)` | Run arbitrary async function |
 | `parallel` | `steps: [...]` | Run multiple steps concurrently |
+| `sequence` | `steps: [...]` | Run multiple steps in order. Essential for nesting inside `parallel` |
 
 ### Visual Effects (Scene-level)
 | Type | Parameters | Description |
@@ -68,6 +69,9 @@ const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'phy
 | Type | Parameters | Description |
 |------|-----------|-------------|
 | `spriteShake` | `target`, `duration`, `flipped?`, `skipIfInvisible?` | Shake + flicker a sprite (the classic "hit" reaction) |
+| `spriteSilhouette` | `target`, `color`, `hold?`, `duration`, `follow?` | Solid-color silhouette. Follows sprite moves by default. |
+| `spriteGhost` | `target`, `color`, `hold?`, `duration` | Stationary silhouette snapshot (ghosting effect). |
+| `spriteWave` | `target`, `intensity`, `duration`, `speed` | Wiggle/distortion on a specific sprite. |
 | `spriteMove` | `target`, `preset` OR `x,y,duration,easing` | Move a sprite with preset templates or custom coordinates |
 | `move` | `el`, `x`, `y`, `duration`, `easing?`, `reset?` | Translate any arbitrary DOM element |
 

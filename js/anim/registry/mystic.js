@@ -27,11 +27,29 @@ AnimFramework.register('psychic', [
     {
         type: 'parallel', steps: [
             { type: 'bgColor', color: '#4b0082', duration: 800 },
-            { type: 'wave', intensity: 5, duration: 800, speed: 120 },
-            { type: 'formation', target: 'defender', pattern: 'ring', shape: 'spiral', particleSize: 20, color: '#ff69b4', outline: '#ffffff', duration: 800, stagger: 60 }
+            { type: 'wave', intensity: 5, duration: 800, speed: 120 }
         ]
     },
-    { type: 'spriteShake', target: 'defender', duration: 400 }
+    { type: 'wait', ms: 200 },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'spriteSilhouette',
+                target: 'defender',
+                color: '#874efe',
+                hold: 110,
+                duration: 600,
+                follow: true
+            },
+            {
+                type: 'spriteWave',
+                target: 'defender',
+                intensity: 6,
+                duration: 500,
+                speed: 100
+            }
+        ]
+    }
 ]);
 
 AnimFramework.register('confusion', [
@@ -39,6 +57,7 @@ AnimFramework.register('confusion', [
     {
         type: 'parallel', steps: [
             { type: 'wave', intensity: 2, duration: 600, speed: 100 },
+            { type: 'spriteWave', target: 'defender', intensity: 8, duration: 600, speed: 80 },
             { type: 'overlay', target: 'defender', shape: 'spiral', color: '#ff69b4', width: 24, height: 24, duration: 500, animation: 'grow' }
         ]
     },
@@ -95,6 +114,7 @@ AnimFramework.register('night-shade', [
     { type: 'sfx', sound: 'ghost' },
     {
         type: 'parallel', steps: [
+            { type: "spriteSilhouette", target: "defender", color: "#000000", duration: 800 },
             { type: 'invert', target: 'scene', duration: 600 },
             { type: 'overlay', target: 'defender', shape: 'skull', color: '#a040a0', width: 60, height: 60, duration: 600, animation: 'fade' }
         ]
@@ -149,6 +169,7 @@ AnimFramework.register('hypnosis', [
     { type: 'wave', intensity: 3, duration: 1500, speed: 80 },
     {
         type: 'parallel', steps: [
+            { type: 'spriteWave', target: 'defender', intensity: 4, duration: 1200, speed: 150 },
             {
                 type: 'formation', target: 'defender', pattern: 'ring',
                 shape: 'spiral', particleSize: 12, color: '#f0e68c', outline: '#bdb76b',
@@ -309,10 +330,9 @@ AnimFramework.register('phantom-force', [
                 type: 'callback', fn: ctx => {
                     const sprite = ctx.attackerSprite;
                     sprite.style.opacity = '1';
-                    // Maybe a filter effect?
-                    sprite.style.filter = 'invert(1) drop-shadow(0 0 10px #4b0082)';
                 }
             },
+            { type: 'spriteSilhouette', target: 'attacker', color: '#4b0082', duration: 400, hold: 100 },
             { type: 'screenFx', class: 'fx-ghost', duration: 400 },
             {
                 type: 'overlay', target: 'defender', shape: 'claw',
@@ -349,9 +369,9 @@ AnimFramework.register('shadow-force', [
                 type: 'callback', fn: ctx => {
                     const sprite = ctx.attackerSprite;
                     sprite.style.opacity = '1';
-                    sprite.style.filter = 'brightness(0) drop-shadow(0 0 15px #800080)'; // Shadow form
                 }
             },
+            { type: 'spriteSilhouette', target: 'attacker', color: '#000000', duration: 800, hold: 200 },
             { type: 'flash', color: '#4b0082', duration: 400, opacity: 0.6 },
             {
                 type: 'overlay', target: 'defender', shape: 'skull',
@@ -360,24 +380,23 @@ AnimFramework.register('shadow-force', [
             }
         ]
     },
-    { type: 'spriteShake', target: 'defender', duration: 600 },
-    {
-        type: 'callback', fn: ctx => {
-            const sprite = ctx.attackerSprite;
-            sprite.style.filter = '';
-        }
-    }
+    { type: 'spriteShake', target: 'defender', duration: 600 }
 ]);
 
 AnimFramework.register('teleport', [
     { type: 'sfx', sound: 'psychic' },
     {
-        type: 'callback', fn: ctx => {
-            const sprite = ctx.attackerSprite;
-            sprite.style.transition = 'transform 0.2s, opacity 0.2s';
-            sprite.style.transform = 'scale(0.1)';
-            sprite.style.opacity = '0';
-        }
+        type: 'parallel', steps: [
+            { type: 'spriteGhost', target: 'attacker', color: '#ffffff', duration: 400 },
+            {
+                type: 'callback', fn: ctx => {
+                    const sprite = ctx.attackerSprite;
+                    sprite.style.transition = 'all 0.2s';
+                    sprite.style.transform = 'scale(0.1)';
+                    sprite.style.opacity = '0';
+                }
+            }
+        ]
     },
     { type: 'wait', ms: 500 },
     {
@@ -393,15 +412,24 @@ AnimFramework.register('curse', [
     { type: 'sfx', sound: 'ghost' },
     { type: 'bgColor', color: '#1a001a', duration: 1000 },
     {
-        type: 'overlay', target: 'attacker', shape: 'skull', // Attacker sacrifice (Ghost) or buff (Non-ghost)
-        color: '#fff', outline: '#000', width: 40, height: 40,
-        duration: 800, animation: 'fade'
+        type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'attacker', color: '#ffffff', duration: 800, hold: 200 },
+            {
+                type: 'overlay', target: 'attacker', shape: 'skull',
+                color: '#fff', outline: '#000', width: 40, height: 40,
+                duration: 800, animation: 'fade'
+            },
+        ]
     },
-    // Ideally logic would split here if Ghost/Non-Ghost, but generic works
     {
-        type: 'overlay', target: 'defender', shape: 'skull',
-        color: '#4b0082', outline: '#000', width: 60, height: 60,
-        duration: 800, animation: 'contain'
+        type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#4b0082', duration: 800, hold: 200 },
+            {
+                type: 'overlay', target: 'defender', shape: 'skull',
+                color: '#4b0082', outline: '#000', width: 60, height: 60,
+                duration: 800, animation: 'contain'
+            }
+        ]
     }
 ]);
 

@@ -23,6 +23,12 @@ A systematic guide to adding new content to the Pokemon Battle Modular system, e
 - **Standard Move**: Uses existing damage/status logic (just add to PokeAPI data)
 - **Unique Move**: Requires custom logic in `MOVE_DEX`
 
+### Move Generation Rules
+When a Pokémon is generated (Wild, Boss, or Starter), its moves are selected dynamically:
+1. **Level-Up Pool**: Favors moves learned closest to the Pokémon's current level.
+2. **Elite Moves**: 10% base chance (100% for Bosses) to include an Egg move or High-level move.
+3. **Natural Count**: Pokémon only show up with the number of moves they would naturally know at that level (plus any elite moves).
+
 ### 2. Add to MOVE_DEX (if unique)
 Location: `js/data/moves.js`
 

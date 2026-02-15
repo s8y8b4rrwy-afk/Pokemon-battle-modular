@@ -1,74 +1,66 @@
 /** @type {AnimationEngine} */
 
-AnimFramework.register('beam-fire', [
-    { type: 'sfx', sound: 'fire' },
-    {
-        type: 'beam', from: 'attacker', to: 'defender', duration: 350,
-        width: 8, height: 4, className: 'beam-projectile',
-        beamStyles: { background: 'linear-gradient(90deg, #ff4500, #ff8c00, #ffd700)', borderRadius: '2px', boxShadow: '0 0 6px #ff4500' }
-    },
-    {
-        type: 'parallel', steps: [
-            { type: 'screenFx', class: 'fx-fire', duration: 500 },
-            { type: 'spriteShake', target: 'defender', duration: 400 },
-            {
-                type: 'particles', position: 'defender', count: 10, spread: 30, duration: 500,
-                particleStyles: { background: '#ff4500', boxShadow: '0 0 4px #ff8c00' }
-            }
-        ]
-    }
-]);
 
-AnimFramework.register('ice-beam_', [
-    { type: 'sfx', sound: 'ice' },
-    {
-        type: 'beam', from: 'attacker', to: 'defender', duration: 400,
-        width: 8, height: 4, className: 'beam-projectile',
-        beamStyles: { background: 'linear-gradient(90deg, #87ceeb, #00bfff, #e0ffff)', borderRadius: '2px', boxShadow: '0 0 6px #00bfff' }
-    },
-    {
-        type: 'parallel', steps: [
-            { type: 'screenFx', class: 'fx-ice', duration: 500 },
-            { type: 'spriteShake', target: 'defender', duration: 400 },
-            {
-                type: 'particles', position: 'defender', count: 12, spread: 25, duration: 600,
-                particleStyles: { background: '#e0ffff', boxShadow: '0 0 4px #87ceeb' }
-            }
-        ]
-    }
-]);
-
-AnimFramework.register('beam-electric', [
-    { type: 'sfx', sound: 'electric' },
-    {
-        type: 'beam', from: 'attacker', to: 'defender', duration: 200,
-        width: 4, height: 4, className: 'beam-projectile',
-        beamStyles: { background: '#ffd700', borderRadius: '50%', boxShadow: '0 0 10px #ffd700' }
-    },
-    {
-        type: 'parallel', steps: [
-            { type: 'screenFx', class: 'fx-electric', duration: 400 },
-            { type: 'spriteShake', target: 'defender', duration: 400 }
-        ]
-    }
-]);
 
 AnimFramework.register('flamethrower', [
-    { type: 'sfx', sound: 'fire' },
     {
-        type: 'stream', from: 'attacker', to: 'defender',
-        count: 18, interval: 30, spread: 14, travelTime: 350,
-        size: 5, color: '#ff4500', outline: '#8b0000',
-        scaleStart: 0.5, scaleEnd: 2.0
+        type: "sfx",
+        sound: "explosion"
     },
-    { type: 'sfx', sound: 'fire' },
     {
-        type: 'parallel', steps: [
-            { type: 'screenFx', class: 'fx-fire', duration: 600 },
-            { type: 'spriteShake', target: 'defender', duration: 400 },
+        type: "stream",
+        from: "attacker",
+        to: "defender",
+        count: 35,
+        interval: 25,
+        spread: 14,
+        travelTime: 350,
+        size: 5,
+        color: "#ff4500",
+        outline: "#8b0000",
+        scaleStart: 1,
+        scaleEnd: 5,
+        svgShape: "fire"
+    },
+    {
+        type: "bgColor",
+        ms: 200,
+        color: "#e32400",
+        duration: 200
+    },
+    {
+        type: "sfx",
+        sound: "explosion"
+    },
+    {
+        type: "parallel",
+        steps: [
             {
-                type: 'particles', position: 'defender', count: 8, spread: 20, duration: 400,
-                particleStyles: { background: '#ffd700', border: '1px solid #ff4500' }
+                type: "screenFx",
+                class: "fx-fire",
+                duration: 1000
+            },
+            {
+                type: "spriteSilhouette",
+                target: "defender",
+                color: "#ff4500",
+                duration: 600
+            },
+            {
+                type: "spriteShake",
+                target: "defender",
+                duration: 400
+            },
+            {
+                type: "particles",
+                position: "defender",
+                count: 8,
+                spread: 20,
+                duration: 400,
+                particleStyles: {
+                    background: "#ffd700",
+                    border: "1px solid #ff4500"
+                }
             }
         ]
     }
@@ -84,6 +76,7 @@ AnimFramework.register('ice-beam', [
     { type: 'sfx', sound: 'ice' },
     {
         type: 'parallel', steps: [
+            { type: "spriteSilhouette", target: "defender", color: "#e0ffff", duration: 500 },
             { type: 'screenFx', class: 'fx-ice', duration: 500 },
             { type: 'spriteShake', target: 'defender', duration: 400 },
             {
@@ -105,6 +98,7 @@ AnimFramework.register('hydro-pump', [
     { type: 'sfx', sound: 'water' },
     {
         type: 'parallel', steps: [
+            { type: "spriteSilhouette", target: "defender", color: "#1e90ff", duration: 600 },
             { type: 'screenFx', class: 'fx-water', duration: 600 },
             { type: 'spriteShake', target: 'defender', duration: 500 },
             {
@@ -129,6 +123,7 @@ AnimFramework.register('thunderbolt', [
     { type: 'sfx', sound: 'electric' },
     {
         type: 'parallel', steps: [
+            { type: "spriteSilhouette", target: "defender", color: "#ffd700", duration: 400, hold: 50 },
             { type: 'screenFx', class: 'fx-electric', duration: 400 },
             { type: 'spriteShake', target: 'defender', duration: 400 },
             {
@@ -314,6 +309,7 @@ AnimFramework.register('will-o-wisp', [
     {
         type: 'parallel', steps: [
             { type: 'screenFx', class: 'fx-poison', duration: 500 },
+            { type: 'spriteWave', target: 'defender', intensity: 3, duration: 600, speed: 100 },
             {
                 type: 'overlay', target: 'defender', shape: 'fire',
                 color: '#a020f0', outline: '#000', width: 20, height: 20,
@@ -377,20 +373,72 @@ AnimFramework.register('sunny-day', [
 ]);
 
 AnimFramework.register('thunder', [
-    { type: 'bgColor', color: '#444444', duration: 400 },
-    { type: 'sfx', sound: 'electric' },
     {
-        type: 'parallel', steps: [
-            { type: 'flash', color: '#ffffff', duration: 400, opacity: 0.5 },
+        type: "bgColor",
+        ms: 200,
+        color: "#000000",
+        duration: 600
+    },
+    {
+        type: "sfx",
+        sound: "faint"
+    },
+    {
+        type: "parallel",
+        steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'lightning',
-                color: '#ffd700', outline: '#000000', width: 40, height: 100,
-                duration: 500, animation: 'strike'
+                type: "flash",
+                color: "#ffffff",
+                duration: 400,
+                opacity: 0.5
             },
-            { type: 'screenFx', class: 'fx-electric', duration: 600 }
+            {
+                type: "overlay",
+                target: "defender",
+                shape: "lightning",
+                color: "#ffd700",
+                outline: "#000000",
+                width: 40,
+                height: 100,
+                duration: 500,
+                animation: "strike"
+            },
+            {
+                type: "wait",
+                ms: 200
+            },
+            {
+                type: "screenFx",
+                class: "fx-electric",
+                duration: 600
+            },
+            {
+                type: "sfx",
+                ms: 200,
+                sound: "explosion",
+                wait: 30
+            },
+            {
+                type: "screenFx",
+                target: "defender",
+                duration: 500,
+                color: "#ffffff",
+                opacity: 1,
+                class: "fx-invert",
+                text: ""
+            }
         ]
     },
-    { type: 'spriteShake', target: 'defender', duration: 500 }
+    {
+        type: "sfx",
+        ms: 200,
+        sound: "rumble",
+        wait: 0
+    },
+    {
+        type: "wait",
+        ms: 200
+    }
 ]);
 
 AnimFramework.register('thunder-wave', [
@@ -400,7 +448,8 @@ AnimFramework.register('thunder-wave', [
         shape: 'lightning', particleSize: 12, color: '#ffd700', outline: '#b8860b',
         duration: 800, stagger: 40
     },
-    { type: 'screenFx', class: 'fx-electric', duration: 400 }
+    { type: 'screenFx', class: 'fx-electric', duration: 400 },
+    { type: 'spriteWave', target: 'defender', intensity: 10, duration: 400, speed: 40 }
 ]);
 
 AnimFramework.register('volt-tackle', [
@@ -435,6 +484,13 @@ const createDrainAnim = (intensity = 'low') => {
                     type: 'stream', from: 'defender', to: 'attacker',
                     count: count, interval: 30, spread: 15, travelTime: 500,
                     size: size, color: color, outline: '#004d00', scaleStart: 1.0, scaleEnd: 0.5
+                },
+                {
+                    type: "spriteSilhouette",
+                    target: "attacker",
+                    color: color,
+                    duration: 600,
+                    hold: 200
                 },
                 { type: 'screenFx', class: 'fx-grass', duration: 600 },
                 { type: 'spriteShake', target: 'defender', duration: 600 }

@@ -30,22 +30,28 @@ const PartyScreen = {
         }
 
         const len = Game.party.length; // Length is the Close Button index
+        const isForced = Game.forcedSwitch || Game.state === 'OVERFLOW';
+        const maxFocus = isForced ? len - 1 : len;
 
         if (key === 'ArrowDown') {
-            Input.focus = Math.min(len, Input.focus + 1);
+            Input.focus = Math.min(maxFocus, Input.focus + 1);
+            AudioEngine.playSfx('select');
             return true;
         }
         if (key === 'ArrowUp') {
             Input.focus = Math.max(0, Input.focus - 1);
+            AudioEngine.playSfx('select');
             return true;
         }
         if (['z', 'Z', 'Enter'].includes(key)) {
-            if (Input.focus === len) document.getElementById('party-close-btn').click();
-            else document.querySelectorAll('.party-slot')[Input.focus].click();
+            if (!isForced && Input.focus === len) document.getElementById('party-close-btn').click();
+            else if (Input.focus < len) document.querySelectorAll('.party-slot')[Input.focus].click();
             return true;
         }
         if (key === 'x' || key === 'X') {
-            if (document.getElementById('party-close-btn').innerText !== "CHOOSE A POKEMON") {
+            if (Game.state === 'HEAL') {
+                ScreenManager.pop();
+            } else if (!isForced) {
                 BattleMenus.uiToMenu();
             }
             return true;
@@ -59,10 +65,12 @@ const PartyScreen = {
 
         if (key === 'ArrowDown') {
             Input.focus = Math.min(len - 1, Input.focus + 1);
+            AudioEngine.playSfx('select');
             return true;
         }
         if (key === 'ArrowUp') {
             Input.focus = Math.max(0, Input.focus - 1);
+            AudioEngine.playSfx('select');
             return true;
         }
         if (['z', 'Z', 'Enter'].includes(key)) {
@@ -97,7 +105,7 @@ const PartyScreen = {
 
         const closeBtn = document.getElementById('party-close-btn');
         const header = document.getElementById('party-header-text');
-        closeBtn.onmouseenter = () => { Input.focus = Game.party.length; Input.updateVisuals(); };
+        closeBtn.onmouseenter = () => { Input.focus = Game.party.length; Input.updateVisuals(); AudioEngine.playSfx('select'); };
 
         closeBtn.style.pointerEvents = "auto";
         closeBtn.style.display = "block";
@@ -109,11 +117,10 @@ const PartyScreen = {
         } else if (Game.state === 'HEAL') {
             header.innerText = "USE ON WHICH PKMN?";
             closeBtn.innerText = "CANCEL";
-            closeBtn.onclick = () => ScreenManager.pop(); // Returns to BAG
+            closeBtn.onclick = () => { AudioEngine.playSfx('select'); ScreenManager.pop(); }; // Returns to BAG
         } else {
             header.innerText = "POKEMON PARTY";
-            closeBtn.innerText = forced ? "CHOOSE A POKEMON" : "CLOSE [X]";
-            closeBtn.onclick = forced ? null : () => BattleMenus.uiToMenu();
+            closeBtn.onclick = forced ? null : () => { AudioEngine.playSfx('select'); BattleMenus.uiToMenu(); };
             if (forced) closeBtn.style.display = "none";
         }
         this.render();
@@ -143,7 +150,7 @@ const PartyScreen = {
                     </div>
                 </div>`;
 
-            div.onmouseenter = () => { Input.focus = i; Input.updateVisuals(); };
+            div.onmouseenter = () => { Input.focus = i; Input.updateVisuals(); AudioEngine.playSfx('select'); };
             div.onclick = () => { Game.selectedPartyIndex = i; this.openContext(i); };
             list.appendChild(div);
         });
@@ -185,17 +192,31 @@ const PartyScreen = {
 
     release(index) {
         this.closeContext();
-        SummaryScreen.close();
+        if (typeof SummaryScreen !== 'undefined') SummaryScreen.close();
+
         const releasedMon = Game.party[index];
         Game.party.splice(index, 1);
-        UI.hide('party-screen');
+
+        if (typeof ScreenManager !== 'undefined') {
+            ScreenManager.pop();
+        } else {
+            UI.hide('party-screen');
+        }
+
+        const onComplete = () => {
+            if (Battle.userInputPromise) {
+                Battle.userInputPromise(index);
+            } else {
+                Game.handleWin(true);
+            }
+        };
 
         if (index < Game.activeSlot) Game.activeSlot--;
         if (index === Game.activeSlot) {
             if (Game.activeSlot >= Game.party.length) Game.activeSlot = Game.party.length - 1;
-            Battle.animateSwap(releasedMon, Game.party[Game.activeSlot], () => Game.handleWin(true));
+            Battle.animateSwap(releasedMon, Game.party[Game.activeSlot], onComplete);
         } else {
-            UI.typeText(`Bye bye, ${releasedMon.name}!`, () => Game.handleWin(true));
+            UI.typeText(`Bye bye, ${releasedMon.name}!`, onComplete);
         }
     },
 
@@ -243,13 +264,16 @@ const PartyScreen = {
         const mon = Game.party[idx];
         if (mon.currentHp <= 0 || idx === Game.activeSlot) { AudioEngine.playSfx('error'); return; }
 
+        const wasForced = Game.forcedSwitch;
+        Game.forcedSwitch = false;
+
         if (Battle.userInputPromise) {
             if (typeof ScreenManager !== 'undefined') {
                 ScreenManager.clear();
             } else {
                 UI.hide('party-screen');
                 UI.hide('party-context');
-                SummaryScreen.close();
+                if (typeof SummaryScreen !== 'undefined') SummaryScreen.close();
             }
             Game.activeSlot = idx;
             Game.state = 'BATTLE';
@@ -266,11 +290,12 @@ const PartyScreen = {
         } else {
             UI.hide('party-screen');
             UI.hide('party-context');
-            SummaryScreen.close();
+            if (typeof SummaryScreen !== 'undefined') SummaryScreen.close();
         }
         Game.activeSlot = idx;
         Game.state = 'BATTLE';
-        if (Game.forcedSwitch) Battle.switchIn(mon, true);
+
+        if (wasForced) Battle.switchIn(mon, true);
         else Battle.performSwitch(mon);
     },
 

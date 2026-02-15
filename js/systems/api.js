@@ -1,5 +1,10 @@
 const API = {
     base: 'https://pokeapi.co/api/v2',
+    cache: {
+        species: {},
+        evolution: {},
+        pokemon: {}
+    },
 
     // Helper: Convert PokeAPI ailment names to short codes
     normalizeAilment(ailment) {
@@ -15,11 +20,42 @@ const API = {
         return ailmentMap[ailment] || ailment;
     },
 
+    async checkFirstStage(id) {
+        try {
+            if (this.cache.species[id]) return this.cache.species[id].evolves_from_species === null;
+            const res = await fetch(`${this.base}/pokemon-species/${id}`);
+            if (!res.ok) return true;
+            const data = await res.json();
+            this.cache.species[id] = data;
+            return data.evolves_from_species === null;
+        } catch (e) {
+            return true;
+        }
+    },
+
+    // Fast check for level-appropriateness before full fetch
+    async getPokemonData(id) {
+        if (this.cache.pokemon[id]) return this.cache.pokemon[id];
+        try {
+            const res = await fetch(`${this.base}/pokemon/${id}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            this.cache.pokemon[id] = data;
+            return data;
+        } catch (e) { return null; }
+    },
+
+    async getBST(id) {
+        const data = await this.getPokemonData(id);
+        if (!data) return 0;
+        return data.stats.reduce((acc, s) => acc + s.base_stat, 0);
+    },
+
     async getPokemon(id, level, overrides = {}) {
         try {
-            // 1. Fetch Core Data
-            const res = await fetch(`${this.base}/pokemon/${id}`);
-            const data = await res.json();
+            // 1. Fetch Core Data (Try Cache first)
+            const data = await this.getPokemonData(id);
+            if (!data) return null;
 
             const getStat = (n) => data.stats.find(s => s.stat.name === n).base_stat;
 
@@ -38,12 +74,77 @@ const API = {
                 ? overrides.shiny
                 : (Math.random() < 0.05); // 5% natural chance
 
-            // 4. Fetch Moves (Optimized: Parallel Fetching)
+            // 4. Fetch Moves (Smart Selection)
             let selectedMoveNames = [];
             if (overrides.moves && Array.isArray(overrides.moves)) {
                 selectedMoveNames = overrides.moves;
+            } else if (typeof GAME_BALANCE !== 'undefined' && GAME_BALANCE.MOVE_GEN_SMART) {
+                const allMoves = data.moves.map(m => {
+                    // Find a relevant level-up entry (prefer G/S/C)
+                    const levelEntry = m.version_group_details.find(d =>
+                        ['gold-silver', 'crystal'].includes(d.version_group.name) &&
+                        d.move_learn_method.name === 'level-up'
+                    ) || m.version_group_details.find(d => d.move_learn_method.name === 'level-up');
+
+                    const isEgg = m.version_group_details.some(d => d.move_learn_method.name === 'egg');
+
+                    return {
+                        name: m.move.name,
+                        level: levelEntry ? levelEntry.level_learned_at : null,
+                        isEgg: isEgg
+                    };
+                });
+
+                // 1. Filter level-up moves learned at or below current level
+                const levelUpPool = allMoves.filter(m => m.level !== null && m.level <= level)
+                    .sort((a, b) => b.level - a.level); // Descending (latest first)
+
+                // 2. Identify potential "special" moves (Egg moves or slightly higher level moves)
+                const specialPool = [
+                    ...allMoves.filter(m => m.isEgg),
+                    ...allMoves.filter(m => m.level !== null && m.level > level && m.level <= level + (GAME_BALANCE.MOVE_GEN_HIGHER_LEVEL_REACH || 10))
+                ].filter((v, i, a) => a.findIndex(t => t.name === v.name) === i); // Unique
+
+                let chosen = [];
+
+                // 3. Rare chance to include special moves (GUARANTEED FOR BOSSES)
+                const isBoss = overrides.isBoss || false;
+                const specialChance = isBoss ? 1.0 : (GAME_BALANCE.MOVE_GEN_SPECIAL_CHANCE || 0.10);
+
+                if (Math.random() < specialChance && specialPool.length > 0) {
+                    const twoChance = isBoss ? 1.0 : (GAME_BALANCE.MOVE_GEN_SPECIAL_COUNT_2_CHANCE || 0.30);
+                    const count = Math.random() < twoChance ? 2 : 1;
+
+                    for (let i = 0; i < count; i++) {
+                        if (specialPool.length === 0) break;
+                        const idx = Math.floor(Math.random() * specialPool.length);
+                        const move = specialPool.splice(idx, 1)[0];
+                        chosen.push(move.name);
+                    }
+                }
+
+                // 4. Fill remaining slots with level-up moves, favoring higher level ones
+                while (chosen.length < 4 && levelUpPool.length > 0) {
+                    // Use a weighted random to prefer moves at the start of the sorted list (higher level)
+                    const weightedIdx = Math.floor(Math.pow(Math.random(), 1.5) * levelUpPool.length);
+                    const move = levelUpPool.splice(weightedIdx, 1)[0];
+                    if (!chosen.includes(move.name)) {
+                        chosen.push(move.name);
+                    }
+                }
+
+                // Fallback: Ensure at least ONE move exists (Safety)
+                if (chosen.length === 0) {
+                    const fallbackPool = data.moves.map(m => m.move.name);
+                    if (fallbackPool.length > 0) {
+                        const idx = Math.floor(Math.random() * fallbackPool.length);
+                        chosen.push(fallbackPool[idx]);
+                    }
+                }
+
+                selectedMoveNames = chosen;
             } else {
-                // Pick 4 random moves from the pool
+                // Fallback: Pick 4 random moves from the pool
                 const pool = data.moves.map(m => m.move.name).sort(() => 0.5 - Math.random());
                 selectedMoveNames = pool.slice(0, 4);
             }
@@ -180,6 +281,52 @@ const API = {
         } catch (e) {
             console.error("Move Learn Check Error", e);
             return [];
+        }
+    },
+
+    async getMinLevel(id) {
+        try {
+            let sData = this.cache.species[id];
+            if (!sData) {
+                const sRes = await fetch(`${this.base}/pokemon-species/${id}`);
+                if (!sRes.ok) return 1;
+                sData = await sRes.json();
+                this.cache.species[id] = sData;
+            }
+
+            if (!sData.evolution_chain) return 1;
+            const chainId = sData.evolution_chain.url.split('/').filter(Boolean).pop();
+
+            let cData = this.cache.evolution[chainId];
+            if (!cData) {
+                const cRes = await fetch(sData.evolution_chain.url);
+                if (!cRes.ok) return 1;
+                cData = await cRes.json();
+                this.cache.evolution[chainId] = cData;
+            }
+
+            // DFS to find the species in the chain and its min level
+            const findLevel = (node, targetId) => {
+                const nodeUrlParts = node.species.url.split('/');
+                const nodeId = parseInt(nodeUrlParts[nodeUrlParts.length - 2]);
+
+                if (nodeId === parseInt(targetId)) {
+                    if (node.evolution_details && node.evolution_details.length > 0) {
+                        return node.evolution_details[0].min_level || 1;
+                    }
+                    return 1;
+                }
+
+                for (const branch of node.evolves_to) {
+                    const result = findLevel(branch, targetId);
+                    if (result !== null) return result;
+                }
+                return null;
+            };
+
+            return findLevel(cData.chain, id) || 1;
+        } catch (e) {
+            return 1;
         }
     }
 };

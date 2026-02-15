@@ -1,0 +1,460 @@
+:root {
+    --bg-dark: #1e1e1e;
+    --bg-panel: #252526;
+    --bg-header: #333333;
+    --border: #3e3e42;
+    --accent: #007acc;
+    --accent-hover: #0098ff;
+    --text-main: #cccccc;
+    --text-dim: #888888;
+    --danger: #d94444;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#editor-app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* PANELS */
+#editor-sidebar {
+    width: 250px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+#editor-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #111;
+    min-width: 0;
+    /* Prevent flex width overflow */
+    min-height: 0;
+    /* Prevent flex height overflow */
+}
+
+#editor-props {
+    width: 300px;
+    background: var(--bg-panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    height: 40px;
+    background: var(--bg-header);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+}
+
+/* SCROLL LISTS */
+.scroll-list {
+    flex: 1;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding: 10px;
+}
+
+.scroll-list::-webkit-scrollbar {
+    width: 8px;
+    background: var(--bg-dark);
+}
+
+.scroll-list::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+/* SIDEBAR ITEMS */
+.anim-item {
+    padding: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+}
+
+.anim-item:hover {
+    background: #333;
+}
+
+.anim-item.active {
+    background: var(--accent);
+    color: white;
+}
+
+.search-box {
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.search-box input {
+    width: 100%;
+    background: #111;
+    border: 1px solid #444;
+    color: white;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+/* PREVIEW AREA */
+#preview-area {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #181818;
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+    /* Prevent preview from shrinking */
+}
+
+#game-boy {
+    width: 320px;
+    /* Locked to game specs */
+    height: 288px;
+    /* Locked to game specs */
+    background: #fff;
+    border: 4px solid #333;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    transform: scale(1.1);
+    /* Slightly larger for better editing focus */
+    margin: 20px 0;
+}
+
+.preview-controls {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--bg-panel);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+/* TIMELINE */
+#timeline-area {
+    flex: 1;
+    background: var(--bg-panel);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    /* CRITICAL for Flex scrolling */
+}
+
+/* TIMELINE STEPS */
+.step-card {
+    background: #333;
+    border: 1px solid #444;
+    margin-bottom: 4px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    /* Changed to column to support nested containers */
+    align-items: stretch;
+    cursor: pointer;
+    font-size: 13px;
+    position: relative;
+    /* For absolute actions */
+    transition: background 0.2s;
+}
+
+.step-card:hover {
+    border-color: #666;
+    background: #383838;
+}
+
+.step-card.selected {
+    border-color: var(--accent);
+    background: #2d2d30;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 24px;
+    padding-right: 60px;
+    /* Space for actions */
+    box-sizing: border-box;
+    position: relative;
+}
+
+.step-type-icon {
+    width: 20px;
+    height: 20px;
+    background: #555;
+    border-radius: 3px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: bold;
+    color: #fff;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.step-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.step-title {
+    font-weight: bold;
+    margin-right: 8px;
+    color: #eee;
+    white-space: nowrap;
+}
+
+.step-desc {
+    color: #aaa;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.step-actions {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    background: rgba(56, 56, 56, 0.9);
+    padding-left: 8px;
+    border-radius: 4px 0 0 4px;
+}
+
+.step-card:hover .step-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.collapse-toggle {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    cursor: pointer;
+    margin-right: 4px;
+    transition: transform 0.2s;
+    font-size: 10px;
+}
+
+.collapse-toggle:hover {
+    color: #fff;
+}
+
+.collapse-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+/* PROPERTIES FORM */
+#editor-props {
+    width: 320px;
+    background: #1e1e1e;
+    border-left: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Segoe UI', sans-serif;
+    color: #e0e0e0;
+}
+
+#props-form {
+    padding: 16px;
+    gap: 12px;
+}
+
+.prop-section {
+    margin-bottom: 16px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+}
+
+.prop-section-title {
+    font-size: 11px;
+    font-weight: bold;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.prop-row {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.prop-label {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.prop-input,
+.prop-select {
+    background: #2d2d2d;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    transition: border-color 0.2s;
+}
+
+.prop-input:focus,
+.prop-select:focus {
+    border-color: var(--accent);
+    outline: none;
+    background: #333;
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    padding: 0;
+    width: 100%;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+/* DROP TARGET */
+.drop-target {
+    height: 8px;
+    margin: 2px 0;
+    border-radius: 2px;
+    transition: all 0.2s;
+    background: transparent;
+}
+
+.drop-target.active {
+    height: 30px;
+    background: rgba(0, 122, 204, 0.2);
+    border: 2px dashed var(--accent);
+    margin: 4px 0;
+}
+
+/* BUTTONS */
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.primary-btn {
+    background: var(--accent);
+    color: white;
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+.primary-btn:hover {
+    background: var(--accent-hover);
+}
+
+.secondary-btn {
+    background: #333;
+    color: #e0e0e0;
+    padding: 8px 16px;
+    font-size: 12px;
+    border: 1px solid #444;
+}
+
+.secondary-btn:hover {
+    background: #444;
+    border-color: #555;
+}
+
+.action-btn {
+    background: #2d2d2d;
+    color: #ccc;
+    padding: 4px 8px;
+    font-size: 10px;
+    border: 1px solid #444;
+}
+
+.action-btn:hover {
+    background: #3b3b3b;
+    border-color: #666;
+    color: white;
+}
+
+.icon-btn {
+    background: transparent;
+    color: #aaa;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.icon-btn:hover {
+    color: white;
+    background: #333;
+}
+
+.save-btn {
+    background: #2e7d32;
+    color: white;
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+.save-btn:hover {
+    background: #388e3c;
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background: #444;
+    margin: 0 8px;
+}

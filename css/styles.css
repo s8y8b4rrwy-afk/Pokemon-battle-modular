@@ -677,7 +677,19 @@ body {
 
 .party-slot.active-mon {
     border: 2px solid #d8b030;
-    background: #fffbe0;
+    background: #fff8e1;
+}
+
+.party-slot.active-mon::after {
+    content: 'IN BATTLE';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 5px;
+    background: #d8b030;
+    color: white;
+    padding: 2px;
+    border-radius: 2px;
 }
 
 .party-slot.new-catch {

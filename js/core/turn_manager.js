@@ -360,7 +360,7 @@ const TurnManager = {
         }
 
         if (!isFaintSwap) {
-            let msg = `Come back,\n${battle.p.name}!`;
+            let msg = `OK ${battle.p.name},\nReturn!`;
             if (isBP) msg = `${battle.p.name} passed\nthe baton!`;
 
             await UI.typeText(msg);

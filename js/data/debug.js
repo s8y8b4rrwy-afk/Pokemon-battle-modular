@@ -1,7 +1,7 @@
 // --- DEBUG SETTINGS ------------------------
 // Change ENABLED to true to activate these overrides
 const DEBUG = {
-    ENABLED: true,
+    ENABLED: false,
     BATTLE_LOGS: true, // Set to true to see detailed battle logs in console
 
     // Customize your starting items (Quantity)
@@ -21,7 +21,7 @@ const DEBUG = {
     // Force specific Enemy attributes
     ENEMY: {
         ID: null,       // Pokedex Number (e.g. 150 = Mewtwo). Set null for random.
-        LEVEL: null,       // Level (1-100). Set null for auto-scaling.
+        LEVEL: 60,       // Level (1-100). Set null for auto-scaling.
         SHINY: null,    // true = Always Shiny, false = Never Shiny, null = Random.
         IS_BOSS: null,  // true = Boss stats & music.
         RAGE: null,     // Start with Rage (0 = None, 1 = !, 2 = !!, 3 = MAX).
@@ -62,7 +62,7 @@ const DEBUG = {
 
         // Force specific moves (Array of lowercase strings with dashes)
         // e.g. ['fly', 'dig', 'solar-beam', 'protect']
-        // MOVES: ['transform', 'thunderbolt', 'ice-beam', 'flamethrower']
+        MOVES: ['transform', 'thunder', 'ice-beam', 'flamethrower']
     },
 
     // Control Drop Rates
