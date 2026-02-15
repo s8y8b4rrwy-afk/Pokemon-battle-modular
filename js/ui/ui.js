@@ -18,21 +18,25 @@ const UI = {
     hideAll(ids) { ids.forEach(id => this.hide(id)); },
 
     // --- TEXT ENGINE ---
-    typeText(text, cb, fast = false) {
-        // Modular Battle Logging
-        if (typeof BattleLogger !== 'undefined') {
+    typeText(text, cb, fast = false, targetId = 'text-content') {
+        const el = document.getElementById(targetId);
+        if (!el) return Promise.resolve();
+
+        // Modular Battle Logging (only log main battle text)
+        if (targetId === 'text-content' && typeof BattleLogger !== 'undefined') {
             BattleLogger.enabled = DEBUG.BATTLE_LOGS;
             BattleLogger.battle(text.replace(/\n/g, ' '));
         }
 
         return new Promise(resolve => {
-            const el = this.textEl;
             clearInterval(this.typeInterval);
             el.innerHTML = "";
 
-            // Layout adjustment
-            if (document.getElementById('action-menu').classList.contains('hidden')) el.classList.add('full-width');
-            else el.classList.remove('full-width');
+            // Layout adjustment (only for main dialog box)
+            if (targetId === 'text-content') {
+                if (document.getElementById('action-menu').classList.contains('hidden')) el.classList.add('full-width');
+                else el.classList.remove('full-width');
+            }
 
             let i = 0;
             this.typeInterval = setInterval(() => {
@@ -44,10 +48,15 @@ const UI = {
                     setTimeout(() => {
                         if (cb && typeof cb === 'function') cb();
                         resolve();
-                    }, 1000);
+                    }, 1000); // Wait 1s after finishing
                 }
             }, fast ? 10 : 20);
         });
+    },
+
+    resetText(text, targetId = 'text-content') {
+        const el = document.getElementById(targetId);
+        if (el) el.innerHTML = text.replace(/\n/g, '<br>');
     },
 
     // --- HUD & PROGRESS ---

@@ -11,7 +11,13 @@ const Game = {
     navSummary(...args) { return SummaryScreen.nav(...args); },
     closeSummary(...args) { return SummaryScreen.close(...args); },
     confirmSelection(...args) { return SelectionScreen.confirm(...args); },
-    openParty(...args) { return PartyScreen.open(...args); },
+    openParty(forced = false) {
+        if (typeof ScreenManager !== 'undefined') {
+            ScreenManager.push('PARTY', { forced: forced });
+        } else {
+            return PartyScreen.open(forced);
+        }
+    },
     renderParty(...args) { return PartyScreen.render(...args); },
     openContext(...args) { return PartyScreen.openContext(...args); },
     closeContext(...args) { return PartyScreen.closeContext(...args); },
@@ -37,25 +43,9 @@ const Game = {
     checkSave() {
         AudioEngine.init();
         if (StorageSystem.exists()) {
-            const data = StorageSystem.load();
-            UI.hide('start-screen');
-            UI.show('continue-screen');
-            document.getElementById('save-wins').innerText = data.wins || 0;
-            document.getElementById('save-bosses').innerText = data.bossesDefeated || 0;
-            document.getElementById('save-name').innerText = data.playerName || 'PLAYER';
-
-            const prevRow = document.getElementById('save-preview');
-            prevRow.innerHTML = '';
-            data.party.forEach((p) => {
-                const img = document.createElement('img'); img.src = p.icon; img.className = 'mini-icon';
-                if (p.currentHp <= 0) img.classList.add('fainted');
-                img.onclick = () => SummaryScreen.open(p, 'READ_ONLY');
-                prevRow.appendChild(img);
-            });
-            Input.setMode('CONTINUE');
+            ScreenManager.push('CONTINUE');
         } else {
-            UI.hide('start-screen');
-            this.startNameInput();
+            ScreenManager.push('NAME_INPUT');
         }
     },
 
@@ -105,16 +95,12 @@ const Game = {
 
     // --- FLOW CONTROL ---
     startNameInput() {
-        UI.hide('continue-screen');
-        UI.show('name-screen');
-        document.getElementById('name-input').focus();
-        Input.setMode('NAME');
+        ScreenManager.push('NAME_INPUT');
     },
 
     confirmName() {
         const val = document.getElementById('name-input').value.trim().toUpperCase();
         this.playerName = val || 'GOLD';
-        UI.hide('name-screen');
         this.newGame();
     },
 
@@ -126,7 +112,13 @@ const Game = {
         if (this.load()) {
             if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
 
-            UI.hide('selection-screen');
+            // Hide everything and clear the stack properly
+            if (typeof ScreenManager !== 'undefined') {
+                ScreenManager.clear();
+            } else {
+                UI.hideAll(['start-screen', 'continue-screen', 'name-screen', 'selection-screen', 'summary-panel', 'party-screen', 'pack-screen']);
+            }
+
             UI.show('scene');
             UI.show('dialog-box');
             UI.show('streak-box');
@@ -177,7 +169,13 @@ const Game = {
         this.party = []; this.wins = 0; this.bossesDefeated = 0;
         this.inventory = { potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0 };
         if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
-        SelectionScreen.open();
+
+        // Use ScreenManager for Selection
+        if (typeof ScreenManager !== 'undefined') {
+            ScreenManager.replace('SELECTION');
+        } else {
+            SelectionScreen.open();
+        }
     },
 
     resetToTitle() {
@@ -193,10 +191,15 @@ const Game = {
 
     returnToTitle() {
         this.state = 'START';
-        UI.hideAll(['scene', 'dialog-box', 'streak-box', 'summary-panel', 'party-screen', 'pack-screen', 'action-menu', 'move-menu']);
+        UI.hideAll(['scene', 'dialog-box', 'streak-box', 'summary-panel', 'party-screen', 'pack-screen', 'action-menu', 'move-menu', 'selection-screen', 'name-screen', 'continue-screen']);
         Battle.resetScene();
-        UI.show('start-screen');
-        Input.setMode('START');
+
+        if (typeof ScreenManager !== 'undefined') {
+            ScreenManager.resetToTitle();
+        } else {
+            UI.show('start-screen');
+            Input.setMode('START');
+        }
     },
 
     skipBattle() {

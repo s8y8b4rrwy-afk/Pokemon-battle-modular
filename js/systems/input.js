@@ -15,6 +15,7 @@ const Input = {
         'BATTLE': () => document.getElementById(['opt-fight', 'opt-pkmn', 'opt-pack', 'opt-run'][Input.focus]),
         'CONTINUE': () => document.getElementById(['opt-continue', 'opt-newgame'][Input.focus]),
         'CONFIRM_RUN': () => document.querySelectorAll('#action-menu .menu-item')[Input.focus],
+        'DIALOG_CHOICE': () => document.querySelectorAll('#dialog-choice-box .choice-item')[Input.focus],
 
         'MOVES': () => {
             const opts = document.querySelectorAll('#move-grid .move-btn');
@@ -34,28 +35,11 @@ const Input = {
         },
 
         'SELECTION': () => {
+            // Visuals handled by SelectionScreen logic now, but keeping this shim for compatibility if needed.
             const target = document.getElementById(`ball-${Input.focus}`);
             const cursor = document.getElementById('sel-cursor');
             const positions = [25, 90, 155];
             if (cursor) cursor.style.left = positions[Input.focus] + 'px';
-
-            if (Game.tempSelectionList && Game.tempSelectionList[Input.focus]) {
-                const p = Game.tempSelectionList[Input.focus];
-                if (Input.lastFocus !== Input.focus) {
-                    Input.lastFocus = Input.focus;
-                    AudioEngine.playCry(p.cry);
-                    const prevImg = document.getElementById('sel-preview-img');
-                    const prevShiny = document.getElementById('sel-preview-shiny');
-                    if (prevImg) {
-                        prevImg.src = p.frontSprite;
-                        prevImg.classList.remove('hidden');
-                        prevImg.style.display = 'block';
-                        prevShiny.classList.remove('hidden');
-                        prevShiny.style.display = p.isShiny ? 'block' : 'none';
-                    }
-                    UI.typeText(`Will you choose\n${p.name}?`, null, true);
-                }
-            }
             return target;
         },
 
@@ -74,7 +58,12 @@ const Input = {
             return target;
         },
 
-        'SUMMARY': () => document.querySelectorAll('.sum-buttons .confirm-btn')[Input.focus]
+        'SUMMARY': () => {
+            const btns = Array.from(document.querySelectorAll('.sum-buttons .confirm-btn'))
+                .filter(b => b.style.display !== 'none');
+            if (Input.focus >= btns.length) Input.focus = btns.length - 1;
+            return btns[Input.focus];
+        }
     },
 
     updateVisuals() {
@@ -92,22 +81,16 @@ const Input = {
             target.classList.add('focused');
             if (target.scrollIntoViewIfNeeded) target.scrollIntoViewIfNeeded(false);
             else target.scrollIntoView({ block: 'nearest' });
+        } else {
+            // Safety: If no target, and mode is not NONE, maybe focus needs reset
+            if (this.mode !== 'NONE' && this.mode !== 'NAME') {
+                console.warn(`Input: No target found for mode ${this.mode} at focus ${this.focus}`);
+            }
         }
     },
 
     // --- 2. INPUT HANDLERS ---
     handlers: {
-        'START': (k) => {
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(k)) { Game.toggleLcd(); AudioEngine.playSfx('select'); }
-            if (['z', 'Z', 'Enter'].includes(k)) Game.checkSave();
-        },
-        'NAME': (k) => {
-            if (['z', 'Z', 'Enter'].includes(k)) Game.confirmName();
-        },
-        'CONTINUE': (k) => {
-            if (k === 'ArrowUp' || k === 'ArrowDown') Input.focus = Input.focus === 0 ? 1 : 0;
-            if (['z', 'Z', 'Enter'].includes(k)) document.getElementById(['opt-continue', 'opt-newgame'][Input.focus]).click();
-        },
         'BATTLE': (k) => {
             if (k === 'ArrowRight' && Input.focus % 2 === 0) Input.focus++;
             if (k === 'ArrowLeft' && Input.focus % 2 !== 0) Input.focus--;
@@ -129,11 +112,7 @@ const Input = {
             if (Input.focus >= len) Input.focus = len - 1;
             if (['z', 'Z', 'Enter'].includes(k)) document.querySelectorAll('.move-btn')[Input.focus].click();
         },
-        'SELECTION': (k) => {
-            if (k === 'ArrowRight') Input.focus = Math.min(2, Input.focus + 1);
-            if (k === 'ArrowLeft') Input.focus = Math.max(0, Input.focus - 1);
-            if (['z', 'Z', 'Enter'].includes(k)) document.getElementById(`ball-${Input.focus}`).click();
-        },
+        // SELECTION handler removed - see js/screens/selection.js
         'BAG': (k) => {
             const len = document.querySelectorAll('.pack-item').length;
             if (k === 'ArrowDown') Input.focus = Math.min(len - 1, Input.focus + 1);
@@ -169,11 +148,31 @@ const Input = {
         AudioEngine.init();
 
         // Global Lock Check (Except for Title Screens)
-        if (Battle.uiLocked && !['START', 'CONTINUE', 'NAME'].includes(this.mode)) return;
+        if (Battle.uiLocked && !['START', 'CONTINUE', 'NAME', 'DIALOG_CHOICE'].includes(this.mode)) return;
 
         const k = e.key;
 
-        // 1. Global Back Button (X)
+        // 0. Priority: Dialog System
+        if (this.mode === 'DIALOG_CHOICE') {
+            if (typeof DialogManager !== 'undefined') {
+                if (DialogManager.handleInput(k)) {
+                    this.updateVisuals();
+                    return;
+                }
+            }
+        }
+
+        // 1. Priority: Screen Manager
+        if (typeof ScreenManager !== 'undefined' && ScreenManager.activeScreen) {
+            // If ScreenManager handles it, stop propagation.
+            // Note: Screens might return false if they want default behavior (like global back button).
+            if (ScreenManager.handleInput(k)) {
+                this.updateVisuals();
+                return;
+            }
+        }
+
+        // 2. Global Back Button (X)
         if (k === 'x' || k === 'X') {
             if (['MOVES', 'BAG', 'CONFIRM_RUN'].includes(this.mode)) { BattleMenus.uiToMenu(); return; }
             if (this.mode === 'PARTY') { if (document.getElementById('party-close-btn').innerText !== "CHOOSE A POKEMON") BattleMenus.uiToMenu(); return; }

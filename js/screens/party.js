@@ -1,4 +1,83 @@
 const PartyScreen = {
+    id: 'PARTY',
+
+    // --- ScreenManager Interface ---
+    onEnter(params = {}) {
+        // Legacy: Handle forced mode via params or global
+        const forced = params.forced || Game.forcedSwitch;
+        this.open(forced);
+    },
+
+    onExit() {
+        UI.hide('party-screen');
+        UI.hide('party-context');
+        // Clean up any temporary states
+    },
+
+    onSuspend() {
+        // When covered by another screen (e.g. Summary)
+    },
+
+    onResume() {
+        this.render();
+        Input.setMode('PARTY', Game.selectedPartyIndex !== -1 ? Game.selectedPartyIndex : 0);
+    },
+
+    handleInput(key) {
+        // If Context Menu is open, delegate to it (or handle here)
+        if (Input.mode === 'CONTEXT') {
+            return this.handleContextInput(key);
+        }
+
+        const len = Game.party.length; // Length is the Close Button index
+
+        if (key === 'ArrowDown') {
+            Input.focus = Math.min(len, Input.focus + 1);
+            return true;
+        }
+        if (key === 'ArrowUp') {
+            Input.focus = Math.max(0, Input.focus - 1);
+            return true;
+        }
+        if (['z', 'Z', 'Enter'].includes(key)) {
+            if (Input.focus === len) document.getElementById('party-close-btn').click();
+            else document.querySelectorAll('.party-slot')[Input.focus].click();
+            return true;
+        }
+        if (key === 'x' || key === 'X') {
+            if (document.getElementById('party-close-btn').innerText !== "CHOOSE A POKEMON") {
+                BattleMenus.uiToMenu();
+            }
+            return true;
+        }
+
+        return false; // Allow global fallbacks if needed
+    },
+
+    handleContextInput(key) {
+        const len = document.querySelectorAll('#party-context .ctx-btn').length;
+
+        if (key === 'ArrowDown') {
+            Input.focus = Math.min(len - 1, Input.focus + 1);
+            return true;
+        }
+        if (key === 'ArrowUp') {
+            Input.focus = Math.max(0, Input.focus - 1);
+            return true;
+        }
+        if (['z', 'Z', 'Enter'].includes(key)) {
+            document.querySelectorAll('#party-context .ctx-btn')[Input.focus].click();
+            return true;
+        }
+        if (key === 'x' || key === 'X') {
+            this.closeContext();
+            return true;
+        }
+
+        return true;
+    },
+
+    // --- Legacy / Internal Logic ---
     open(forced) {
         if (Battle.uiLocked && !forced && !['OVERFLOW', 'HEAL'].includes(Game.state)) return;
 
@@ -12,6 +91,7 @@ const PartyScreen = {
 
         if (!['OVERFLOW', 'HEAL'].includes(Game.state)) Game.state = 'PARTY';
         Game.forcedSwitch = forced;
+        // UI.show managed by ScreenManager usually, but doubling up is safe
         UI.show('party-screen');
         UI.hide('party-context');
 
@@ -29,7 +109,7 @@ const PartyScreen = {
         } else if (Game.state === 'HEAL') {
             header.innerText = "USE ON WHICH PKMN?";
             closeBtn.innerText = "CANCEL";
-            closeBtn.onclick = () => { UI.hide('party-screen'); BattleMenus.openPack(); };
+            closeBtn.onclick = () => ScreenManager.pop(); // Returns to BAG
         } else {
             header.innerText = "POKEMON PARTY";
             closeBtn.innerText = forced ? "CHOOSE A POKEMON" : "CLOSE [X]";
@@ -139,12 +219,23 @@ const PartyScreen = {
 
         if (index === Game.activeSlot) UI.updateHUD(p, 'player');
 
-        UI.hide('party-screen');
-        UI.hide('pack-screen');
-        UI.hide('action-menu');
+        if (index === Game.activeSlot) UI.updateHUD(p, 'player');
+
+        // Clear everything to return to Battle Scene
+        if (typeof ScreenManager !== 'undefined') {
+            ScreenManager.clear();
+        } else {
+            UI.hide('party-screen');
+            UI.hide('pack-screen');
+            UI.hide('action-menu');
+        }
 
         Game.state = 'BATTLE';
-        UI.typeText(`Used ${data.name} on ${p.name}!`, () => Battle.endTurnItem());
+
+        // Delay effect to happen IN SCENE
+        setTimeout(() => {
+            UI.typeText(`Used ${data.name} on ${p.name}!`, () => Battle.endTurnItem());
+        }, 300);
     },
 
     shift() {
@@ -153,9 +244,13 @@ const PartyScreen = {
         if (mon.currentHp <= 0 || idx === Game.activeSlot) { AudioEngine.playSfx('error'); return; }
 
         if (Battle.userInputPromise) {
-            this.closeContext();
-            SummaryScreen.close();
-            UI.hide('party-screen');
+            if (typeof ScreenManager !== 'undefined') {
+                ScreenManager.clear();
+            } else {
+                UI.hide('party-screen');
+                UI.hide('party-context');
+                SummaryScreen.close();
+            }
             Game.activeSlot = idx;
             Game.state = 'BATTLE';
             Battle.userInputPromise(idx);
@@ -166,9 +261,13 @@ const PartyScreen = {
         Game.party[Game.activeSlot].volatiles = {};
         Game.party[Game.activeSlot].stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
 
-        this.closeContext();
-        SummaryScreen.close();
-        UI.hide('party-screen');
+        if (typeof ScreenManager !== 'undefined') {
+            ScreenManager.clear();
+        } else {
+            UI.hide('party-screen');
+            UI.hide('party-context');
+            SummaryScreen.close();
+        }
         Game.activeSlot = idx;
         Game.state = 'BATTLE';
         if (Game.forcedSwitch) Battle.switchIn(mon, true);
@@ -176,6 +275,6 @@ const PartyScreen = {
     },
 
     stats() {
-        SummaryScreen.open(Game.party[Game.selectedPartyIndex]);
+        ScreenManager.push('SUMMARY', Game.party[Game.selectedPartyIndex]);
     }
 };

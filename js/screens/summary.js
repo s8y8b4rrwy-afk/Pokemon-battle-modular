@@ -1,20 +1,84 @@
 const SummaryScreen = {
-    open(p, mode) {
+    id: 'SUMMARY',
+
+    // --- ScreenManager Interface ---
+    onEnter(params = {}) {
+        // Support legacy call signature: open(p, mode)
+        // New Signature: push('SUMMARY', { mon: p, mode: 'MODE' })
+
+        let p = params;
+        if (params.mon) p = params.mon; // New style
+
+        const mode = params.mode || null;
+
+        // Legacy internal logic
         Game.previousState = Game.state;
         Game.state = mode || 'SUMMARY';
-        Input.setMode('SUMMARY', 1);
+        // Note: 'SUMMARY' is not in Input.handlers anymore for logic, but fine for state tracking
 
+        // Prepare State
         if (mode === 'SELECTION') {
+            // In selection mode, find index in temp list
             Game.currentSummaryIndex = Game.tempSelectionList.indexOf(p);
         } else {
+            // Find index in party
             const idx = Game.party.findIndex(mon => mon.id === p.id && mon.exp === p.exp);
             Game.currentSummaryIndex = (idx !== -1) ? idx : 0;
         }
 
-        UI.show('summary-panel');
-        this.render(p);
+        this.render(p); // Render content
+        this.setupButtons(); // Update button states based on mode
 
-        // Setup Buttons
+        Input.setMode('SUMMARY', 1); // Focus on 'Action' button by default
+    },
+
+    onExit() {
+        UI.hide('summary-panel');
+        // Restore previous state logic
+        if (Game.state !== 'SUMMARY') {
+            // If we were in a special mode, we might need to revert Game.state
+            Game.state = Game.previousState;
+        }
+    },
+
+    handleInput(key) {
+        const buttons = Array.from(document.querySelectorAll('.sum-buttons .confirm-btn'))
+            .filter(b => b.style.display !== 'none');
+
+        if (key === 'ArrowRight') {
+            if (Input.focus < buttons.length - 1) {
+                Input.focus++;
+            } else {
+                this.nav(1);
+            }
+            return true;
+        }
+        if (key === 'ArrowLeft') {
+            if (Input.focus > 0) {
+                Input.focus--;
+            } else {
+                this.nav(-1);
+            }
+            return true;
+        }
+        if (key === 'ArrowDown') { this.nav(1); return true; }
+        if (key === 'ArrowUp') { this.nav(-1); return true; }
+
+        if (['z', 'Z', 'Enter'].includes(key)) {
+            if (buttons[Input.focus]) buttons[Input.focus].click();
+            return true;
+        }
+
+        if (key === 'x' || key === 'X') {
+            this.close();
+            return true;
+        }
+
+        return false;
+    },
+
+    // --- Internal Logic ---
+    setupButtons() {
         const btn = document.getElementById('btn-action');
         const prevBtn = document.getElementById('btn-prev');
         const nextBtn = document.getElementById('btn-next');
@@ -30,6 +94,8 @@ const SummaryScreen = {
         prevBtn.disabled = false;
         nextBtn.disabled = false;
 
+        // Map button clicks to actions
+        // Note: referencing PartyScreen globals is brittle, ideally should use ScreenManager.push
         if (Game.state === 'SELECTION') {
             btn.innerText = "I CHOOSE YOU!";
             btn.onclick = () => SelectionScreen.confirm();
@@ -40,8 +106,7 @@ const SummaryScreen = {
             prevBtn.disabled = true;
             nextBtn.disabled = true;
         } else if (Game.state === 'READ_ONLY') {
-            btn.innerText = "ACTION";
-            btn.disabled = true;
+            btn.style.display = 'none';
         } else if (Game.state === 'HEAL') {
             btn.innerText = "USE";
             btn.onclick = () => PartyScreen.applyItem(Game.selectedPartyIndex);
@@ -51,6 +116,26 @@ const SummaryScreen = {
             btn.innerText = "SHIFT";
             btn.onclick = () => PartyScreen.shift();
         }
+
+        // Nav and Back buttons
+        prevBtn.onclick = () => this.nav(-1);
+        nextBtn.onclick = () => this.nav(1);
+        backBtn.onclick = () => this.close();
+
+        // Update mouse listeners for dynamic indices
+        const visibleButtons = [prevBtn, btn, backBtn, nextBtn].filter(b => b.style.display !== 'none');
+        visibleButtons.forEach((el, i) => {
+            el.onmouseenter = () => { Input.focus = i; Input.updateVisuals(); };
+        });
+    },
+
+    // Legacy Open shim
+    open(p, mode) {
+        // UI.show moved to ScreenManager.push, but for legacy specific calls:
+        // UI.show('summary-panel'); 
+        // Actually, let's just use ScreenManager logic inside onEnter
+        this.onEnter({ mon: p, mode: mode });
+        UI.show('summary-panel'); // Ensure visibility for legacy calls bypassing Manager
     },
 
     render(p) {
@@ -101,7 +186,14 @@ const SummaryScreen = {
     nav(dir) {
         if (['HEAL', 'OVERFLOW'].includes(Game.state)) return;
 
-        let list = (Game.state === 'SELECTION') ? Game.tempSelectionList : Game.party;
+        // Determine list based on state/mode
+        let list = Game.party;
+        if (Game.state === 'SELECTION') list = Game.tempSelectionList;
+        if (Game.state === 'READ_ONLY') list = Game.tempPreviewList || Game.party;
+
+        // Safety check
+        if (!list || list.length === 0) return;
+
         let nextIdx = Game.currentSummaryIndex + dir;
 
         if (nextIdx < 0) nextIdx = list.length - 1;
@@ -109,13 +201,30 @@ const SummaryScreen = {
 
         Game.currentSummaryIndex = nextIdx;
 
-        if (['PARTY', 'SUMMARY'].includes(Game.state)) Game.selectedPartyIndex = nextIdx;
-        if (Game.state === 'SELECTION') Game.tempSelection = list[nextIdx];
+        // Update Global Refs
+        if (['PARTY', 'SUMMARY', 'HEAL', 'READ_ONLY'].includes(Game.state)) {
+            // Usually internal index is enough, but legacy might need this
+            Game.selectedPartyIndex = nextIdx;
+        }
+
+        if (Game.state === 'SELECTION') {
+            Game.tempSelection = list[nextIdx];
+        }
 
         this.render(list[nextIdx]);
     },
 
     close() {
+        if (this._closing) return; // Guard against double-popping
+        this._closing = true;
+
+        if (typeof ScreenManager !== 'undefined' && ScreenManager.stack.length > 0) {
+            ScreenManager.pop();
+            this._closing = false;
+            return;
+        }
+
+        // Fallback for legacy calls not using push/pop
         UI.hide('summary-panel');
         Game.state = Game.previousState;
 
@@ -124,10 +233,9 @@ const SummaryScreen = {
         } else if (Game.state === 'PARTY') {
             UI.hide('party-context');
             Input.setMode('PARTY', Game.selectedPartyIndex);
-        } else if (Game.state === 'HEAL') {
-            Input.setMode('CONTEXT');
         } else if (Game.state === 'READ_ONLY') {
             Input.setMode('CONTINUE');
         }
+        this._closing = false;
     }
 };

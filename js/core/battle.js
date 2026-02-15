@@ -427,10 +427,20 @@ const Battle = {
                 speed: this.e.stats.spe, priority: 0, isPlayer: false
             };
             const result = await this.runQueue([itemAction, eAction]);
-            if (result === 'STOP_BATTLE') return;
+
+            // Clear any lingering menu screens (Bag/Party) that were open
+            if (typeof ScreenManager !== 'undefined') ScreenManager.clear();
+
+            if (result === 'STOP_BATTLE') {
+                this.uiLocked = false;
+                return;
+            }
+
             if (Game.state === 'BATTLE' && this.p.currentHp > 0 && this.e.currentHp > 0) {
                 this.uiLocked = false;
                 BattleMenus.uiToMenu();
+            } else {
+                this.uiLocked = false;
             }
         } catch (err) {
             console.error('Item Error:', err);

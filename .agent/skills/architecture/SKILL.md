@@ -27,7 +27,7 @@ const ModuleName = {
 The order in `Pokemon.html` is strictly enforced. When adding a new file, place it in the correct category:
 
 1. **Systems & Data** (Foundation): `utils.js`, `constants.js`, `settings.js`.
-2. **Low-Level Engines**: `audio.js`, `api.js`, `storage.js`, `logger.js`.
+2. **Low-Level Engines**: `audio.js`, `api.js`, `storage.js`, `logger.js`, `screen_manager.js`.
 3. **Data Definitions**: `items.js`, `moves.js`, `debug.js`.
 4. **Core Logic**: `mechanics.js`, `effects.js`, `moves_engine.js`, `capture.js`.
 5. **UI**: `ui.js`, `menus.js`.
@@ -35,7 +35,7 @@ The order in `Pokemon.html` is strictly enforced. When adding a new file, place 
    - Framework contains: 20 step types, SVG shape library (9 shapes), formation patterns (4 presets), sprite movement presets (8 presets).
    - Registry defines all move-specific animations using the framework's declarative API.
    - Animations module is the public API that delegates to the framework.
-7. **Screens**: `party.js`, `summary.js`, `selection.js`.
+7. **Screens**: `party.js`, `summary.js`, `selection.js`, `menus.js (PackScreen)`.
 8. **Managers & Orchestrators**: `rage_manager.js`, `turn_manager.js`, `battle.js`, `game.js`.
 
 **Rule**: If `Module A` calls `Module B`, `Module B` MUST be loaded before `Module A` in the HTML file.

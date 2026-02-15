@@ -1,176 +1,114 @@
 /* ==================================
              EVOLUTION SCREEN
    ================================== */
-/* ==================================
-             EVOLUTION SCREEN
-   ================================== */
 #evolution-screen {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: white;
+    background: #fff;
+    /* or match battle gradient? usually white or specialized bg */
     z-index: 100;
-    /* Same as selection */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     pointer-events: auto;
     font-family: inherit;
-    border: 4px solid #202020;
-    /* Match selection screen border style if any, or just be clean */
-    box-sizing: border-box;
+    /* Box sizing is handled generally */
 }
 
-/* Removed Radial Gradient .evo-bg, kept for structure if needed but hidden */
-.evo-bg {
-    display: none;
+.evo-scene {
+    width: 100%;
+    height: 180px;
+    /* Slightly taller to allow moving sprite up */
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    /* Removed gradient */
+    margin-top: -20px;
+    /* Move entire scene up */
 }
 
-@keyframes bg-spin {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-/* Container for the sprite to center it perfect */
 /* Container for the sprite to center it perfect */
 .evo-sprite-container {
     position: relative;
-    /* Changed from absolute */
-    top: auto;
-    left: auto;
     width: 200px;
-    /* Bigger canvas */
     height: 200px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
     z-index: 2;
 }
 
 #evo-sprite {
     image-rendering: pixelated;
-    width: 128px;
-    /* Doubled Size for impact */
-    height: 128px;
-    transition: filter 0.2s, transform 0.2s;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    width: 80px;
+    /* Adjust size */
+    height: 80px;
+    transform: scale(1.5);
+    /* Smaller scale than before */
+    transition: filter 0.1s;
     transform-origin: center center;
 }
 
-/* Text Box for Evolution (at bottom, similar to battle text) */
-.evo-text-box {
-    position: relative;
-    /* Changed from absolute */
-    bottom: auto;
-    left: auto;
-    width: 80%;
-    max-width: 600px;
-    height: auto;
-    min-height: 60px;
-    background: transparent;
-    /* Clean look */
-    border: none;
+/* === BATTLE STYLE TEXTBOX === */
+/* Recycled structure to match #dialog-box from battle.css */
+.evo-dialog-box {
+    width: 100%;
+    height: 88px;
+    background-color: #282828;
+    color: white;
+    border-top: 4px solid #a0a0a0;
     padding: 10px;
-    font-size: 16px;
-    /* Readable */
-    font-weight: bold;
-    text-align: center;
-    line-height: 1.5;
-    color: black;
-    z-index: 3;
+    box-sizing: border-box;
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    z-index: 20;
+}
+
+/* Reuse default font styles, but specific ID for clarity */
+#evo-text {
+    width: 100%;
+    font-size: 12px;
+    line-height: 18px;
+    text-transform: uppercase;
+    white-space: pre-wrap;
+    color: white;
 }
 
 /* === ANIMATIONS === */
 
-/* 1. White Silhouette (Preparation) */
+/* 1. White Silhouette */
 .evo-white {
-    filter: brightness(0) invert(1) drop-shadow(0 0 4px white);
+    filter: brightness(0) invert(1);
+    image-rendering: pixelated;
 }
 
-/* 2. Rapid Flash (The Gen 3 flicker effect) */
-@keyframes evo-flash-cycle {
-    0% {
-        filter: brightness(1);
-        transform: scale(1);
-    }
-
-    25% {
-        filter: brightness(10);
-        transform: scale(1.1);
-    }
-
-    /* Flash White & Grow */
-    50% {
-        filter: brightness(0) invert(1);
-        transform: scale(0.9);
-    }
-
-    /* Invert Black? Or White Silhouette */
-    75% {
-        filter: brightness(10);
-        transform: scale(1.1);
-    }
-
-    100% {
-        filter: brightness(1);
-        transform: scale(1);
-    }
+/* 2. Rapid Flicker Class (Applied via JS now for more control) */
+.anim-flicker-white {
+    filter: brightness(0) invert(1);
 }
 
-.anim-evo-cycle {
-    animation: evo-flash-cycle 0.5s linear infinite;
-}
-
-/* 3. Deep Pulse (Before transformation) */
-@keyframes evo-pulse {
-    0% {
-        filter: brightness(1) sepia(1) hue-rotate(180deg) saturate(3);
-        transform: scale(1);
-    }
-
-    50% {
-        filter: brightness(2) sepia(0) saturate(0);
-        transform: scale(1.05);
-    }
-
-    /* Whiteout */
-    100% {
-        filter: brightness(1) sepia(1) hue-rotate(180deg) saturate(3);
-        transform: scale(1);
-    }
-}
-
-.anim-evo-jam {
-    animation: evo-pulse 1s ease-in-out infinite;
-}
-
-/* 4. Complete Reveal Flash */
+/* 3. Success Reveal */
 @keyframes reveal-flash {
     0% {
-        filter: brightness(10);
-        transform: scale(1.2);
+        filter: brightness(5);
         opacity: 1;
     }
 
     100% {
         filter: brightness(1);
-        transform: scale(1);
         opacity: 1;
     }
 }
 
 .anim-reveal {
-    animation: reveal-flash 1.0s ease-out forwards;
+    animation: reveal-flash 0.8s ease-out forwards;
 }

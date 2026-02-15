@@ -1,3 +1,36 @@
+const PackScreen = {
+    id: 'BAG',
+    onEnter() {
+        UI.show('pack-screen');
+        document.querySelector('.bag-icon').style.backgroundImage = "url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/backpack.png')";
+        BattleMenus.renderPackList();
+        Input.setMode('BAG', 0);
+    },
+    onExit() {
+        UI.hide('pack-screen');
+    },
+    onResume() {
+        UI.show('pack-screen');
+        BattleMenus.renderPackList();
+        Input.setMode('BAG', Input.focus);
+    },
+    handleInput(key) {
+        const len = document.querySelectorAll('.pack-item').length;
+        if (key === 'ArrowDown') { Input.focus = Math.min(len - 1, Input.focus + 1); Input.updateVisuals(); return true; }
+        if (key === 'ArrowUp') { Input.focus = Math.max(0, Input.focus - 1); Input.updateVisuals(); return true; }
+        if (['z', 'Z', 'Enter'].includes(key)) {
+            const btns = document.querySelectorAll('.pack-item');
+            if (btns[Input.focus]) btns[Input.focus].click();
+            return true;
+        }
+        if (key === 'x' || key === 'X') {
+            BattleMenus.uiToMenu();
+            return true;
+        }
+        return false;
+    }
+};
+
 const BattleMenus = {
     // --- MENU TOGGLES ---
     uiToMoves() {
@@ -34,6 +67,12 @@ const BattleMenus = {
 
         // 3. NORMAL STATE: Show Menu
         Game.state = 'BATTLE';
+
+        // Ensure all screens are closed when returning to main battle menu
+        if (typeof ScreenManager !== 'undefined') {
+            ScreenManager.clear();
+        }
+
         UI.hide('move-menu');
         UI.hide('pack-screen');
         UI.hide('party-screen');
@@ -65,10 +104,8 @@ const BattleMenus = {
     openPack() {
         if (Battle.uiLocked) return;
         Battle.lastMenuIndex = Input.focus;
-        UI.show('pack-screen');
-        document.querySelector('.bag-icon').style.backgroundImage = "url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/backpack.png')";
-        this.renderPackList();
-        Input.setMode('BAG');
+        UI.hide('action-menu');
+        ScreenManager.push('BAG');
     },
 
     // --- RENDERERS ---
@@ -119,8 +156,7 @@ const BattleMenus = {
                     if (data.type === 'heal' || data.type === 'revive') {
                         Game.selectedItemKey = key;
                         Game.state = 'HEAL';
-                        UI.hide('pack-screen');
-                        Game.openParty(false);
+                        ScreenManager.push('PARTY', { mode: 'HEAL' });
                     } else {
                         Battle.performItem(key);
                     }
@@ -141,7 +177,7 @@ const BattleMenus = {
             document.getElementById('pack-desc').innerText = "Close the Pack.";
         };
         cancelBtn.onclick = () => {
-            this.uiToMenu();
+            BattleMenus.uiToMenu();
         };
         list.appendChild(cancelBtn);
     },

@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/explosion.css">
     <link rel="stylesheet" href="css/evolution.css">
+    <link rel="stylesheet" href="css/dialog.css">
 </head>
 
 <body>
@@ -29,7 +30,7 @@
             <!-- Start Screen -->
             <div id="start-screen">
                 <div class="start-title">POKEMON<br>GOLD & SILVER<br>SIMULATION</div>
-                <div class="start-btn" onclick="Game.checkSave()">CLICK TO START</div>
+                <div class="start-btn" onclick="ScreenManager.getScreen('TITLE').checkSave()">CLICK TO START</div>
                 <div class="toggle-box" onclick="Game.toggleLcd()">
                     <div class="checkbox" id="lcd-check"></div>
                     <span>RETRO FILTER</span>
@@ -48,15 +49,16 @@
                 <div style="margin-bottom: 10px;">REGISTRATION</div>
                 <div style="font-size: 8px; margin-bottom: 20px;">PLEASE ENTER YOUR NAME</div>
                 <input type="text" id="name-input" maxlength="8" placeholder="NAME">
-                <div class="start-btn" onclick="Game.confirmName()">CONFIRM</div>
+                <div class="start-btn" onclick="ScreenManager.push('SELECTION')">CONFIRM</div>
             </div>
 
             <!-- CONTINUE SCREEN -->
             <div id="continue-screen" class="hidden">
                 <!-- ... (unchanged) ... -->
                 <div class="cont-menu-box">
-                    <div class="cont-opt" id="opt-continue" onclick="Game.loadGame()">CONTINUE</div>
-                    <div class="cont-opt" id="opt-newgame" onclick="Game.startNameInput()">NEW GAME</div>
+                    <div class="cont-opt" id="opt-continue" onclick="ScreenManager.getScreen('CONTINUE').confirm()">
+                        CONTINUE</div>
+                    <div class="cont-opt" id="opt-newgame" onclick="ScreenManager.push('NAME_INPUT')">NEW GAME</div>
                 </div>
                 <div class="save-info-box">
                     <div class="save-row" style="color:yellow" id="save-name">PLAYER</div>
@@ -97,10 +99,10 @@
                 <div style="font-size:8px; font-weight:bold; margin-bottom:2px;">MOVES:</div>
                 <div id="summary-moves" class="sum-moves"></div>
                 <div class="sum-buttons">
-                    <button class="confirm-btn nav-btn" id="btn-prev" onclick="Game.navSummary(-1)">&lt;</button>
+                    <button class="confirm-btn nav-btn" id="btn-prev">&lt;</button>
                     <button class="confirm-btn" id="btn-action">ACTION</button>
-                    <button class="confirm-btn secondary" id="btn-back-sum" onclick="Game.closeSummary()">CLOSE</button>
-                    <button class="confirm-btn nav-btn" id="btn-next" onclick="Game.navSummary(1)">&gt;</button>
+                    <button class="confirm-btn secondary" id="btn-back-sum">CLOSE</button>
+                    <button class="confirm-btn nav-btn" id="btn-next">&gt;</button>
                 </div>
             </div>
 
@@ -126,13 +128,14 @@
 
             <!-- EVOLUTION SCREEN (NEW) -->
             <div id="evolution-screen" class="hidden">
-                <div id="evo-bg" class="evo-bg"></div>
-                <div class="evo-sprite-container">
-                    <img id="evo-sprite"
-                        src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                <div class="evo-scene">
+                    <div id="evo-bg" class="evo-bg"></div>
+                    <div class="evo-sprite-container">
+                        <img id="evo-sprite" src="">
+                    </div>
                 </div>
-                <div class="evo-text-box" id="evo-text">
-                    What? ELKIE is evolving!
+                <div class="evo-dialog-box" id="evo-dialog">
+                    <div id="evo-text"></div>
                 </div>
             </div>
 
@@ -207,7 +210,8 @@
                 <div id="text-content">...</div>
                 <div id="action-menu" class="hidden">
                     <div class="menu-item" id="opt-fight" onclick="BattleMenus.uiToMoves()">FIGHT</div>
-                    <div class="menu-item" id="opt-pkmn" onclick="Game.openParty(false)">PKMN</div>
+                    <div class="menu-item" id="opt-pkmn" onclick="UI.hide('action-menu'); Game.openParty(false)">PKMN
+                    </div>
                     <div class="menu-item" id="opt-pack" onclick="BattleMenus.openPack()">PACK</div>
                     <div class="menu-item" id="opt-run" onclick="BattleMenus.askRun()">RUN</div>
                 </div>
@@ -220,6 +224,8 @@
     <!-- Extracted Modules -->
     <script src="js/systems/utils.js"></script>
     <script src="js/systems/logger.js"></script>
+    <script src="js/systems/screen_manager.js"></script>
+    <script src="js/systems/dialog_manager.js"></script>
 
     <!-- Data & Config -->
     <script src="js/data/constants.js"></script>
@@ -255,15 +261,17 @@
     <script src="js/screens/party.js"></script>
     <script src="js/screens/summary.js"></script>
     <script src="js/screens/selection.js"></script>
+    <script src="js/screens/title_flow.js"></script>
     <script src="js/engine/ai.js"></script>
     <script src="js/core/evolution.js"></script>
     <script src="js/core/game.js"></script>
     <script src="js/core/battle.js"></script>
+    <script src="js/screens/evolution_screen.js"></script>
 
     <script>
         // --- INITIALIZATION ---
         Input.init();
-        Input.setMode("START");
+        ScreenManager.push('TITLE');
     </script>
 </body>
 
