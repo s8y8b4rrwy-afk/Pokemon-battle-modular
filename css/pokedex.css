@@ -1,0 +1,461 @@
+/* Pokedex Screen Styles */
+#pokedex-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #e0f8cf;
+    /* Classic Game Boy Light Green */
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    font-family: inherit;
+    color: #0f380f;
+    image-rendering: pixelated;
+}
+
+.dex-header {
+    background: #0f380f;
+    color: #e0f8cf;
+    padding: 4px;
+    font-size: 10px;
+    text-align: center;
+    border-bottom: 2px solid #306230;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dex-stats {
+    font-size: 8px;
+    display: flex;
+    gap: 8px;
+}
+
+.dex-list {
+    flex: 1;
+    overflow-y: scroll;
+    padding: 4px;
+    background: #8bac0f;
+    /* Slightly darker green for content */
+}
+
+/* Hide Scrollbar */
+.dex-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dex-list::-webkit-scrollbar-thumb {
+    background: #306230;
+}
+
+.dex-item {
+    display: flex;
+    align-items: center;
+    background: #e0f8cf;
+    margin-bottom: 2px;
+    padding: 2px;
+    border: 2px solid #8bac0f;
+    cursor: pointer;
+    position: relative;
+    height: 32px;
+    /* Fixed height for clean grid */
+    transition: background 0.1s;
+}
+
+.dex-item.selected {
+    border-color: #0f380f;
+    background: #fff;
+    /* Highlight */
+}
+
+.dex-num {
+    font-size: 8px;
+    width: 24px;
+    text-align: right;
+    margin-right: 4px;
+    color: #306230;
+}
+
+.dex-icon-box {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #9bbc0f;
+    margin-right: 4px;
+    border: 1px solid #306230;
+    image-rendering: pixelated;
+}
+
+.dex-mini-sprite {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+    object-fit: contain;
+}
+
+.dex-pokeball {
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+    opacity: 0.1;
+    /* Default hidden/uncaught state */
+
+    background-color: #306230;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="black"/><rect x="0" y="45" width="100" height="10" fill="white"/><circle cx="50" cy="50" r="15" fill="white" stroke="black" stroke-width="5"/></svg>') center/contain no-repeat;
+    mask: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="black"/><rect x="0" y="45" width="100" height="10" fill="white"/><circle cx="50" cy="50" r="15" fill="white" stroke="black" stroke-width="5"/></svg>') center/contain no-repeat;
+}
+
+.dex-pokeball.caught {
+    opacity: 1;
+    background-color: #f00 !important;
+    /* Red for caught */
+}
+
+.dex-name {
+    font-size: 10px;
+    font-weight: bold;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dex-types {
+    display: flex;
+    gap: 2px;
+    margin-right: 4px;
+}
+
+.dex-type-icon {
+    width: 24px;
+    height: 10px;
+    /* Small pill */
+    font-size: 6px;
+    color: white;
+    text-align: center;
+    line-height: 10px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* ========================================
+   POKEDEX DETAIL OVERLAY - REDESIGNED
+   ======================================== */
+
+.dex-detail-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #e0f8cf;
+    z-index: 200;
+    /* Above index header */
+    display: none;
+    flex-direction: column;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.dex-detail-panel.visible {
+    display: flex;
+}
+
+/* --- Top Section: Sprite & Basic Info --- */
+
+
+
+
+.dex-nav-btn {
+    background: #0f380f;
+    color: #e0f8cf;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 2px;
+    border: 1px solid #306230;
+    user-select: none;
+    transition: background 0.1s;
+}
+
+.dex-nav-btn:hover {
+    background: #306230;
+    color: #fff;
+}
+
+.dex-nav-btn:active {
+    transform: scale(0.9);
+}
+
+.detail-sprite-box {
+    width: 80px;
+    height: 80px;
+    background: #ffffff;
+    /* White background as requested */
+    border: 2px solid #0f380f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 0;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.detail-large-sprite {
+    width: 90px;
+    height: 90px;
+    image-rendering: pixelated;
+    object-fit: contain;
+}
+
+/* --- Detail Header: Full Width --- */
+.detail-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #306230;
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+}
+
+.detail-name {
+    font-size: 10px;
+    font-weight: bold;
+    color: #0f380f;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: normal;
+    padding-right: 4px;
+    flex: 1;
+}
+
+.dex-detail-controls {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+/* --- Content Row: Sprite & Stats --- */
+.detail-content-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 4px;
+    min-height: 84px;
+    /* Ensured min height */
+}
+
+/* Adjust Info Column to fit beside sprite */
+.detail-info-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    /* Tighter gap */
+    justify-content: flex-start;
+    min-width: 0;
+}
+
+.detail-row {
+    font-size: 8px;
+    color: #0f380f;
+    font-weight: normal;
+    background: #8bac0f;
+    padding: 2px 4px;
+    border-radius: 2px;
+    margin: 0;
+    /* Removed margin-bottom to rely on flex gap */
+}
+
+.detail-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px;
+    margin-top: 0;
+    /* Removed margin-top */
+    background: transparent;
+}
+
+.detail-stat-small {
+    font-size: 7px;
+    background: #0f380f;
+    /* Dark background */
+    color: #e0f8cf;
+    padding: 2px 4px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+}
+
+.detail-stat-small span {
+    color: #fff;
+    font-weight: normal;
+}
+
+/* --- Bottom Section: Evolution & Desc --- */
+.detail-bottom {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    /* Flex fix */
+    padding: 0;
+}
+
+/* This was detail-row before in existing HTML, but we style it specifically */
+.detail-bottom .detail-row {
+    background: none;
+    padding: 0;
+    font-weight: bold;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    color: #0f380f;
+}
+
+/* --- Middle Section: Description --- */
+.detail-desc-box {
+    background: #e0f8cf;
+    border: 2px solid #306230;
+    padding: 4px;
+    font-size: 8px;
+    /* Body Text */
+    line-height: 12px;
+    height: 48px;
+    /* Fixed height for consistency */
+    overflow-y: auto;
+    color: #0f380f;
+    margin-bottom: 8px;
+    font-family: inherit;
+}
+
+.detail-evo-chain {
+    flex: 1;
+    background: #e0f8cf;
+    border: 2px solid #0f380f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px;
+    min-height: 50px;
+    border-radius: 4px;
+    margin: 0;
+}
+
+.evo-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40px;
+    position: relative;
+    justify-content: center;
+    height: auto;
+}
+
+.evo-step img,
+.evo-step .unknown-icon {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+    object-fit: contain;
+}
+
+.unknown-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #306230;
+    border: 1px dashed #306230;
+    background: rgba(48, 98, 48, 0.1);
+    border-radius: 50%;
+}
+
+.evo-arrow {
+    font-size: 10px;
+    color: #306230;
+    font-weight: bold;
+    margin: 0 2px;
+}
+
+.dex-controls {
+    padding: 4px;
+    font-size: 8px;
+    text-align: center;
+    background: #0f380f;
+    color: #fff;
+}
+
+.dex-gap {
+    text-align: center;
+    color: #306230;
+    font-weight: bold;
+    font-size: 10px;
+    padding: 2px;
+    opacity: 0.7;
+    margin: 4px 0;
+    letter-spacing: 4px;
+}
+
+/* --- Controls --- */
+.dex-close-btn {
+    background: #0f380f;
+    color: #e0f8cf;
+    font-size: 10px;
+    font-weight: bold;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border: 1px solid #306230;
+    border-radius: 2px;
+    transition: background 0.1s;
+}
+
+.dex-header-close {
+    background: #306230;
+    color: #e0f8cf;
+    padding: 2px 6px;
+    font-size: 8px;
+    border: 1px solid #e0f8cf;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.dex-header-close:hover {
+    background: #e0f8cf;
+    color: #0f380f;
+}
+
+.dex-close-btn:hover {
+    background: #306230;
+    color: #fff;
+}
+
+.evo-info {
+    font-size: 6px;
+    /* Small Label */
+    color: #0f380f;
+    background: #8bac0f;
+    padding: 1px 3px;
+    border-radius: 2px;
+    margin-bottom: 2px;
+}

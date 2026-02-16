@@ -257,6 +257,9 @@ const Battle = {
 
         // Only run the sequence if it's a new encounter
         if (playIntro) {
+            // Register in Pokedex
+            if (typeof PokedexData !== 'undefined') PokedexData.registerSeen(enemy.id, enemy.isShiny, enemy.isBoss);
+
             this.startEncounterSequence(player, enemy, playIntro, skipPlayerAnim, eSprite);
         }
     },

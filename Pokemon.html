@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/selection.css">
     <link rel="stylesheet" href="css/summary.css">
     <link rel="stylesheet" href="css/party.css">
+    <link rel="stylesheet" href="css/pokedex.css">
     <link rel="stylesheet" href="css/pack.css">
     <link rel="stylesheet" href="css/battle.css">
     <link rel="stylesheet" href="css/animations.css">
@@ -59,6 +60,7 @@
                 <div class="cont-menu-box">
                     <div class="cont-opt" id="opt-continue" onclick="ScreenManager.getScreen('CONTINUE').confirm()">
                         CONTINUE</div>
+                    <div class="cont-opt" id="opt-pokedex" onclick="ScreenManager.push('POKEDEX')">POKEDEX</div>
                     <div class="cont-opt" id="opt-newgame" onclick="ScreenManager.push('NAME_INPUT')">NEW GAME</div>
                 </div>
                 <div class="save-info-box">
@@ -202,6 +204,56 @@
                 <div class="sel-desc-box" id="sel-text-box">SELECT A POKEMON</div>
             </div>
 
+            <!-- POKEDEX SCREEN -->
+            <div id="pokedex-screen" class="hidden">
+                <div class="dex-header">
+                    <span>POKEDEX</span>
+                    <div class="dex-stats">
+                        <span>SEEN: <span id="dex-seen-count">0</span></span>
+                        <span>OWN: <span id="dex-caught-count">0</span></span>
+                    </div>
+                    <div class="dex-header-close" onclick="ScreenManager.pop()">BACK</div>
+                </div>
+                <div id="dex-list" class="dex-list"></div>
+
+                <!-- Detail Overlay -->
+                <div id="dex-detail-panel" class="dex-detail-panel">
+                    <!-- New Header Row -->
+                    <div class="detail-header-row">
+                        <div id="detail-name" class="detail-name">LOADING...</div>
+                        <div class="dex-detail-controls">
+                            <div class="dex-nav-btn" onclick="PokedexScreen.navigateDetails(-1)">&lt;</div>
+                            <div class="dex-nav-btn" onclick="PokedexScreen.navigateDetails(1)">&gt;</div>
+                            <div class="dex-close-btn" onclick="PokedexScreen.closeDetails()">×</div>
+                        </div>
+                    </div>
+
+                    <!-- Content Row: Sprite + Stats -->
+                    <div class="detail-content-row">
+                        <div class="detail-sprite-box">
+                            <img id="detail-sprite" class="detail-large-sprite">
+                        </div>
+                        <div class="detail-info-col">
+                            <div id="detail-types" class="detail-row"></div>
+                            <div class="detail-stats-grid">
+                                <div class="detail-stat-small">SEEN: <span id="detail-encounters">0</span></div>
+                                <div class="detail-stat-small">SHINY: <span id="detail-shiny">NO</span></div>
+                                <div class="detail-stat-small">BOSS: <span id="detail-boss">NO</span></div>
+                                <div class="detail-stat-small">HT: <span id="detail-height">-.-m</span></div>
+                                <div class="detail-stat-small">WT: <span id="detail-weight">-.-kg</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-bottom">
+                        <div id="detail-desc" class="detail-desc-box">
+                        </div>
+                        <div class="detail-row">EVOLUTION CHAIN</div>
+                        <div id="detail-evo-chain" class="detail-evo-chain"></div>
+                    </div>
+
+                </div>
+            </div>
+
             <!-- Battle Scene -->
             <div class="scene hidden" id="scene">
                 <div id="fx-container"
@@ -211,6 +263,8 @@
                 <div class="hud" id="enemy-hud">
                     <div class="name">
                         <span id="enemy-name">LOADING...</span>
+                        <span id="enemy-caught-icon" class="dex-pokeball caught"
+                            style="display:none; width:8px; height:8px; margin-left:4px;"></span>
                         <!-- Pre-baked empty icons for Status and Rage -->
                         <span id="enemy-status-icon"
                             style="font-size:8px; font-weight:bold; margin-left:4px; text-shadow:1px 1px 0 #fff; display:none;"></span>
@@ -287,6 +341,7 @@
     <script src="js/systems/audio.js"></script>
     <script src="js/systems/api.js"></script>
     <script src="js/systems/storage.js"></script>
+    <script src="js/systems/pokedex_data.js"></script>
     <script src="js/systems/input.js"></script>
     <script src="js/engine/encounter.js"></script>
 
@@ -318,9 +373,11 @@
     <script src="js/core/battle.js"></script>
     <script src="js/screens/evolution_screen.js"></script>
     <script src="js/screens/move_learn.js"></script>
+    <script src="js/screens/pokedex.js"></script>
 
     <script>
         // --- INITIALIZATION ---
+        PokedexData.init();
         Input.init();
         ScreenManager.push('TITLE');
     </script>
