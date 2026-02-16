@@ -375,17 +375,26 @@ AnimFramework.register('fx-impact-silent', [
 AnimFramework.register('confused', [
     { type: 'sfx', sound: 'psychic' },
     {
-        type: 'parallel', steps: [
-            { type: 'wave', intensity: 0.5, duration: 1500, speed: 80 },
+        type: 'parallel',
+        steps: [
             { type: 'spriteWave', target: 'defender', intensity: 2, duration: 1500, speed: 60 },
             {
-                type: 'orbit', target: 'defender', shape: 'duck',
-                count: 3, radiusX: 32, radiusY: 12, yOffset: -45,
-                speed: 1.1, duration: 1800, color: '#ffd700', outline: '#b8860b'
+                type: 'orbit',
+                target: 'defender',
+                shape: 'duck',
+                count: 4,
+                radiusX: 32,
+                radiusY: 16,
+                yOffset: -45,
+                speed: 1.1,
+                duration: 1800,
+                color: '#ffd700',
+                outline: '#b8860b'
             }
         ]
     }
 ]);
+
 
 AnimFramework.register('explosion', [
     {
@@ -961,56 +970,140 @@ AnimFramework.register('tick-perish-song', [
 AnimFramework.register('tick-slp', [
     { type: 'sfx', sound: 'psychic' },
     {
-        type: 'parallel', steps: [
-            {
-                type: 'overlay', target: 'defender', shape: 'zzz',
-                color: '#fff', outline: '#000', width: 20, height: 15,
-                duration: 800, animation: 'float', count: 2, spread: 10
-            }
-        ]
+        type: 'overlay',
+        target: 'defender',
+        shape: 'zzz',
+        color: '#fff',
+        outline: '#000000',
+        width: 30,
+        height: 25,
+        duration: 800,
+        animation: 'grow',
+        count: 2,
+        spread: 10
+    },
+    {
+        type: 'overlay',
+        target: 'defender',
+        shape: 'zzz',
+        color: '#fff',
+        outline: '#000',
+        width: 20,
+        height: 15,
+        duration: 800,
+        animation: 'fade',
+        count: 2,
+        spread: 10
+    },
+    {
+        type: 'overlay',
+        target: 'defender',
+        shape: 'zzz',
+        color: '#fff',
+        outline: '#000',
+        width: 20,
+        height: 5,
+        duration: 1000,
+        animation: 'fade',
+        count: 2,
+        spread: 10
     }
 ]);
+
 
 AnimFramework.register('tick-par', [
     { type: 'sfx', sound: 'electric' },
     {
-        type: 'parallel', steps: [
-            { type: 'spriteShake', target: 'defender', duration: 300 },
+        type: 'parallel',
+        steps: [
+            { type: 'spriteWave', ms: 200, target: 'defender', intensity: 3, duration: 600, speed: 100 },
             {
-                type: 'particles', position: 'defender', count: 8, spread: 35, duration: 600,
-                particleStyles: { background: '#ffd700', border: '1px solid #b8860b', width: '3px', height: '3px' }
+                type: 'spriteSilhouette',
+                ms: 200,
+                target: 'defender',
+                color: '#f5ec00',
+                hold: 200,
+                duration: 800,
+                follow: true
+            },
+            {
+                type: 'particles',
+                position: 'defender',
+                count: 8,
+                spread: 35,
+                duration: 600,
+                particleStyles: { background: '#ffd700', border: '1px solid #b8860b', width: '3px', height: '3px' },
+                gravity: 0,
+                color: '#561029'
             }
         ]
     }
 ]);
+
 
 AnimFramework.register('tick-psn', [
     { type: 'sfx', sound: 'poison' },
     {
-        type: 'parallel', steps: [
-            { type: 'spriteSilhouette', target: 'defender', color: '#a040a0', duration: 500 },
+        type: 'parallel',
+        steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#a040a0', duration: 800, hold: 100 },
             {
-                type: 'overlay', target: 'defender', shape: 'bubble',
-                color: '#a040a0', outline: '#4b0082', width: 10, height: 10,
-                duration: 400, animation: 'float', count: 2, spread: 15
+                type: 'overlay',
+                target: 'defender',
+                shape: 'bubble',
+                color: '#a040a0',
+                outline: '#4b0082',
+                width: 10,
+                height: 10,
+                duration: 400,
+                animation: 'fade',
+                count: 2,
+                spread: 15
+            },
+            {
+                type: 'spriteShake',
+                ms: 200,
+                target: 'defender',
+                duration: 400,
+                flipped: false,
+                skipIfInvisible: true
             }
         ]
     }
 ]);
 
+
 AnimFramework.register('tick-tox', [
     { type: 'sfx', sound: 'poison' },
     {
-        type: 'parallel', steps: [
-            { type: 'spriteSilhouette', target: 'defender', color: '#703070', duration: 600 },
+        type: 'parallel',
+        steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#a040a0', duration: 800, hold: 100 },
             {
-                type: 'overlay', target: 'defender', shape: 'skull',
-                color: '#300030', outline: '#000', width: 16, height: 16,
-                duration: 500, animation: 'fade', count: 1
+                type: 'overlay',
+                target: 'defender',
+                shape: 'bubble',
+                color: '#a040a0',
+                outline: '#4b0082',
+                width: 10,
+                height: 10,
+                duration: 400,
+                animation: 'fade',
+                count: 2,
+                spread: 15
+            },
+            {
+                type: 'spriteShake',
+                ms: 200,
+                target: 'defender',
+                duration: 400,
+                flipped: false,
+                skipIfInvisible: true
             }
         ]
     }
 ]);
+
 
 AnimFramework.register('tick-brn', [
     { type: 'sfx', sound: 'fire' },
