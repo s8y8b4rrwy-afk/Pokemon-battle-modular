@@ -204,7 +204,16 @@ const BattleMenus = {
             btn.dataset.power = m.power > 0 ? m.power : '-';
             btn.dataset.accuracy = m.accuracy || '-';
 
-            btn.onclick = () => Battle.performTurn(m);
+            btn.onclick = async () => {
+                if (Battle.p.volatiles.disabled && Battle.p.volatiles.disabled.moveName === m.name) {
+                    AudioEngine.playSfx('error');
+                    UI.hide('move-menu');
+                    await DialogManager.show(`${m.name} is disabled!`);
+                    this.uiToMoves();
+                    return;
+                }
+                Battle.performTurn(m);
+            };
 
             const updateInfo = () => {
                 infoPanel.innerHTML = `<div>TYPE/<br>${m.type.toUpperCase()}</div><div>PWR/${m.power > 0 ? m.power : '-'}</div><div>ACC/${m.accuracy || '-'}%</div>`;

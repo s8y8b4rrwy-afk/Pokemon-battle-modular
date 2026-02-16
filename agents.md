@@ -130,6 +130,7 @@ These skills provide detailed, step-by-step guidance for common workflows. **Alw
 |-------|------|-------------|
 | **Add Feature** | `.agent/skills/add_feature/SKILL.md` | Adding new moves, items, or mechanics. Covers MOVE_DEX patterns, return values, end-of-turn effects, animation registration, and testing checklist. |
 | **Battle Animations & Timing** | `.agent/skills/battle_animations/SKILL.md` | Creating or modifying battle animations. Documents the `AnimFramework` step types, context object, entry/hit/faint sequences, and CSS animation file conventions. |
+| **Dialogue Manager** | `.agent/skills/dialogue_manager/SKILL.md` | Learn how to use the DialogManager system to display text, ask questions, and manage user interactions in the game. |
 | **Project Architecture & Maintenance** | `.agent/skills/architecture/SKILL.md` | Understanding the modular structure, script loading order, global module pattern, cross-module communication, and CSS file organization. |
 | **Screen Management & Navigation** | `.agent/skills/screens/SKILL.md` | Guide for creating new screens and managing transitions using the ScreenManager framework. |
 

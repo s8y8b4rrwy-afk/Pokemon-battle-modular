@@ -297,3 +297,15 @@
  * @property {string} [stat]
  * @property {number} [val]
  */
+
+/**
+ * @typedef {Object} DialogManager
+ * @property {Array} queue
+ * @property {boolean} isTyping
+ * @property {(text: string, options?: Object) => Promise<void>} show
+ * @property {(text: string, choices?: string[], options?: Object) => Promise<string>} ask
+ * @property {(choices: string[]) => void} renderChoices
+ * @property {() => void} hideChoices
+ * @property {() => void} processQueue
+ * @property {(key: string) => boolean} handleInput
+ */

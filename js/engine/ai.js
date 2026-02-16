@@ -22,12 +22,19 @@ const BattleAI = {
             return { name: "STRUGGLE", type: "normal", power: 50, accuracy: 100, priority: 0 };
         }
 
-        // 3. Simple Logic (Random for now, but modularized for smarter AI later)
-        // Future: Filter out useless moves, prioritize super-effective, etc.
-        const moves = enemy.moves;
+        // 3. Filter Disabled Moves
+        let availableMoves = enemy.moves;
+        if (enemy.volatiles.disabled) {
+            availableMoves = availableMoves.filter(m => m.name !== enemy.volatiles.disabled.moveName);
+        }
 
-        // Basic Logic: If we have a lot of moves, maybe avoid repeating a non-damaging move twice in a row?
-        // For now, keeping it random to match original behavior but making it easy to extend.
-        return moves[Math.floor(Math.random() * moves.length)];
+        // 4. Fallback to Struggle if all moves are disabled
+        if (availableMoves.length === 0) {
+            return { name: "STRUGGLE", type: "normal", power: 50, accuracy: 100, priority: 0 };
+        }
+
+        // 5. Simple Logic (Random for now, but modularized for smarter AI later)
+        // Future: Filter out useless moves, prioritize super-effective, etc.
+        return availableMoves[Math.floor(Math.random() * availableMoves.length)];
     }
 };
