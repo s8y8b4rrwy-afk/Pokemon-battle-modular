@@ -109,6 +109,7 @@ const ScreenManager = {
             case 'BAG': return typeof PackScreen !== 'undefined' ? PackScreen : null; // Future proof
             case 'EVOLUTION': return EvolutionScreen;
             case 'MOVE_LEARN': return MoveLearnScreen;
+            case 'POKEDEX': return PokedexScreen;
             // Add others...
             default: return null;
         }
@@ -126,7 +127,8 @@ const ScreenManager = {
             'CONTINUE': 'continue-screen',
             'NAME_INPUT': 'name-screen',
             'EVOLUTION': 'evolution-screen',
-            'MOVE_LEARN': 'move-learn-screen'
+            'MOVE_LEARN': 'move-learn-screen',
+            'POKEDEX': 'pokedex-screen'
         };
         const domId = map[id] || id; // Fallback
         if (action === 'show') UI.show(domId);
