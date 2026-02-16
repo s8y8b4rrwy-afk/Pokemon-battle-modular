@@ -134,13 +134,14 @@
 }
 
 .cont-opt::before {
-    content: ' ';
-    width: 10px;
+    content: '▶';
+    width: 12px;
     display: inline-block;
+    visibility: hidden;
 }
 
 .cont-opt.focused::before {
-    content: '▶';
+    visibility: visible;
 }
 
 .save-info-box {

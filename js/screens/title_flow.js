@@ -42,6 +42,8 @@ const TitleScreen = {
     // --- Continue / New Game Logic ---
     // Ideally this could be a sub-screen or state, but let's keep it here for now
     checkSave() {
+        AudioEngine.init();
+        AudioEngine.playSfx('select');
         if (StorageSystem.exists()) {
             // Show Continue Screen
             ScreenManager.push('CONTINUE');
@@ -64,6 +66,11 @@ const ContinueScreen = {
         document.getElementById('save-wins').innerText = data.wins || 0;
         document.getElementById('save-bosses').innerText = data.bossesDefeated || 0;
         document.getElementById('save-name').innerText = data.playerName || 'PLAYER';
+
+        // Update Pokedex stats on continue screen
+        const counts = PokedexData.getCounts();
+        if (document.getElementById('save-seen')) document.getElementById('save-seen').innerText = counts.seen.toString();
+        if (document.getElementById('save-caught')) document.getElementById('save-caught').innerText = counts.caught.toString();
 
         const prevRow = document.getElementById('save-preview');
         prevRow.innerHTML = '';
@@ -92,14 +99,28 @@ const ContinueScreen = {
     },
 
     handleInput(key) {
-        if (key === 'ArrowUp' || key === 'ArrowDown') {
-            Input.focus = Input.focus === 0 ? 1 : 0;
+        if (key === 'ArrowUp') {
+            Input.focus = (Input.focus - 1 + 3) % 3;
             Input.updateVisuals();
+            AudioEngine.playSfx('select');
+            return true;
+        }
+        if (key === 'ArrowDown') {
+            Input.focus = (Input.focus + 1) % 3;
+            Input.updateVisuals();
+            AudioEngine.playSfx('select');
             return true;
         }
 
         if (['z', 'Z', 'Enter'].includes(key)) {
+            AudioEngine.playSfx('select');
             this.confirm();
+            return true;
+        }
+
+        if (['x', 'X'].includes(key)) {
+            AudioEngine.playSfx('select');
+            ScreenManager.pop();
             return true;
         }
 
@@ -107,9 +128,11 @@ const ContinueScreen = {
     },
 
     confirm() {
-        const choice = Input.focus; // 0 = Continue, 1 = New Game
+        const choice = Input.focus; // 0 = Continue, 1 = Pokedex, 2 = New Game
         if (choice === 0) {
             Game.loadGame();
+        } else if (choice === 1) {
+            ScreenManager.push('POKEDEX');
         } else {
             ScreenManager.replace('NAME_INPUT');
         }
@@ -137,6 +160,7 @@ const NameInputScreen = {
 
     handleInput(key) {
         if (['z', 'Z', 'Enter'].includes(key)) {
+            AudioEngine.playSfx('select');
             Game.confirmName();
             return true;
         }

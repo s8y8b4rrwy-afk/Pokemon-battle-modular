@@ -1,6 +1,27 @@
 const PackScreen = {
     id: 'BAG',
+    currentPocketIdx: 0,
+    pockets: [
+        { id: 'items', name: 'HEALING ITEMS' },
+        { id: 'balls', name: 'POKE BALLS' },
+        { id: 'key', name: 'KEY ITEMS' }
+    ],
+    nextPocket() {
+        this.currentPocketIdx = (this.currentPocketIdx + 1) % this.pockets.length;
+        BattleMenus.renderPackList();
+        Input.focus = 0;
+        Input.updateVisuals();
+        AudioEngine.playSfx('select');
+    },
+    prevPocket() {
+        this.currentPocketIdx = (this.currentPocketIdx - 1 + this.pockets.length) % this.pockets.length;
+        BattleMenus.renderPackList();
+        Input.focus = 0;
+        Input.updateVisuals();
+        AudioEngine.playSfx('select');
+    },
     onEnter() {
+        this.currentPocketIdx = 0;
         UI.show('pack-screen');
         document.querySelector('.bag-icon').style.backgroundImage = "url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/backpack.png')";
         BattleMenus.renderPackList();
@@ -18,6 +39,16 @@ const PackScreen = {
         const len = document.querySelectorAll('.pack-item').length;
         if (key === 'ArrowDown') { Input.focus = Math.min(len - 1, Input.focus + 1); Input.updateVisuals(); AudioEngine.playSfx('select'); return true; }
         if (key === 'ArrowUp') { Input.focus = Math.max(0, Input.focus - 1); Input.updateVisuals(); AudioEngine.playSfx('select'); return true; }
+
+        if (key === 'ArrowRight') {
+            this.nextPocket();
+            return true;
+        }
+        if (key === 'ArrowLeft') {
+            this.prevPocket();
+            return true;
+        }
+
         if (['z', 'Z', 'Enter'].includes(key)) {
             const btns = document.querySelectorAll('.pack-item');
             if (btns[Input.focus]) btns[Input.focus].click();
@@ -37,6 +68,7 @@ const BattleMenus = {
     uiToMoves() {
         if (Battle.uiLocked) return;
 
+        AudioEngine.playSfx('select');
         Battle.lastMenuIndex = Input.focus;
 
         // Rebuild menu to account for Transform/Metronome/etc changes
@@ -68,6 +100,7 @@ const BattleMenus = {
 
         // 3. NORMAL STATE: Show Menu
         Game.state = 'BATTLE';
+        AudioEngine.playSfx('select');
 
         // Ensure all screens are closed when returning to main battle menu
         if (typeof ScreenManager !== 'undefined') {
@@ -91,6 +124,7 @@ const BattleMenus = {
             return;
         }
 
+        AudioEngine.playSfx('select');
         UI.hide('action-menu');
         const choice = await DialogManager.ask("Give up and\nrestart?", ["Yes", "No"], { lock: true });
 
@@ -103,6 +137,7 @@ const BattleMenus = {
 
     openPack() {
         if (Battle.uiLocked) return;
+        AudioEngine.playSfx('select');
         Battle.lastMenuIndex = Input.focus;
         UI.hide('action-menu');
         Game.state = 'BAG';
@@ -111,6 +146,14 @@ const BattleMenus = {
 
     // --- RENDERERS ---
     renderPackList() {
+        const pocket = PackScreen.pockets[PackScreen.currentPocketIdx];
+        const header = document.querySelector('.pack-header');
+        header.innerHTML = `<span class="pocket-arrow" id="pocket-prev" style="cursor:pointer; padding: 0 10px;">&lt;</span> ${pocket.name} <span class="pocket-arrow" id="pocket-next" style="cursor:pointer; padding: 0 10px;">&gt;</span>`;
+
+        // Mouse Listeners for header arrows
+        document.getElementById('pocket-prev').onclick = (e) => { e.stopPropagation(); PackScreen.prevPocket(); };
+        document.getElementById('pocket-next').onclick = (e) => { e.stopPropagation(); PackScreen.nextPocket(); };
+
         const list = document.getElementById('pack-list');
         list.innerHTML = "";
         let idxCounter = 0;
@@ -118,7 +161,8 @@ const BattleMenus = {
         const itemOrder = [
             'potion', 'superpotion', 'hyperpotion', 'maxpotion',
             'revive', 'maxrevive',
-            'pokeball', 'greatball', 'ultraball', 'masterball'
+            'pokeball', 'greatball', 'ultraball', 'masterball',
+            'pokedex', 'bicycle'
         ];
 
         const sortedKeys = Object.keys(Game.inventory).sort((a, b) => {
@@ -135,6 +179,10 @@ const BattleMenus = {
             if (count > 0) {
                 const data = ITEMS[key];
                 if (!data) return;
+
+                // Filter by pocket
+                if (data.pocket !== pocket.id) return;
+
                 const div = document.createElement('div');
                 div.className = 'pack-item';
                 div.innerHTML = `<span>${data.name}</span> <span>x${count}</span>`;
@@ -154,7 +202,21 @@ const BattleMenus = {
                     showDesc();
                     AudioEngine.playSfx('select');
                 };
-                div.onclick = () => {
+                div.onclick = async () => {
+                    if (key === 'pokedex') {
+                        AudioEngine.playSfx('select');
+                        ScreenManager.push('POKEDEX');
+                        return;
+                    }
+                    if (key === 'bicycle') {
+                        AudioEngine.playSfx('error');
+                        await DialogManager.show("OAK: There's a time\nand place for that!");
+                        return;
+                    }
+                    if (data.type === 'rogue') {
+                        AudioEngine.playSfx('select');
+                        return;
+                    }
                     if (data.type === 'heal' || data.type === 'revive') {
                         Game.selectedItemKey = key;
                         Game.state = 'HEAL';
@@ -168,6 +230,15 @@ const BattleMenus = {
                 idxCounter++;
             }
         });
+
+        // Add "None Found" message if pocket is empty
+        if (idxCounter === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'pack-item disabled';
+            emptyMsg.innerText = "NO ITEMS";
+            list.appendChild(emptyMsg);
+            idxCounter++;
+        }
 
         const cancelBtn = document.createElement('div');
         cancelBtn.className = 'pack-item cancel-btn';

@@ -72,11 +72,13 @@ const PokedexScreen = {
         }
 
         if (key === 'z' || key === 'Z' || key === 'Enter') {
+            AudioEngine.playSfx('select');
             this.openDetails();
             return true;
         }
 
         if (key === 'x' || key === 'X' || key === 'Escape') {
+            AudioEngine.playSfx('select');
             ScreenManager.pop();
             return true;
         }
@@ -274,14 +276,9 @@ const PokedexScreen = {
     },
 
     updateStats() {
-        let seen = 0;
-        let caught = 0;
-        for (let i = 1; i <= this.maxIndex; i++) {
-            if (PokedexData.isSeen(i)) seen++;
-            if (PokedexData.isCaught(i)) caught++;
-        }
-        document.getElementById('dex-seen-count').innerText = seen;
-        document.getElementById('dex-caught-count').innerText = caught;
+        const { seen, caught } = PokedexData.getCounts();
+        document.getElementById('dex-seen-count').innerText = seen.toString();
+        document.getElementById('dex-caught-count').innerText = caught.toString();
     },
 
     // --- Details Panel ---

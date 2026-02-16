@@ -9,6 +9,8 @@ const MOVE_DEX = {
         isUnique: true,
         /** @param {Battle} battle @param {Pokemon} user @param {Pokemon} target */
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('metronome', ctx);
             await UI.typeText("Waggling a finger...");
             let rndId = Math.floor(Math.random() * 700) + 1;
             const moveData = await API.getMove(rndId);
@@ -128,6 +130,8 @@ const MOVE_DEX = {
     'DISABLE': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('disable', ctx);
             // Check if target has used a move
             if (!target.lastMoveUsed || !target.lastMoveUsed.name) {
                 await UI.typeText("But it failed!");
@@ -155,6 +159,8 @@ const MOVE_DEX = {
     'SPIKES': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('spikes', ctx);
             const side = user === battle.p ? 'enemy' : 'player';
             const current = battle.sideConditions[side].spikes || 0;
             if (current >= 3) {
@@ -339,12 +345,16 @@ const MOVE_DEX = {
     'ROAR': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            if (target.isBoss) { await UI.typeText("But it failed!"); return 'FAIL'; }
+            await battle.triggerHitAnim(target, 'normal', 'ROAR', user);
             return await MovesEngine.forceSwitchOrRun(battle, user, target);
         }
     },
     'WHIRLWIND': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            if (target.isBoss) { await UI.typeText("But it failed!"); return 'FAIL'; }
+            await battle.triggerHitAnim(target, 'normal', 'WHIRLWIND', user);
             return await MovesEngine.forceSwitchOrRun(battle, user, target);
         }
     },
@@ -399,6 +409,12 @@ const MOVE_DEX = {
     'TOXIC': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            const mod = Mechanics.getTypeEffectiveness('poison', target.types);
+            if (mod === 0) { await UI.typeText(`It doesn't affect\n${target.name}...`); return 'IMMUNE'; }
+            if (target.status) { await UI.typeText("But it failed!"); return 'FAIL'; }
+
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('toxic', ctx);
             const success = await battle.applyStatus(target, 'tox', target === battle.p);
             return success;
         }
@@ -410,6 +426,8 @@ const MOVE_DEX = {
                 await UI.typeText("But it failed!");
                 return 'FAIL';
             }
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('yawn', ctx);
             target.volatiles.drowsy = 2;
             await UI.typeText(`${user.name} made\n${target.name} drowsy!`);
             return true;
@@ -443,6 +461,8 @@ const MOVE_DEX = {
                 await UI.typeText("But it failed!");
                 return 'FAIL';
             }
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('encore', ctx);
             target.volatiles.encored = {
                 move: target.lastMoveUsed,
                 turns: Math.floor(Math.random() * 3) + 3
@@ -467,16 +487,25 @@ const MOVE_DEX = {
     'CURSE': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
-            await BattleAnims.playRegistered('curse', ctx);
             if (user.types.includes('ghost')) {
-                user.currentHp = Math.floor(user.currentHp / 2);
+                if (user.currentHp <= Math.floor(user.maxHp / 2)) {
+                    await UI.typeText("But it failed!");
+                    return 'FAIL';
+                }
+
+                const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+                await BattleAnims.playRegistered('curse', ctx);
+
+                user.currentHp = Math.floor(user.currentHp - (user.maxHp / 2));
                 UI.updateHUD(user, user === battle.p ? 'player' : 'enemy');
                 await UI.typeText(`${user.name} cut its HP\nto lay a curse!`);
 
                 target.volatiles.cursed = true;
                 await UI.typeText(`${target.name} was\ncursed!`);
             } else {
+                const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+                await BattleAnims.playRegistered('curse', ctx);
+
                 await battle.applyStatChanges(user, [{ stat: { name: 'speed' }, change: -1 }, { stat: { name: 'attack' }, change: 1 }, { stat: { name: 'defense' }, change: 1 }], user === battle.p);
             }
             return true;
@@ -485,6 +514,11 @@ const MOVE_DEX = {
     'PAIN SPLIT': {
         isUnique: true,
         onHit: async (battle, user, target) => {
+            if (user.currentHp === user.maxHp && target.currentHp === target.maxHp) {
+                await UI.typeText("But it failed!");
+                return 'FAIL';
+            }
+
             const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
             await BattleAnims.playRegistered('pain-split', ctx);
             const avg = Math.floor((user.currentHp + target.currentHp) / 2);
@@ -603,6 +637,9 @@ const MOVE_DEX = {
                 await UI.typeText(`${target.name} is already\nseeded!`);
                 return 'FAIL';
             }
+
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('leech-seed', ctx);
 
             target.volatiles.seeded = {
                 source: user === battle.p ? 'player' : 'enemy'

@@ -80,7 +80,7 @@
 
 /**
  * @typedef {Object} AnimStep
- * @property {'sfx'|'cry'|'wait'|'screenFx'|'spriteShake'|'cssClass'|'move'|'spawn'|'particles'|'beam'|'stream'|'volley'|'flash'|'overlay'|'formation'|'spriteMove'|'tilt'|'bgColor'|'invert'|'spriteSilhouette'|'spriteGhost'|'wave'|'spriteWave'|'callback'|'parallel'} type
+ * @property {'sfx'|'cry'|'wait'|'screenFx'|'spriteShake'|'cssClass'|'move'|'spawn'|'particles'|'beam'|'stream'|'volley'|'flash'|'overlay'|'formation'|'spriteMove'|'tilt'|'bgColor'|'invert'|'spriteSilhouette'|'spriteGhost'|'wave'|'spriteWave'|'orbit'|'callback'|'parallel'} type
  * @property {string} [sound] For 'sfx'
  * @property {string} [cry] For 'cry'
  * @property {number} [ms] For 'wait'
@@ -169,6 +169,7 @@
  * @property {Function} [_ensureSilhouetteFilter]
  * @property {Function} [_doWave]
  * @property {Function} [_doSpriteWave]
+ * @property {Function} [_doOrbit]
  * @property {Function} [_createShapeEl]
  * @property {Function} [_getMovePreset]
  * @property {any} [x]

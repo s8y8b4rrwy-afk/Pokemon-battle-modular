@@ -13,7 +13,7 @@ const Input = {
     // --- 1. VISUAL HIGHLIGHTING LOGIC ---
     visuals: {
         'BATTLE': () => document.getElementById(['opt-fight', 'opt-pkmn', 'opt-pack', 'opt-run'][Input.focus]),
-        'CONTINUE': () => document.getElementById(['opt-continue', 'opt-newgame'][Input.focus]),
+        'CONTINUE': () => document.getElementById(['opt-continue', 'opt-pokedex', 'opt-newgame'][Input.focus]),
         'DIALOG_CHOICE': () => document.querySelectorAll('#dialog-choice-box .choice-item')[Input.focus],
 
         'MOVES': () => {

@@ -26,6 +26,7 @@
 //   bgColor    — Flash background color  { color, duration }
 //   invert     — Invert colors           { target:'scene'|'attacker'|'defender', duration }
 //   wave       — Wavy scene distortion   { intensity, duration, speed }
+//   orbit      — Orbiting shapes around target { target, shape, radiusX, radiusY, count, speed, duration, color, outline }
 //   callback   — Run arbitrary async fn  { fn }
 //   parallel   — Run steps concurrently  { steps: [...] }
 //
@@ -110,19 +111,33 @@ const AnimFramework = {
         const scene = ctx.scene || document.getElementById('scene');
         const fxContainer = ctx.fxContainer || document.getElementById('fx-container');
 
-        const isPlayerAttacker = ctx.isPlayerAttacker ?? true;
+        // Resolve which side is the attacker/defender based on objects if provided
+        // This explicitly supports self-targeting (attacker === defender)
+        let isPlayerAttacker = ctx.isPlayerAttacker ?? true;
+        if (ctx.attacker && typeof Battle !== 'undefined') {
+            isPlayerAttacker = (ctx.attacker === Battle.p);
+        }
 
-        // Attacker/Defender sprite elements
         const attackerSprite = isPlayerAttacker
             ? document.getElementById('player-sprite')
             : document.getElementById('enemy-sprite');
-        const defenderSprite = isPlayerAttacker
-            ? document.getElementById('enemy-sprite')
-            : document.getElementById('player-sprite');
 
-        // Canonical positions (center of each sprite area)
+        let defenderSprite;
+        if (ctx.defender && typeof Battle !== 'undefined') {
+            defenderSprite = (ctx.defender === Battle.p)
+                ? document.getElementById('player-sprite')
+                : document.getElementById('enemy-sprite');
+        } else {
+            defenderSprite = isPlayerAttacker
+                ? document.getElementById('enemy-sprite')
+                : document.getElementById('player-sprite');
+        }
+
+        // Canonical positions
         const attackerPos = isPlayerAttacker ? { x: 60, y: 150 } : { x: 230, y: 70 };
-        const defenderPos = isPlayerAttacker ? { x: 230, y: 70 } : { x: 60, y: 150 };
+        const defenderPos = (ctx.defender && typeof Battle !== 'undefined' && ctx.defender === Battle.p)
+            ? { x: 60, y: 150 }
+            : (isPlayerAttacker ? { x: 230, y: 70 } : { x: 60, y: 150 });
 
         return {
             ...ctx,
@@ -234,6 +249,7 @@ const AnimFramework = {
             case 'spriteGhost': await this._doSpriteGhost(step, ctx); break;
             case 'wave': await this._doWave(step, ctx); break;
             case 'spriteWave': await this._doSpriteWave(step, ctx); break;
+            case 'orbit': await this._doOrbit(step, ctx); break;
 
             default:
                 console.warn(`[AnimFramework] Unknown step type: "${step.type}"`);
@@ -1022,5 +1038,73 @@ const AnimFramework = {
         sprite.style.animation = `${keyframeName} ${speed}ms ease-in-out ${cycles}`;
         await wait(dur);
         sprite.style.animation = '';
+    },
+
+    // --- ORBIT (Rotating shapes in ellipsis/circle) ---
+    async _doOrbit(step, ctx) {
+        const parent = this._resolveElement(step.parent || 'fxContainer', ctx);
+        if (!parent) return;
+        const pos = this._resolvePosition(step.target || 'defender', ctx);
+
+        const count = step.count || 3;
+        const duration = step.duration || 1000;
+        const radiusX = step.radiusX || 30;
+        const radiusY = step.radiusY || 10;
+        const yOffset = step.yOffset || -40; // Aiming for head height
+        const speed = step.speed || 1; // Rotations per second
+        const color = step.color || '#ffd700';
+        const outline = step.outline || '#b8860b';
+        const size = step.particleSize || 16;
+        const shape = step.shape || 'duck';
+
+        const els = [];
+        for (let i = 0; i < count; i++) {
+            const el = this._createShapeEl(shape, size, size, color, outline);
+            if (!el) continue;
+
+            Object.assign(el.style, {
+                position: 'absolute',
+                pointerEvents: 'none',
+                zIndex: '45',
+                opacity: '0',
+                transition: 'opacity 300ms ease-out'
+            });
+            parent.appendChild(el);
+            els.push({ el, angle: (i / count) * Math.PI * 2 });
+        }
+
+        const startTime = Date.now();
+        els.forEach(item => item.el.style.opacity = '1');
+
+        return new Promise((resolve) => {
+            const update = () => {
+                const elapsed = Date.now() - startTime;
+                if (elapsed >= duration) {
+                    els.forEach(item => item.el.remove());
+                    resolve();
+                    return;
+                }
+
+                const rotation = (elapsed / 1000) * speed * Math.PI * 2;
+
+                els.forEach(item => {
+                    const currentAngle = item.angle + rotation;
+                    const x = pos.x + Math.cos(currentAngle) * radiusX - size / 2;
+                    const y = pos.y + yOffset + Math.sin(currentAngle) * radiusY - size / 2;
+
+                    const depth = Math.sin(currentAngle);
+                    const scale = 0.8 + (depth + 1) * 0.2; // 0.8 to 1.2
+                    // front is sin > 0
+                    item.el.style.left = x + 'px';
+                    item.el.style.top = y + 'px';
+                    item.el.style.transform = `scale(${scale})`;
+                    // Assuming pokemon sprite is around z-index 10
+                    item.el.style.zIndex = depth > 0 ? '25' : '5';
+                });
+
+                requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+        });
     }
 };

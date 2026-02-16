@@ -391,3 +391,10 @@
     font-size: 16px;
     position: absolute;
 }
+
+/* --- BOSS VISUALS --- */
+
+.boss-name-tag {
+    color: #ff4444;
+    font-weight: bold;
+}

@@ -25,13 +25,21 @@ const SelectionScreen = {
 
     handleInput(key) {
         if (key === 'ArrowRight') {
+            const oldFocus = Input.focus;
             Input.focus = Math.min(2, Input.focus + 1);
-            this.updatePreview(Input.focus);
+            if (oldFocus !== Input.focus) {
+                AudioEngine.playSfx('select');
+                this.updatePreview(Input.focus);
+            }
             return true;
         }
         if (key === 'ArrowLeft') {
+            const oldFocus = Input.focus;
             Input.focus = Math.max(0, Input.focus - 1);
-            this.updatePreview(Input.focus);
+            if (oldFocus !== Input.focus) {
+                AudioEngine.playSfx('select');
+                this.updatePreview(Input.focus);
+            }
             return true;
         }
 
@@ -39,6 +47,7 @@ const SelectionScreen = {
             const idx = Input.focus;
             const p = Game.tempSelectionList[idx];
             if (p) {
+                AudioEngine.playSfx('select');
                 Game.tempSelection = p;
                 // Use screen manager to push summary
                 ScreenManager.push('SUMMARY', { mon: p, mode: 'SELECTION' });

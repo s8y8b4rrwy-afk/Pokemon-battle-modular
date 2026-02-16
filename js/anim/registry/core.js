@@ -376,25 +376,12 @@ AnimFramework.register('confused', [
     { type: 'sfx', sound: 'psychic' },
     {
         type: 'parallel', steps: [
-            { type: 'wave', intensity: 2, duration: 1000, speed: 100 },
-            { type: 'spriteWave', target: 'defender', intensity: 10, duration: 1000, speed: 80 },
+            { type: 'wave', intensity: 0.5, duration: 1500, speed: 80 },
+            { type: 'spriteWave', target: 'defender', intensity: 2, duration: 1500, speed: 60 },
             {
-                type: 'overlay', target: 'defender', shape: 'duck',
-                color: '#ffd700', outline: '#b8860b',
-                width: 14, height: 14, duration: 1000, animation: 'fade',
-                count: 2, spread: 20
-            },
-            {
-                type: 'overlay', target: 'defender', shape: 'bird',
-                color: '#fff', outline: '#666',
-                width: 12, height: 8, duration: 1000, animation: 'fade',
-                count: 2, spread: 25
-            },
-            {
-                type: 'overlay', target: 'defender', shape: 'spiral',
-                color: '#ff69b4', outline: '#c71585',
-                width: 18, height: 18, duration: 1000, animation: 'fade',
-                count: 1
+                type: 'orbit', target: 'defender', shape: 'duck',
+                count: 3, radiusX: 32, radiusY: 12, yOffset: -45,
+                speed: 1.1, duration: 1800, color: '#ffd700', outline: '#b8860b'
             }
         ]
     }
@@ -440,13 +427,10 @@ AnimFramework.register('status-par', [
     {
         type: 'parallel', steps: [
             { type: 'spriteSilhouette', target: 'defender', color: '#ffd700', duration: 600, hold: 100 },
-            { type: 'spriteWave', target: 'defender', intensity: 8, duration: 600, speed: 50 },
-            { type: 'cssClass', el: 'defender', class: 'status-anim-par', duration: 600 },
+            { type: 'cssClass', el: 'defender', class: 'status-anim-par', duration: 800 },
             {
-                type: 'overlay', target: 'defender', shape: 'lightning',
-                color: '#ffd700', outline: '#b8860b',
-                width: 20, height: 40, duration: 400, animation: 'strike',
-                count: 2, spread: 15
+                type: 'particles', position: 'defender', count: 12, spread: 40, duration: 800,
+                particleStyles: { background: '#ffd700', border: '1px solid #b8860b', width: '4px', height: '4px' }
             },
             { type: 'spriteShake', target: 'defender', duration: 400 } // Jitter
         ]
@@ -484,14 +468,23 @@ AnimFramework.register('status-frz', [
 ]);
 
 AnimFramework.register('status-slp', [
-    { type: 'sfx', sound: 'psychic' }, // Soft sound
+    { type: 'sfx', sound: 'psychic' },
     {
         type: 'parallel', steps: [
-            { type: 'cssClass', el: 'defender', class: 'status-anim-slp', duration: 800 },
+            { type: 'cssClass', el: 'defender', class: 'status-anim-slp', duration: 1000 },
+            {
+                type: 'particles', position: 'defender', count: 5, spread: 30, duration: 1200,
+                particleStyles: { background: 'none', border: 'none' },
+                callback: (p, i) => {
+                    // This is a bit of a hack if the particle system doesn't support SVG shapes directly
+                    // but we can just use the shapes via css classes or similar.
+                    // For now let's use the overlay approach which is safer.
+                }
+            },
             {
                 type: 'overlay', target: 'defender', shape: 'zzz',
                 color: '#fff', outline: '#000', width: 24, height: 18,
-                duration: 800, animation: 'float', count: 3, spread: 10, stagger: 200
+                duration: 1000, animation: 'float', count: 4, spread: 15, stagger: 200
             }
         ]
     }
@@ -962,5 +955,72 @@ AnimFramework.register('tick-perish-song', [
         type: 'overlay', target: 'defender', shape: 'music',
         color: '#ff69b4', outline: '#000', width: 24, height: 24,
         duration: 400, animation: 'float'
+    }
+]);
+
+AnimFramework.register('tick-slp', [
+    { type: 'sfx', sound: 'psychic' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'zzz',
+                color: '#fff', outline: '#000', width: 20, height: 15,
+                duration: 800, animation: 'float', count: 2, spread: 10
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('tick-par', [
+    { type: 'sfx', sound: 'electric' },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteShake', target: 'defender', duration: 300 },
+            {
+                type: 'particles', position: 'defender', count: 8, spread: 35, duration: 600,
+                particleStyles: { background: '#ffd700', border: '1px solid #b8860b', width: '3px', height: '3px' }
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('tick-psn', [
+    { type: 'sfx', sound: 'poison' },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#a040a0', duration: 500 },
+            {
+                type: 'overlay', target: 'defender', shape: 'bubble',
+                color: '#a040a0', outline: '#4b0082', width: 10, height: 10,
+                duration: 400, animation: 'float', count: 2, spread: 15
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('tick-tox', [
+    { type: 'sfx', sound: 'poison' },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#703070', duration: 600 },
+            {
+                type: 'overlay', target: 'defender', shape: 'skull',
+                color: '#300030', outline: '#000', width: 16, height: 16,
+                duration: 500, animation: 'fade', count: 1
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('tick-brn', [
+    { type: 'sfx', sound: 'fire' },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteSilhouette', target: 'defender', color: '#ff4500', duration: 500 },
+            {
+                type: 'particles', position: 'defender', count: 5, spread: 25, duration: 500,
+                particleStyles: { background: '#ff4500', borderRadius: '50% 50% 0 50%' }
+            }
+        ]
     }
 ]);

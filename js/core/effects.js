@@ -29,11 +29,10 @@ const EffectsManager = {
                 await UI.typeText(`${mon.name} thawed out!`);
                 return true;
             }
-            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-            sprite.classList.add('status-anim-frz');
-            AudioEngine.playSfx('ice');
-            await wait(600);
-            sprite.classList.remove('status-anim-frz');
+            // Trigger Visuals using Framework
+            const ctx = { attacker: isPlayer ? battle.e : battle.p, defender: mon, isPlayerAttacker: !isPlayer };
+            await AnimFramework.play('fx-ice', ctx);
+
             await UI.typeText(`${mon.name} is\nfrozen solid!`);
             return false;
         }
@@ -53,22 +52,20 @@ const EffectsManager = {
                 await UI.typeText(`${mon.name} woke up!`);
                 return true;
             }
-            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-            sprite.classList.add('status-anim-slp');
-            AudioEngine.playSfx('sleep');
-            await wait(600);
-            sprite.classList.remove('status-anim-slp');
+            // Trigger Visuals using Framework
+            const ctx = { attacker: isPlayer ? battle.e : battle.p, defender: mon, isPlayerAttacker: !isPlayer };
+            await AnimFramework.play('tick-slp', ctx);
+
             await UI.typeText(`${mon.name} is\nfast asleep!`);
             return false;
         }
 
         // 3. PARALYSIS
         if (mon.status === 'par' && Math.random() < 0.25) {
-            const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-            sprite.classList.add('status-anim-par');
-            AudioEngine.playSfx('electric');
-            await wait(600);
-            sprite.classList.remove('status-anim-par');
+            // Trigger Visuals using Framework
+            const ctx = { attacker: isPlayer ? battle.e : battle.p, defender: mon, isPlayerAttacker: !isPlayer };
+            await AnimFramework.play('tick-par', ctx);
+
             await UI.typeText(`${mon.name} is paralyzed!\nIt can't move!`);
             return false;
         }
@@ -198,14 +195,19 @@ const EffectsManager = {
         UI.updateHUD(target, isPlayerTarget ? 'player' : 'enemy');
 
         // Sprite Flash & Sound
-        const sprite = isPlayerTarget ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-        const animClass = `status-anim-${ailment === 'tox' ? 'psn' : ailment}`;
-        const sfxMap = { 'par': 'electric', 'psn': 'poison', 'tox': 'poison', 'brn': 'burn', 'frz': 'ice', 'slp': 'sleep' };
-
-        if (animClass) sprite.classList.add(animClass);
-        AudioEngine.playSfx(sfxMap[ailment] || 'damage');
-        await wait(600);
-        if (animClass) sprite.classList.remove(animClass);
+        // Trigger Visuals using Framework
+        const animKey = `status-${ailment === 'tox' ? 'psn' : ailment}`;
+        const ctx = { attacker: isPlayerTarget ? battle.e : battle.p, defender: target, isPlayerAttacker: !isPlayerTarget };
+        if (AnimFramework.has(animKey)) {
+            await AnimFramework.play(animKey, ctx);
+        } else {
+            const sprite = isPlayerTarget ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+            const animClass = `status-anim-${ailment === 'tox' ? 'psn' : ailment}`;
+            if (animClass) sprite.classList.add(animClass);
+            AudioEngine.playSfx('damage');
+            await wait(600);
+            if (animClass) sprite.classList.remove(animClass);
+        }
 
         const msg = STATUS_DATA[ailment].applyMsg || STATUS_DATA[ailment].msg || 'was affected!';
         await UI.typeText(`${target.name} ${msg}`);
@@ -234,12 +236,9 @@ const EffectsManager = {
         if (mon.status === 'brn' || mon.status === 'psn' || mon.status === 'tox') {
             await wait(400);
             if (!isInvisible) {
-                const animClass = mon.status === 'brn' ? 'status-anim-brn' : 'status-anim-psn';
-                const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-                sprite.classList.add(animClass);
-                AudioEngine.playSfx(mon.status === 'brn' ? 'burn' : 'poison');
-                await wait(600);
-                sprite.classList.remove(animClass);
+                const animKey = `tick-${mon.status}`;
+                const ctx = { attacker: isPlayer ? battle.e : battle.p, defender: mon, isPlayerAttacker: !isPlayer };
+                await AnimFramework.play(animKey, ctx);
             }
             const tickMsg = STATUS_DATA[mon.status].tickMsg || STATUS_DATA[mon.status].msg || 'is affected!';
             await UI.typeText(`${mon.name} ${tickMsg}`);

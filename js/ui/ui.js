@@ -46,8 +46,28 @@ const UI = {
 
             let i = 0;
             this.typeInterval = setInterval(() => {
+                // Handle HTML tags (don't type them char-by-char)
+                while (text.charAt(i) === '<') {
+                    const endOfTag = text.indexOf('>', i);
+                    if (endOfTag === -1) break;
+                    const tag = text.substring(i, endOfTag + 1);
+                    el.innerHTML += tag;
+                    i = endOfTag + 1;
+                }
+
+                if (i >= text.length) {
+                    clearInterval(this.typeInterval);
+                    setTimeout(() => {
+                        if (cb && typeof cb === 'function') cb();
+                        resolve();
+                    }, postDelay);
+                    return;
+                }
+
                 const char = text.charAt(i);
-                if (char === '\n') el.innerHTML += '<br>'; else el.innerHTML += char;
+                if (char === '\n') el.innerHTML += '<br>';
+                else el.innerHTML += char;
+
                 i++;
                 if (i >= text.length) {
                     clearInterval(this.typeInterval);
@@ -68,8 +88,11 @@ const UI = {
     // --- HUD & PROGRESS ---
     updateHUD(mon, side) {
         const nameEl = document.getElementById(`${side}-name`);
-        if (mon.name.startsWith("BOSS ")) nameEl.innerHTML = mon.name.replace("BOSS ", "BOSS<br>");
-        else nameEl.innerText = mon.name;
+        if (mon.name.startsWith("BOSS ")) {
+            nameEl.innerHTML = mon.name.replace("BOSS ", '<span class="boss-name-tag">BOSS</span><br>');
+        } else {
+            nameEl.innerText = mon.name;
+        }
 
         document.getElementById(`${side}-lvl`).innerText = `Lv${mon.level}`;
 

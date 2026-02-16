@@ -6,7 +6,7 @@
 #dialog-choice-box {
     position: absolute;
     right: 15px;
-    top: -55px;
+    top: -70px;
     /* Positioned above the dialog box */
     background: white;
     border: 3px solid #333;
@@ -19,7 +19,7 @@
 }
 
 .choice-item {
-    padding: 4px 8px;
+    padding: 8px 12px;
     font-size: 11px;
     color: black;
     /* Pure black text */

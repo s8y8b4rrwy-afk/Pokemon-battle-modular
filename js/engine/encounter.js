@@ -43,7 +43,16 @@ const EncounterManager = {
         }
 
         // Natural Shiny Chance (if not forced)
-        if (!specs.overrides.hasOwnProperty('shiny') && RNG.roll(ENCOUNTER_CONFIG.SHINY_CHANCE)) {
+        let shinyChance = ENCOUNTER_CONFIG.SHINY_CHANCE;
+
+        // Rogue Boost (Shiny Charm)
+        if (typeof Game !== 'undefined' && Game.inventory) {
+            // Base chance is likely low (e.g. 1/100 or 1/4096). 
+            const boost = (typeof ROGUE_CONFIG !== 'undefined') ? ROGUE_CONFIG.SHINY_BOOST_PER_STACK : 0.005;
+            shinyChance += (Game.inventory.rogue_shiny || 0) * boost;
+        }
+
+        if (!specs.overrides.hasOwnProperty('shiny') && RNG.roll(shinyChance)) {
             specs.overrides.shiny = true;
         }
 
@@ -109,8 +118,8 @@ const EncounterManager = {
             enemy.isBoss = true;
             enemy.name = "BOSS " + enemy.name;
             enemy.isHighTier = true;
-            enemy.rageLevel = 3;
-            enemy.maxHp = Math.floor(enemy.maxHp * 1.5);
+            enemy.rageLevel = 1;
+            enemy.maxHp = Math.floor(enemy.maxHp * 1.2);
             enemy.currentHp = enemy.maxHp;
         }
 

@@ -209,6 +209,8 @@ const AudioEngine = {
             case 'heal': [0, 0.1, 0.2, 0.3].forEach((d, i) => this.playTone(SFX_LIB.heal_base * [1, 1.25, 1.5, 2][i], 'sine', 0.1 + (i * 0.05), 0.1, d)); break;
             case 'levelup': [0, 0.15, 0.3, 0.45].forEach((d, i) => this.playTone(SFX_LIB.levelup_base * [1, 1.25, 1.5, 2][i], 'square', 0.1, 0.1, d)); break;
             case 'funfair': this.playTone(523.25, 'square', 0.1, 0.1, 0); this.playTone(659.25, 'square', 0.1, 0.1, 0.1); this.playTone(783.99, 'square', 0.1, 0.1, 0.2); this.playTone(1046.50, 'square', 0.2, 0.1, 0.3); break;
+            case 'pokedex_open': [0, 0.08, 0.16].forEach((d, i) => this.playTone(600 * [1, 1.33, 1.5][i], 'square', 0.12, 0.1, d)); break;
+            case 'pokedex_close': [0, 0.08, 0.16].forEach((d, i) => this.playTone(600 * [1.5, 1.33, 1][i], 'square', 0.12, 0.1, d)); break;
             case 'error': osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.2); osc.start(now); osc.stop(now + 0.2); break;
             case 'crit': osc.type = 'square'; osc.frequency.setValueAtTime(80, now); gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); break;
             case 'miss': osc.type = 'square'; osc.frequency.setValueAtTime(500, now); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.1); osc.start(now); osc.stop(now + 0.1); break;

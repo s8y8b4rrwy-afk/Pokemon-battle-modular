@@ -15,7 +15,7 @@ const Battle = {
     buildMoveMenu(...args) { return BattleMenus.buildMoveMenu(...args); },
 
     // --- ANIMATION SHIMS (Delegately to BattleAnims module) ---
-    triggerHitAnim(...args) { return BattleAnims.triggerHitAnim(...args); },
+    triggerHitAnim(target, type, moveName, attacker) { return BattleAnims.triggerHitAnim(target, type, moveName, attacker); },
     triggerHealAnim(...args) { return BattleAnims.triggerHealAnim(...args); },
     performVisualSwap(...args) { return BattleAnims.performVisualSwap(...args); },
     triggerRageAnim(...args) { return BattleAnims.triggerRageAnim(...args); },
@@ -30,12 +30,12 @@ const Battle = {
      * @param {string|boolean} moveName 
      * @param {Object} effectivenessData 
      */
-    async applyDamage(target, amount, type = 'normal', moveName = null, effectivenessData = null) {
+    async applyDamage(target, amount, type = 'normal', moveName = null, effectivenessData = null, attacker = null) {
         // A. Handle Substitute
         if (target.volatiles.substituteHP > 0 && type !== 'recoil' && type !== 'poison' && type !== 'burn') {
             target.volatiles.substituteHP -= amount;
             if (moveName !== false) {
-                await this.triggerHitAnim(target, type, moveName); // Move animation on doll
+                await this.triggerHitAnim(target, type, moveName, attacker); // Move animation on doll
             }
             await wait(150); // Beat before impact
             this._playEffectivenessSfx(effectivenessData, moveName);
@@ -62,7 +62,7 @@ const Battle = {
         // Step 1: Move animation (projectiles, streams, overlays)
         // If moveName is explicitly false (from skipAnim), we skip this step
         if (moveName !== false) {
-            await this.triggerHitAnim(target, type, moveName);
+            await this.triggerHitAnim(target, type, moveName, attacker);
         }
 
         // Step 2: Brief pause for dramatic timing

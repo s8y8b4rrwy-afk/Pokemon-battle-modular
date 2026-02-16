@@ -64,6 +64,12 @@ const Mechanics = {
         if (move.meta && move.meta.crit_rate >= 2) critChance = 0.50;
         if (attacker.isBoss) critChance = Math.max(critChance, GAME_BALANCE.CRIT_CHANCE_BOSS);
 
+        // Rogue Boost (Crit)
+        if (typeof Game !== 'undefined' && Game.inventory && Game.party && Game.party.includes(attacker)) {
+            const boost = (typeof ROGUE_CONFIG !== 'undefined') ? ROGUE_CONFIG.CRIT_BOOST_PER_STACK : 0.05;
+            critChance += (Game.inventory.rogue_crit || 0) * boost;
+        }
+
         if (Math.random() < critChance) { isCrit = true; dmg *= 2; }
 
         const variance = GAME_BALANCE.DAMAGE_VARIANCE_MIN + Math.random() * (GAME_BALANCE.DAMAGE_VARIANCE_MAX - GAME_BALANCE.DAMAGE_VARIANCE_MIN);
@@ -86,6 +92,14 @@ const Mechanics = {
         let gain = Math.floor(((b * L) / 5) * Math.pow((2 * L + 10) / (L + Lp + 10), 2.5)) + 1;
         if (enemy.isBoss) gain = Math.floor(gain * 1.5);
         if (wasCaught) gain = Math.floor(gain * 0.8);
+
+        // Rogue Boost (XP)
+        if (typeof Game !== 'undefined' && Game.inventory) {
+            const boost = (typeof ROGUE_CONFIG !== 'undefined') ? ROGUE_CONFIG.XP_BOOST_PER_STACK : 0.10;
+            const xpMult = 1 + (Game.inventory.rogue_xp || 0) * boost;
+            gain = Math.floor(gain * xpMult);
+        }
+
         return gain;
     },
 
@@ -108,5 +122,19 @@ const Mechanics = {
             random -= item.weight;
         }
         return 'potion';
+    },
+
+    getRogueLoot() {
+        if (!ROGUE_LOOT || !ROGUE_LOOT.TABLE) return 'rogue_attack';
+
+        // Calculate Total Weight
+        const totalWeight = ROGUE_LOOT.TABLE.reduce((sum, item) => sum + item.weight, 0);
+        let random = Math.random() * totalWeight;
+
+        for (let item of ROGUE_LOOT.TABLE) {
+            if (random < item.weight) return item.key;
+            random -= item.weight;
+        }
+        return 'rogue_attack';
     }
 };

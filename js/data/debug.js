@@ -1,7 +1,7 @@
 // --- DEBUG SETTINGS ------------------------
 // Change ENABLED to true to activate these overrides
 const DEBUG = {
-    ENABLED: false,
+    ENABLED: true,
     BATTLE_LOGS: true, // Set to true to see detailed battle logs in console
 
     // Customize your starting items (Quantity)
@@ -15,13 +15,15 @@ const DEBUG = {
         pokeball: 20,
         greatball: 20,
         ultraball: 20,
-        masterball: 20
+        masterball: 20,
+        bicycle: 1,
+        pokedex: 1
     },
 
     // Force specific Enemy attributes
     ENEMY: {
         ID: null,       // Pokedex Number (e.g. 150 = Mewtwo). Set null for random.
-        LEVEL: 60,       // Level (1-100). Set null for auto-scaling.
+        LEVEL: null,       // Level (1-100). Set null for auto-scaling.
         SHINY: null,    // true = Always Shiny, false = Never Shiny, null = Random.
         IS_BOSS: null,  // true = Boss stats & music.
         RAGE: null,     // Start with Rage (0 = None, 1 = !, 2 = !!, 3 = MAX).
@@ -32,7 +34,7 @@ const DEBUG = {
 
         // Volatile Status (Temporary / Wear off)
         // e.g. { confused: 3 } (Confused for 3 turns)
-        VOLATILES: {},
+        VOLATILES: { confused: 3 },
 
         // Stat Stages (Buffs/Debuffs)
         // Keys: atk, def, spa (Sp. Atk), spd (Sp. Def), spe, acc, eva
@@ -52,7 +54,7 @@ const DEBUG = {
         STATUS: null,
 
         // Volatile Status: e.g. { confused: 5 }
-        VOLATILES: null,
+        VOLATILES: { sleep: 3 },
 
         // Stat Stages: e.g. { atk: 6, spe: 6 }
         STAGES: null,

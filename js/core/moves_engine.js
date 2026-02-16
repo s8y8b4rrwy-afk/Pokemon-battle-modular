@@ -128,7 +128,7 @@ const MovesEngine = {
         // Effectiveness data is passed INTO applyDamage so SFX plays at impact, not before
         const effData = { eff: result.eff, isCrit: result.isCrit };
 
-        await battle.applyDamage(defender, damage, move.type, move.skipAnim ? false : move.name, effData);
+        await battle.applyDamage(defender, damage, move.type, move.skipAnim ? false : move.name, effData, attacker);
 
         // Rage Building flags
         if (defender.currentHp > 0 && defender.rageLevel !== undefined) {
@@ -186,10 +186,22 @@ const MovesEngine = {
 
     async handleStatusMove(battle, attacker, defender, move) {
         const typeMod = Mechanics.getTypeEffectiveness(move.type, defender.types);
-        if (typeMod === 0) {
-            await UI.typeText("It had no effect!");
+
+        // Target Determination
+        const isSelfTarget = (move.target === 'user' || move.target === 'users-field');
+        const target = isSelfTarget ? attacker : defender;
+
+        // If it's an offensive move targeting the enemy, check immunity first
+        if (!isSelfTarget && typeMod === 0) {
+            await UI.typeText("It had no effect!"); // Immune
             return 'IMMUNE';
         }
+
+        // --- FIX: Play Move Animation ---
+        // We only reach here if the move is targeting the user OR if the enemy is not immune.
+        // This prevents the "anim-then-fail" ghost hits against immunities.
+        await battle.triggerHitAnim(target, move.type, move.name, attacker);
+
         return false;
     },
 

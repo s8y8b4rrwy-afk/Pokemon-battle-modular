@@ -88,6 +88,7 @@ const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'phy
 |------|-----------|-------------|
 | `overlay` | `target`, `shape`, `color`, `outline?`, `width`, `height`, `duration`, `animation`, `count?`, `spread?` | Render an SVG shape on top of a target with entrance animation |
 | `formation` | `target`, `pattern`\|`points`, `particleSize`, `color`, `outline?`, `shape?`, `duration`, `stagger?` | Spawn particles arranged in a predefined pattern (e.g. Fire Blast 大 kanji) |
+| `orbit` | `target`, `shape`, `radiusX`, `radiusY`, `count`, `speed`, `duration`, `color`, `outline?`, `yOffset?` | Rotate shapes in an elliptical path around a target. Simulates depth with z-index and scaling. |
 | `spawn` | `parent?`, `className`, `styles?`, `tag?`, `text?`, `duration`, `waitAfter?` | Create a temporary DOM element |
 
 ---

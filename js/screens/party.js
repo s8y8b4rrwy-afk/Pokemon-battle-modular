@@ -44,11 +44,13 @@ const PartyScreen = {
             return true;
         }
         if (['z', 'Z', 'Enter'].includes(key)) {
+            AudioEngine.playSfx('select');
             if (!isForced && Input.focus === len) document.getElementById('party-close-btn').click();
             else if (Input.focus < len) document.querySelectorAll('.party-slot')[Input.focus].click();
             return true;
         }
         if (key === 'x' || key === 'X') {
+            AudioEngine.playSfx('select');
             if (Game.state === 'HEAL') {
                 ScreenManager.pop();
             } else if (!isForced) {
@@ -74,10 +76,12 @@ const PartyScreen = {
             return true;
         }
         if (['z', 'Z', 'Enter'].includes(key)) {
+            AudioEngine.playSfx('select');
             document.querySelectorAll('#party-context .ctx-btn')[Input.focus].click();
             return true;
         }
         if (key === 'x' || key === 'X') {
+            AudioEngine.playSfx('select');
             this.closeContext();
             return true;
         }

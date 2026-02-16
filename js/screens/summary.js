@@ -46,6 +46,7 @@ const SummaryScreen = {
             .filter(b => b.style.display !== 'none');
 
         if (key === 'ArrowRight') {
+            AudioEngine.playSfx('select');
             if (Input.focus < buttons.length - 1) {
                 Input.focus++;
             } else {
@@ -54,6 +55,7 @@ const SummaryScreen = {
             return true;
         }
         if (key === 'ArrowLeft') {
+            AudioEngine.playSfx('select');
             if (Input.focus > 0) {
                 Input.focus--;
             } else {
@@ -61,15 +63,17 @@ const SummaryScreen = {
             }
             return true;
         }
-        if (key === 'ArrowDown') { this.nav(1); return true; }
-        if (key === 'ArrowUp') { this.nav(-1); return true; }
+        if (key === 'ArrowDown') { AudioEngine.playSfx('select'); this.nav(1); return true; }
+        if (key === 'ArrowUp') { AudioEngine.playSfx('select'); this.nav(-1); return true; }
 
         if (['z', 'Z', 'Enter'].includes(key)) {
+            AudioEngine.playSfx('select');
             if (buttons[Input.focus]) buttons[Input.focus].click();
             return true;
         }
 
         if (key === 'x' || key === 'X') {
+            AudioEngine.playSfx('select');
             this.close();
             return true;
         }

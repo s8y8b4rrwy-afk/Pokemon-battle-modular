@@ -15,11 +15,44 @@
 }
 
 .pack-header {
-    background: #282828;
+    background: #303030;
     color: white;
-    padding: 8px;
+    padding: 10px;
     font-size: 10px;
-    border-bottom: 2px solid #a0a0a0;
+    text-align: center;
+    border-bottom: 3px solid #606060;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pocket-arrow {
+    color: #ffd700;
+    font-size: 14px;
+    padding: 0 15px;
+    animation: pulse 1.5s infinite;
+}
+
+.pocket-arrow:hover {
+    color: white;
+    transform: scale(1.2);
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
 }
 
 .pack-body {

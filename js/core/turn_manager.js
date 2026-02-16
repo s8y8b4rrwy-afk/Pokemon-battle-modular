@@ -15,6 +15,7 @@ const TurnManager = {
         battle.uiLocked = true;
         document.getElementById('action-menu').classList.add('hidden');
         document.getElementById('move-menu').classList.add('hidden');
+        UI.textEl.innerHTML = "";
         Input.setMode('NONE');
 
         try {

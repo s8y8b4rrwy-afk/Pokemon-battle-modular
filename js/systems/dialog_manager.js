@@ -127,6 +127,20 @@ const DialogManager = {
             div.innerText = c;
             div.className = 'choice-item';
             if (i === 0) div.classList.add('focused');
+
+            // Mouse interaction
+            div.onmouseover = () => {
+                Input.focus = i;
+                if (typeof Input !== 'undefined') Input.updateVisuals();
+                else this.updateFocus(document.querySelectorAll('#dialog-choice-box .choice-item'));
+            };
+            div.onclick = () => {
+                if (this.activeResolver) {
+                    this.activeResolver(c);
+                    AudioEngine.playSfx('select');
+                }
+            };
+
             el.appendChild(div);
         });
 

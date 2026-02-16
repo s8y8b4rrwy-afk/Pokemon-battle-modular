@@ -71,5 +71,15 @@ const PokedexData = {
             if (Math.random() > 0.5) this.registerCaught(i);
         }
         this.save();
+    },
+
+    getCounts() {
+        let seen = 0;
+        let caught = 0;
+        for (const id in this.data) {
+            if (this.data[id].seen) seen++;
+            if (this.data[id].caught) caught++;
+        }
+        return { seen, caught };
     }
 };

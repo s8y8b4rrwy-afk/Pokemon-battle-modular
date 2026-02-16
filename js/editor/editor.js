@@ -175,6 +175,19 @@ const Editor = {
             text: { type: 'text', default: '' },
             duration: { type: 'number', default: 600 }
         },
+        orbit: {
+            target: { type: 'select', options: ['attacker', 'defender'], default: 'defender' },
+            shape: { type: 'select', options: [], dynamic: 'shapes' },
+            count: { type: 'number', default: 3 },
+            radiusX: { type: 'number', default: 32 },
+            radiusY: { type: 'number', default: 12 },
+            yOffset: { type: 'number', default: -45 },
+            speed: { type: 'number', default: 1.1 },
+            duration: { type: 'number', default: 1800 },
+            color: { type: 'color', default: '#ffd700' },
+            outline: { type: 'color', default: '#b8860b' },
+            particleSize: { type: 'number', default: 16 }
+        },
         parallel: {
             // Special container type
         },
@@ -237,6 +250,7 @@ const Editor = {
             if (AnimFramework._shapes) {
                 this.StepSchema.stream.svgShape.options = Object.keys(AnimFramework._shapes);
                 this.StepSchema.overlay.shape.options = Object.keys(AnimFramework._shapes);
+                this.StepSchema.orbit.shape.options = Object.keys(AnimFramework._shapes);
             }
             if (AnimFramework._formations) {
                 this.StepSchema.formation.pattern.options = Object.keys(AnimFramework._formations);
@@ -707,7 +721,8 @@ const Editor = {
             particles: '#60e0a0',
             flash: '#e0e0e0',
             overlay: '#a060e0',
-            formation: '#ff4500'
+            formation: '#ff4500',
+            orbit: '#ffd700'
         };
         return colors[type] || '#555';
     },
@@ -720,6 +735,7 @@ const Editor = {
         if (step.type === 'overlay') return `${step.shape || 'circle'} on ${step.target}`;
         if (step.type === 'screenFx') return `${step.class}`;
         if (step.type === 'particles') return `${step.type} (${step.count})`;
+        if (step.type === 'orbit') return `${step.count} ${step.shape || 'duck'}s around ${step.target}`;
         return '';
     },
 

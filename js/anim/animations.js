@@ -13,15 +13,17 @@ const BattleAnims = {
     // Used by the damage pipeline. Checks framework first,
     // then falls back to the classic inline behavior.
     // Priority: move-specific animation → type-based fx → inline fallback
-    async triggerHitAnim(target, moveType = 'normal', moveName = null) {
-        const isPlayer = (target === Battle.p);
-        const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-        const isInvisible = !!target.volatiles.invulnerable;
+    async triggerHitAnim(target, moveType = 'normal', moveName = null, attacker = null) {
+        const isPlayerRecipient = (target === Battle.p);
+
+        // Determine the logical attacker for the animation.
+        // Default to the opponent of the target if not provided.
+        const animAttacker = attacker || (isPlayerRecipient ? Battle.e : Battle.p);
 
         const ctx = {
-            attacker: isPlayer ? Battle.e : Battle.p,
+            attacker: animAttacker,
             defender: target,
-            isPlayerAttacker: !isPlayer
+            isPlayerAttacker: (animAttacker === Battle.p)
         };
 
         // If no moveName is provided, this is a "silent hit" from status effects,
@@ -77,8 +79,9 @@ const BattleAnims = {
     async triggerHealAnim(target, animName = 'fx-heal') {
         const isPlayer = (target === Battle.p);
         const ctx = {
+            attacker: target, // For healing, the target is usually the producer of the effect
             defender: target,
-            isPlayerAttacker: !isPlayer // Target side is the one receiving effects
+            isPlayerAttacker: isPlayer
         };
 
         if (AnimFramework.has(animName)) {

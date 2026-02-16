@@ -1,6 +1,9 @@
 const Game = {
     tempSelection: null, tempSelectionList: [], party: [], activeSlot: 0, enemyMon: null, selectedItemKey: null,
-    inventory: { potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0 },
+    inventory: {
+        potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
+        rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
+    },
     state: 'START', selectedPartyIndex: -1, forcedSwitch: false, previousState: 'SELECTION', wins: 0, bossesDefeated: 0,
     playerName: 'PLAYER', currentSummaryIndex: 0, savedBattleState: null,
 
@@ -12,6 +15,7 @@ const Game = {
     closeSummary() { return SummaryScreen.close(); },
     confirmSelection() { return SelectionScreen.confirm(); },
     openParty(forced = false) {
+        AudioEngine.playSfx('select');
         if (typeof ScreenManager !== 'undefined') {
             ScreenManager.push('PARTY', { forced: forced });
         } else {
@@ -67,6 +71,16 @@ const Game = {
         this.party = data.party || [];
         this.inventory = data.inventory || {};
         this.wins = data.wins || 0;
+
+        // --- MIGRATION: Ensure new items (Pokedex, Bicycle) exist in old saves ---
+        if (this.inventory.pokedex === undefined) this.inventory.pokedex = 1;
+        if (this.inventory.bicycle === undefined) this.inventory.bicycle = 1;
+
+        // --- ROGUE MIGRATION ---
+        ['rogue_attack', 'rogue_defense', 'rogue_sp_attack', 'rogue_sp_defense', 'rogue_speed', 'rogue_hp', 'rogue_crit', 'rogue_xp', 'rogue_shiny'].forEach(k => {
+            if (this.inventory[k] === undefined) this.inventory[k] = 0;
+        });
+
         this.bossesDefeated = data.bossesDefeated || 0;
         this.activeSlot = data.activeSlot || 0;
         this.playerName = data.playerName || 'PLAYER';
@@ -169,7 +183,10 @@ const Game = {
     newGame() {
         StorageSystem.wipe();
         this.party = []; this.wins = 0; this.bossesDefeated = 0;
-        this.inventory = { potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0 };
+        this.inventory = {
+            potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
+            rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
+        };
         if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
 
         // Use ScreenManager for Selection
@@ -248,24 +265,23 @@ const Game = {
             const balls = DEBUG.ENABLED && DEBUG.INVENTORY && DEBUG.INVENTORY.pokeball ? DEBUG.INVENTORY.pokeball : 10;
 
             // Default Inventory
-            this.inventory = { 'potion': potions, 'pokeball': balls, 'superpotion': 0, 'ultraball': 0, 'revive': 0, 'maxrevive': 0, 'elixir': 0 };
+            this.inventory = {
+                'potion': potions, 'pokeball': balls, 'superpotion': 0, 'hyperpotion': 0, 'maxpotion': 0, 'greatball': 0, 'ultraball': 0, 'masterball': 0, 'revive': 0, 'maxrevive': 0, 'elixir': 0, 'bicycle': 1, 'pokedex': 1,
+                rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
+            };
 
             // Full Debug Inventory Override
             if (DEBUG.ENABLED && DEBUG.INVENTORY) {
                 Object.assign(this.inventory, DEBUG.INVENTORY);
             }
         } else {
-            // Restore Volatiles for existing party
-            const p = this.party[this.activeSlot];
-            p.volatiles = {};
-            p.stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
-            p.rageLevel = 0;
-            if (DEBUG.ENABLED) {
-                if (DEBUG.PLAYER.RAGE !== null) p.rageLevel = DEBUG.PLAYER.RAGE;
-                if (DEBUG.PLAYER.STATUS !== null) p.status = DEBUG.PLAYER.STATUS;
-                if (DEBUG.PLAYER.STAGES !== null) Object.assign(p.stages, DEBUG.PLAYER.STAGES);
-                if (DEBUG.PLAYER.VOLATILES) Object.assign(p.volatiles, DEBUG.PLAYER.VOLATILES);
-            }
+            // Restore Volatiles for existing party (Reset all, not just active)
+            this.party.forEach(p => {
+                p.volatiles = {};
+                p.stages = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 };
+                p.rageLevel = 0;
+            });
+
         }
 
         // Safety Check: If active slot fainted (e.g. via Destiny Bond), pick next healthy one
@@ -479,11 +495,37 @@ const Game = {
             const levelDiff = this.enemyMon.level - p.level;
             let rate = this.enemyMon.isBoss ? LOOT_SYSTEM.DROP_RATE_BOSS : LOOT_SYSTEM.DROP_RATE_WILD;
             if (levelDiff > 0) rate += (levelDiff * 0.05);
+
+            // 1. Normal Loot
             if (RNG.roll(rate)) {
                 const key = Mechanics.getLoot(this.enemyMon, this.wins, levelDiff); this.inventory[key]++; AudioEngine.playSfx('funfair');
                 await DialogManager.show(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`, { lock: true });
-                await checkRage();
-            } else await checkRage();
+            }
+
+            // 2. Rogue Loot (Secondary Drop)
+            let rogueRate = (ROGUE_LOOT && ROGUE_LOOT.DROP_RATE_BASE) ? ROGUE_LOOT.DROP_RATE_BASE : 0.35;
+            if (this.enemyMon.isBoss) rogueRate += (ROGUE_LOOT && ROGUE_LOOT.DROP_RATE_BOSS_BONUS) ? ROGUE_LOOT.DROP_RATE_BOSS_BONUS : 0.50;
+
+            if (RNG.roll(rogueRate)) {
+                const key = Mechanics.getRogueLoot();
+                this.inventory[key]++;
+
+                // Recalculate stats immediately to apply passive boosts
+                this.party.forEach(p => StatCalc.recalculate(p));
+
+                AudioEngine.playSfx('funfair');
+                await DialogManager.show(`Lucky! You found a\n${ITEMS[key].name}!`, { lock: true });
+
+                // Multi-drop for Bosses
+                if (this.enemyMon.isBoss && RNG.roll(0.5)) {
+                    const key2 = Mechanics.getRogueLoot();
+                    this.inventory[key2]++;
+                    this.party.forEach(p => StatCalc.recalculate(p));
+                    await DialogManager.show(`And another one!\nFound ${ITEMS[key2].name}!`, { lock: true });
+                }
+            }
+
+            await checkRage();
         };
 
         if (p.volatiles.substituteHP > 0) {
