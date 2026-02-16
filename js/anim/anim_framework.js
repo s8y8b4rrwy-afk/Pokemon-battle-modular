@@ -27,6 +27,7 @@
 //   invert     — Invert colors           { target:'scene'|'attacker'|'defender', duration }
 //   wave       — Wavy scene distortion   { intensity, duration, speed }
 //   orbit      — Orbiting shapes around target { target, shape, radiusX, radiusY, count, speed, duration, color, outline }
+//   spriteMetallic — Grayscale metallic sheen { target, duration, color }
 //   callback   — Run arbitrary async fn  { fn }
 //   parallel   — Run steps concurrently  { steps: [...] }
 //
@@ -250,6 +251,7 @@ const AnimFramework = {
             case 'wave': await this._doWave(step, ctx); break;
             case 'spriteWave': await this._doSpriteWave(step, ctx); break;
             case 'orbit': await this._doOrbit(step, ctx); break;
+            case 'spriteMetallic': await this._doSpriteMetallic(step, ctx); break;
 
             default:
                 console.warn(`[AnimFramework] Unknown step type: "${step.type}"`);
@@ -1106,5 +1108,103 @@ const AnimFramework = {
             };
             requestAnimationFrame(update);
         });
+    },
+
+    // --- SPRITE METALLIC (Grayscale + Shine Wipe) ---
+    async _doSpriteMetallic(step, ctx) {
+        const targetName = step.target || 'attacker';
+        const sprite = (targetName === 'attacker') ? ctx.attackerSprite : ctx.defenderSprite;
+        if (!sprite) return;
+
+        const duration = step.duration || 1000;
+        const color = step.color || null; // 'gold', 'bronze', etc.
+
+        // 1. Create Wrapper to hold clone + shine
+        // Note: We append to parent.
+        const parent = sprite.parentNode;
+
+        // Clone Sprite for the Metallic Base
+        const clone = sprite.cloneNode(true);
+        // Sync minimal styles
+        const computed = window.getComputedStyle(sprite);
+        clone.style.position = 'absolute';
+        clone.style.left = sprite.style.left || computed.left;
+        clone.style.top = sprite.style.top || computed.top;
+        clone.style.width = sprite.offsetWidth + 'px';
+        clone.style.height = sprite.offsetHeight + 'px';
+        clone.style.transform = sprite.style.transform;
+
+        // Apply Metallic Look
+        let filter = 'grayscale(100%) contrast(150%) brightness(130%) sepia(10%)';
+        if (color === 'gold') {
+            filter = 'grayscale(100%) contrast(120%) brightness(130%) sepia(100%) hue-rotate(5deg) saturate(250%)';
+        } else if (color === 'bronze') {
+            filter = 'grayscale(100%) contrast(120%) brightness(100%) sepia(80%) hue-rotate(-30deg) saturate(150%)';
+        }
+        clone.style.filter = filter;
+        clone.style.zIndex = parseInt(computed.zIndex || 10) + 1;
+        clone.style.pointerEvents = 'none';
+        clone.style.opacity = '0';
+        clone.style.transition = 'opacity 200ms ease-out';
+        clone.id = `metallic-base-${Date.now()}`;
+
+        // Create Shine Layer
+        const shine = document.createElement('div');
+        Object.assign(shine.style, {
+            position: 'absolute',
+            left: clone.style.left,
+            top: clone.style.top,
+            width: clone.style.width,
+            height: clone.style.height,
+            transform: clone.style.transform,
+            zIndex: parseInt(clone.style.zIndex) + 1,
+            pointerEvents: 'none',
+            opacity: '0',
+            transition: 'opacity 200ms ease-out'
+        });
+
+        // Masking logic
+        const spriteUrl = sprite.src;
+        const maskImg = `url("${spriteUrl}")`;
+        shine.style.webkitMaskImage = maskImg;
+        shine.style.maskImage = maskImg;
+        shine.style.webkitMaskSize = 'contain';
+        shine.style.maskSize = 'contain';
+        shine.style.webkitMaskRepeat = 'no-repeat';
+        shine.style.maskRepeat = 'no-repeat';
+        shine.style.webkitMaskPosition = 'center';
+        shine.style.maskPosition = 'center';
+
+        // Shine Gradient
+        shine.style.background = 'linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.8) 45%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.8) 55%, transparent 65%)';
+        shine.style.backgroundSize = '250% 100%';
+        shine.style.backgroundPosition = '100% 0'; // Start
+
+        parent.appendChild(clone);
+        parent.appendChild(shine);
+
+        // Animate
+        // Phase 1: Fade In Metallic
+        requestAnimationFrame(() => {
+            clone.style.opacity = '1';
+            shine.style.opacity = '1';
+        });
+
+        await wait(200);
+
+        // Phase 2: Swipe Shine
+        shine.style.transition = `background-position ${duration * 0.6}ms ease-in-out, opacity 200ms`;
+        requestAnimationFrame(() => {
+            shine.style.backgroundPosition = '-150% 0';
+        });
+
+        await wait(duration);
+
+        // Cleanup
+        clone.style.opacity = '0';
+        shine.style.opacity = '0';
+        await wait(200);
+        clone.remove();
+        shine.remove();
     }
 };

@@ -162,6 +162,11 @@ const Editor = {
             hold: { type: 'number', default: 0 },
             duration: { type: 'number', default: 600 }
         },
+        spriteMetallic: {
+            target: { type: 'select', options: ['attacker', 'defender'], default: 'attacker' },
+            color: { type: 'select', options: [null, 'gold', 'bronze'], default: null },
+            duration: { type: 'number', default: 1000 }
+        },
         cssClass: {
             selector: { type: 'text', default: '#scene' },
             class: { type: 'select', options: ['fx-shake', 'fx-flash', 'anim-violent', 'anim-shake-only', 'anim-faint'], default: 'fx-shake' },
@@ -722,7 +727,8 @@ const Editor = {
             flash: '#e0e0e0',
             overlay: '#a060e0',
             formation: '#ff4500',
-            orbit: '#ffd700'
+            orbit: '#ffd700',
+            spriteMetallic: '#a0a0a0'
         };
         return colors[type] || '#555';
     },
@@ -736,6 +742,7 @@ const Editor = {
         if (step.type === 'screenFx') return `${step.class}`;
         if (step.type === 'particles') return `${step.type} (${step.count})`;
         if (step.type === 'orbit') return `${step.count} ${step.shape || 'duck'}s around ${step.target}`;
+        if (step.type === 'spriteMetallic') return `${step.color || 'Silver'} Shine on ${step.target}`;
         return '';
     },
 

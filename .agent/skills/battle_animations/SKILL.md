@@ -73,6 +73,7 @@ const moveData = { name: 'EXPLOSION', type: 'normal', power: 250, category: 'phy
 | `spriteGhost` | `target`, `color`, `hold?`, `duration` | Stationary silhouette snapshot (ghosting effect). |
 | `spriteWave` | `target`, `intensity`, `duration`, `speed` | Wiggle/distortion on a specific sprite. |
 | `spriteMove` | `target`, `preset` OR `x,y,duration,easing` | Move a sprite with preset templates or custom coordinates |
+| `spriteMetallic` | `target`, `duration`, `color?` | Applies a grayscale metallic filter to the sprite and animates a shiny gradient wipe across it. Supports 'gold'/'bronze' tints. |
 | `move` | `el`, `x`, `y`, `duration`, `easing?`, `reset?` | Translate any arbitrary DOM element |
 
 ### Projectiles & Particles
