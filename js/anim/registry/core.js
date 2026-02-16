@@ -862,11 +862,6 @@ AnimFramework.register('double-team', [
     }
 ]);
 
-AnimFramework.register('harden', [
-    { type: 'sfx', sound: 'steel' },
-    { type: 'filter', target: 'attacker', filter: 'brightness(1.5) contrast(1.2)', duration: 500 },
-    { type: 'wait', ms: 200 }
-]);
 
 AnimFramework.register('belly-drum', [
     { type: 'sfx', sound: 'normal' },

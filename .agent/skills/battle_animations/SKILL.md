@@ -17,6 +17,7 @@ The project uses a **data-driven, registry-based animation system** spread acros
     - `elemental.js`: Fire, Water, Electric, Grass, and Ice moves.
     - `physical.js`: Normal, Fighting, Flying, and Poison moves.
     - `nature.js`: Ground and Rock moves.
+    - `steel.js`: Steel and Metal-themed moves.
     - `mystic.js`: Psychic, Ghost, Dark, Dragon, and multi-elemental moves.
 - **`BattleAnims`** (`animations.js`) — High-level API the rest of the codebase calls. Delegates to the framework.
 
