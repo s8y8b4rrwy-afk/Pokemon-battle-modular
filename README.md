@@ -138,11 +138,14 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 - **Rare Event** — 5% chance (1/20) to encounter a "Lucky" Pokémon.
 - **Distinctive** — Gold name text and unique "flash" intro animation.
 - **High Reward** — Guaranteed item drop on every hit. 50% chance for rare "Roguelike" stat-boosting items.
-- **Uncatchable** — Too lucky to be caught! Deflects all standard Poké Balls (Master Ball bypasses).
+- **Uncatchable** — Too lucky to be caught! Deflects standard Poké Balls.
+- **Master Ball Interaction** — Playfully swats Master Balls back to the player (Refunded).
 - **Passive Nature** — Only uses safe moves (Splash, Recover, Barrier).
 - **Pity System** — Percentage increases significantly after 5 battles without a Lucky encounter.
 
-### 💾 Save System
+### 💾 Save System & Persistence
+- **Game Over Persistence**: If you black out, you keep your items!
+- **Safety Net**: Restarting after a black out ensures you have at least 5 Potions and 5 Poké Balls.
 - Auto-saves after each battle
 - Saves: party, inventory, win streak, active battle state
 - Resume mid-battle with weather and delayed moves preserved

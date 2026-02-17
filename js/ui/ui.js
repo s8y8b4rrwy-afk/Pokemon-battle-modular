@@ -90,6 +90,8 @@ const UI = {
         const nameEl = document.getElementById(`${side}-name`);
         if (mon.name.startsWith("BOSS ")) {
             nameEl.innerHTML = mon.name.replace("BOSS ", '<span class="boss-name-tag">BOSS</span><br>');
+        } else if (mon.name.startsWith("LUCKY ")) {
+            nameEl.innerHTML = mon.name.replace("LUCKY ", '<span class="lucky-name-tag">LUCKY</span><br>');
         } else {
             nameEl.innerText = mon.name;
         }

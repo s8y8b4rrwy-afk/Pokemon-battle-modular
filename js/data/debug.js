@@ -35,7 +35,7 @@ const DEBUG = {
 
         // Volatile Status (Temporary / Wear off)
         // e.g. { confused: 3 } (Confused for 3 turns)
-        VOLATILES: { confused: 3 },
+        VOLATILES: null,
 
         // Stat Stages (Buffs/Debuffs)
         // Keys: atk, def, spa (Sp. Atk), spd (Sp. Def), spe, acc, eva

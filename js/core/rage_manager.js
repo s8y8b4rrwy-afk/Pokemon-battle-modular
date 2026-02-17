@@ -7,6 +7,9 @@ const RageManager = {
 
         for (const item of mons) {
             const m = item.mon;
+            // Lucky Pokemon cannot get enraged
+            if (m.isLucky) continue;
+
             if (m.currentHp <= 0 || m.rageLevel === undefined || m.rageLevel >= GAME_BALANCE.RAGE_MAX_LEVEL) {
                 this.resetRageFlags(m);
                 continue;

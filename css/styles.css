@@ -2035,3 +2035,10 @@ body.retro-motion #lcd-overlay {
 .anim-flash-gold {
     animation: flashGold 0.8s ease-out;
 }
+
+.lucky-name-tag {
+    color: #ffd700;
+    /* Gold */
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #000;
+}

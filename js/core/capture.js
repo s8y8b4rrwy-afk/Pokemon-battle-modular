@@ -4,16 +4,36 @@ const CaptureManager = {
         const enemy = battle.e;
 
         // 1. CHECK BOSS/RAGE DEFLECTION
-        // 1. CHECK BOSS/RAGE/LUCKY DEFLECTION
-        if (enemy.isLucky && ballKey !== 'masterball') {
-            AudioEngine.playSfx('throw');
-            await sleep(500);
-            AudioEngine.playSfx('clank');
-            document.getElementById('enemy-sprite').classList.add('anim-deflect');
-            await sleep(300);
-            document.getElementById('enemy-sprite').classList.remove('anim-deflect');
-            await UI.typeText("It's too lucky to\nbe caught!");
-            return 'CONTINUE';
+        // 1. CHECK BOSS/RAGE DEFLECTION
+        // Lucky Pokemon logic: Deflect normal balls, REFUND Master Ball
+        if (enemy.isLucky) {
+            if (ballKey !== 'masterball') {
+                AudioEngine.playSfx('throw');
+                await sleep(500);
+                AudioEngine.playSfx('clank');
+                document.getElementById('enemy-sprite').classList.add('anim-deflect');
+                await sleep(300);
+                document.getElementById('enemy-sprite').classList.remove('anim-deflect');
+                await UI.typeText("It's too lucky to\nbe caught!");
+                return 'CONTINUE';
+            } else {
+                // Master Ball Case: Play playful deflection & refund
+                AudioEngine.playSfx('throw');
+                await sleep(500);
+                // Different sound/anim for "playful" rejection
+                AudioEngine.playSfx('menu_open');
+
+                const es = document.getElementById('enemy-sprite');
+                es.classList.add('anim-hit-flipped');
+                await sleep(400);
+                es.classList.remove('anim-hit-flipped');
+
+                await UI.typeText("It playfully swatted\nthe Ball back!");
+
+                // Refund the ball
+                Game.inventory[ballKey]++;
+                return 'CONTINUE';
+            }
         }
 
         if (enemy.isBoss && ballKey !== 'masterball') {

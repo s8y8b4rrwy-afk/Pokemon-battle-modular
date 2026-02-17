@@ -35,9 +35,17 @@ const EncounterManager = {
         // 3. Determine Level Range
         let min, max;
         if (isBoss) {
-            min = refLevel + ENCOUNTER_CONFIG.BOSS_LEVEL_MIN;
-            max = refLevel + ENCOUNTER_CONFIG.BOSS_LEVEL_MAX;
+            // UPDATED: Bosses now scale based on AVG party level (median-ish)
+            const baseLevel = Math.ceil(avgLvl);
+            min = baseLevel + ENCOUNTER_CONFIG.BOSS_LEVEL_MIN;
+            max = baseLevel + ENCOUNTER_CONFIG.BOSS_LEVEL_MAX;
+        } else if (isLucky) {
+            // UPDATED: Lucky Pokemon are always slightly weaker than the party average
+            const baseLevel = Math.max(1, Math.floor(avgLvl) - 2);
+            min = baseLevel;
+            max = baseLevel;
         } else {
+            // Wild Pokemon still use the weighted refLevel to keep some challenge
             min = Math.max(1, refLevel + ENCOUNTER_CONFIG.WILD_LEVEL_MIN);
             max = Math.max(1, refLevel + ENCOUNTER_CONFIG.WILD_LEVEL_MAX);
         }
@@ -149,6 +157,10 @@ const EncounterManager = {
             enemy.isLucky = true;
             enemy.name = "LUCKY " + enemy.name;
             enemy.catchRate = 0; // Uncatchable via standard means
+
+            // WEAKENED: 1/8th of Max HP
+            enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp / 8));
+            enemy.currentHp = enemy.maxHp;
 
             // Force Safe/Healing Moves
             const luckyMoves = ['SPLASH', 'RECOVER', 'SOFT BOILED', 'MILK DRINK', 'REST', 'AMNESIA', 'BARRIER', 'LIGHT SCREEN'];

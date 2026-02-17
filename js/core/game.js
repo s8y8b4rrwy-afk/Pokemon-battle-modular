@@ -645,8 +645,27 @@ const Game = {
             await UI.typeText(`${this.playerName} blacked out!`);
             await wait(2000);
 
+            // NEW: Persistence Logic
+            // 1. Capture current inventory
+            const savedInventory = { ...this.inventory };
+
+            // 2. Replenish Essentials (if low)
+            if (savedInventory.potion < 5) savedInventory.potion = 5;
+            if (savedInventory.pokeball < 5) savedInventory.pokeball = 5;
+
+            await UI.typeText(`...but managed to\nkeep hold of items!`);
+            await wait(2000);
+
             document.getElementById('game-boy').style.animation = "";
-            this.newGame(); // Reset game & wipe save
+
+            // 3. Reset Game
+            this.newGame();
+
+            // 4. Restore Inventory
+            this.inventory = savedInventory;
+
+            // 5. Save immediately so the reload has the items
+            this.save();
         }
     },
 };
