@@ -716,3 +716,25 @@
 .anim-evo-flash {
     animation: evo-flash 0.5s ease-out;
 }
+
+/* --- LUCKY POKEMON --- */
+@keyframes flashGold {
+    0% {
+        filter: brightness(1) sepia(1) saturate(5) hue-rotate(10deg);
+        transform: scale(1);
+    }
+
+    50% {
+        filter: brightness(2) sepia(1) saturate(5) hue-rotate(10deg);
+        transform: scale(1.2);
+    }
+
+    100% {
+        filter: none;
+        transform: scale(1);
+    }
+}
+
+.anim-flash-gold {
+    animation: flashGold 0.8s ease-out;
+}

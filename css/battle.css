@@ -398,3 +398,10 @@
     color: #ff4444;
     font-weight: bold;
 }
+
+.lucky-name-tag {
+    color: #ffd700;
+    /* Gold */
+    font-weight: bold;
+    text-shadow: 1px 1px 0 #000;
+}
