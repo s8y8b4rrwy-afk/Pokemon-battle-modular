@@ -2003,3 +2003,35 @@ body.retro-motion #lcd-overlay {
 .anim-hit-flipped {
     animation: shakeFlipped 0.4s, flicker 0.4s;
 }
+
+/* --- LUCKY & BOSS STYLING --- */
+.boss-name {
+    color: #ff4444;
+    text-shadow: 2px 2px 0px #300, -1px -1px 0 #300, 1px -1px 0 #300, -1px 1px 0 #300, 1px 1px 0 #300;
+}
+
+.lucky-name {
+    color: #288eed;
+    text-shadow: 2px 2px 0px #640, -1px -1px 0 #640, 1px -1px 0 #640, -1px 1px 0 #640, 1px 1px 0 #640;
+}
+
+@keyframes flashGold {
+    0% {
+        filter: brightness(1) sepia(1) saturate(5) hue-rotate(10deg);
+        transform: scale(1);
+    }
+
+    50% {
+        filter: brightness(2) sepia(1) saturate(5) hue-rotate(10deg);
+        transform: scale(1.2);
+    }
+
+    100% {
+        filter: none;
+        transform: scale(1);
+    }
+}
+
+.anim-flash-gold {
+    animation: flashGold 0.8s ease-out;
+}

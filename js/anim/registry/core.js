@@ -566,7 +566,6 @@ AnimFramework.register('splash', [
     { type: 'sfx', sound: 'water' }, // Or generic hop sound?
     { type: 'spriteMove', target: 'attacker', preset: 'jump', duration: 300 },
     { type: 'wait', ms: 200 },
-    { type: 'callback', fn: async () => await UI.typeText("But nothing happened!") }
 ]);
 
 AnimFramework.register('transform', [

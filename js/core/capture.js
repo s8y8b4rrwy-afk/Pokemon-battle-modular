@@ -4,6 +4,18 @@ const CaptureManager = {
         const enemy = battle.e;
 
         // 1. CHECK BOSS/RAGE DEFLECTION
+        // 1. CHECK BOSS/RAGE/LUCKY DEFLECTION
+        if (enemy.isLucky && ballKey !== 'masterball') {
+            AudioEngine.playSfx('throw');
+            await sleep(500);
+            AudioEngine.playSfx('clank');
+            document.getElementById('enemy-sprite').classList.add('anim-deflect');
+            await sleep(300);
+            document.getElementById('enemy-sprite').classList.remove('anim-deflect');
+            await UI.typeText("It's too lucky to\nbe caught!");
+            return 'CONTINUE';
+        }
+
         if (enemy.isBoss && ballKey !== 'masterball') {
             let deflectChance = (enemy.rageLevel || 0) * GAME_BALANCE.RAGE_DEFLECT_CHANCE;
 

@@ -134,6 +134,14 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 - Party management with overflow release mechanic (max 6)
 - Caught Pokémon receive partial HP restoration
 
+### 🍀 Lucky Pokémon Encounters
+- **Rare Event** — 5% chance (1/20) to encounter a "Lucky" Pokémon.
+- **Distinctive** — Gold name text and unique "flash" intro animation.
+- **High Reward** — Guaranteed item drop on every hit. 50% chance for rare "Roguelike" stat-boosting items.
+- **Uncatchable** — Too lucky to be caught! Deflects all standard Poké Balls (Master Ball bypasses).
+- **Passive Nature** — Only uses safe moves (Splash, Recover, Barrier).
+- **Pity System** — Percentage increases significantly after 5 battles without a Lucky encounter.
+
 ### 💾 Save System
 - Auto-saves after each battle
 - Saves: party, inventory, win streak, active battle state
@@ -331,6 +339,13 @@ const DEBUG = {
 ---
 
 ## 📝 Recent Updates
+
+### v1.4.0 - Lucky Pokémon & Pity System (Feb 2026)
+**New Encounter Type:**
+- 🍀 **Lucky Pokémon**: New rare encounter type that provides guaranteed loot drops.
+- 🍀 **Smart Behavior**: Lucky Pokémon use non-damaging moves to survive longer and give more rewards.
+- 🍀 **Pity System**: Bad luck protection ensures you see them eventually.
+- 🍀 **Visuals**: Unique gold styling and intro animations.
 
 ### v1.3.0 - Smart Generation System (Feb 2026)
 **Natural Pokemon Generation:**

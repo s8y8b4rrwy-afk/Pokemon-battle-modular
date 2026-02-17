@@ -692,6 +692,15 @@ const MOVE_DEX = {
             return true;
         }
     },
+    'SPLASH': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('splash', ctx);
+            await UI.typeText("But nothing happened!");
+            return true;
+        }
+    },
 };
 
 // Logic for Two-Turn and Special Moves

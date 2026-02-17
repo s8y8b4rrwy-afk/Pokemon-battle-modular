@@ -20,6 +20,8 @@ const FaintManager = {
     async processFaint(battle, mon, isPlayer) {
         mon.currentHp = 0;
         mon.rageLevel = 0;
+        mon.status = null;
+        mon.volatiles = {};
         const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
         const hud = document.getElementById(isPlayer ? 'player-hud' : 'enemy-hud');
 

@@ -19,13 +19,19 @@ const LOOT_SYSTEM = {
 
     TABLE: [
         { key: 'potion', ...RARITY.COMMON },
+        { key: 'antidote', ...RARITY.COMMON },
+        { key: 'paralyzeheal', ...RARITY.COMMON },
         { key: 'pokeball', ...RARITY.COMMON },
 
         { key: 'superpotion', ...RARITY.UNCOMMON },
+        { key: 'burnheal', ...RARITY.UNCOMMON },
+        { key: 'iceheal', ...RARITY.UNCOMMON },
+        { key: 'awakening', ...RARITY.UNCOMMON },
         { key: 'greatball', ...RARITY.UNCOMMON },
 
         { key: 'revive', ...RARITY.RARE },
         { key: 'hyperpotion', ...RARITY.RARE },
+        { key: 'fullheal', ...RARITY.RARE },
 
         { key: 'ultraball', ...RARITY.ULTRA_RARE },
         { key: 'maxpotion', ...RARITY.ULTRA_RARE },
@@ -49,6 +55,14 @@ const ITEMS = {
     masterball: { name: "MASTER BALL", type: 'ball', pocket: 'balls', rate: 255, desc: "The best Ball. It catches without fail.", css: 'master', img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png" },
     bicycle: { name: "BICYCLE", type: 'key', pocket: 'key', desc: "A folding bicycle for traveling faster.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/bicycle.png" },
     pokedex: { name: "POKEDEX", type: 'key', pocket: 'key', desc: "A high-tech encyclopedia that records Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/pokedex.png" },
+
+    // --- STATUS HEALERS ---
+    antidote: { name: "ANTIDOTE", type: 'status_heal', condition: 'poison', pocket: 'items', desc: "Cures a poisoned Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/antidote.png" },
+    paralyzeheal: { name: "PARALYZ HEAL", type: 'status_heal', condition: 'paralysis', pocket: 'items', desc: "Cures a paralyzed Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/paralyze-heal.png" },
+    burnheal: { name: "BURN HEAL", type: 'status_heal', condition: 'burn', pocket: 'items', desc: "Cures a burnt Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/burn-heal.png" },
+    iceheal: { name: "ICE HEAL", type: 'status_heal', condition: 'freeze', pocket: 'items', desc: "Thaws a frozen Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ice-heal.png" },
+    awakening: { name: "AWAKENING", type: 'status_heal', condition: 'sleep', pocket: 'items', desc: "Wakes a sleeping Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/awakening.png" },
+    fullheal: { name: "FULL HEAL", type: 'status_heal', condition: 'all', pocket: 'items', desc: "Cures all status problems.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/full-heal.png" },
 
     // --- ROGUELIKE ITEMS ---
     rogue_attack: { name: "MIGHT CANDY", type: 'rogue', pocket: 'key', desc: "Slightly boosts Attack power. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-attack.png" },

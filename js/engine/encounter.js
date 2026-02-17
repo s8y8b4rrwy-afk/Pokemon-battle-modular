@@ -10,7 +10,27 @@ const EncounterManager = {
         // 2. Determine Boss Status
         const isStreak = (wins > 0 && wins % ENCOUNTER_CONFIG.BOSS_STREAK_TRIGGER === 0);
         const bossRate = isStreak ? ENCOUNTER_CONFIG.BOSS_STREAK_CHANCE : ENCOUNTER_CONFIG.BOSS_CHANCE;
+
         let isBoss = RNG.roll(bossRate);
+        let isLucky = !isBoss && RNG.roll(ENCOUNTER_CONFIG.LUCKY_CHANCE);
+
+        // Pity System
+        if (!isBoss && !isLucky && typeof Game !== 'undefined') {
+            if (Game.battlesSinceLucky >= ENCOUNTER_CONFIG.LUCKY_PITY_THRESHOLD) {
+                if (RNG.roll(ENCOUNTER_CONFIG.LUCKY_PITY_CHANCE)) isLucky = true;
+            }
+        }
+
+        // Debug Override
+        if (typeof DEBUG !== 'undefined' && DEBUG.ENABLED && DEBUG.ENEMY.IS_LUCKY !== null) {
+            isLucky = DEBUG.ENEMY.IS_LUCKY;
+        }
+
+        // Update Counter
+        if (typeof Game !== 'undefined') {
+            if (isLucky) Game.battlesSinceLucky = 0;
+            else if (!isBoss) Game.battlesSinceLucky++;
+        }
 
         // 3. Determine Level Range
         let min, max;
@@ -27,6 +47,7 @@ const EncounterManager = {
             id: RNG.int(1, 251),
             level: RNG.int(min, max),
             isBoss: isBoss,
+            isLucky: isLucky,
             overrides: { isBoss: isBoss }
         };
 
@@ -121,6 +142,28 @@ const EncounterManager = {
             enemy.rageLevel = 1;
             enemy.maxHp = Math.floor(enemy.maxHp * 1.2);
             enemy.currentHp = enemy.maxHp;
+        }
+
+        // Apply Lucky Attributes
+        if (specs.isLucky) {
+            enemy.isLucky = true;
+            enemy.name = "LUCKY " + enemy.name;
+            enemy.catchRate = 0; // Uncatchable via standard means
+
+            // Force Safe/Healing Moves
+            const luckyMoves = ['SPLASH', 'RECOVER', 'SOFT BOILED', 'MILK DRINK', 'REST', 'AMNESIA', 'BARRIER', 'LIGHT SCREEN'];
+            enemy.moves = [];
+            for (let i = 0; i < 4; i++) {
+                const rndMove = luckyMoves[Math.floor(Math.random() * luckyMoves.length)];
+                const moveData = await API.getMove(rndMove);
+                if (moveData) enemy.moves.push(moveData);
+            }
+
+            // Ensure at least Splash
+            if (!enemy.moves.find(m => m.name === 'SPLASH')) {
+                const splash = await API.getMove('SPLASH');
+                if (splash) enemy.moves[0] = splash;
+            }
         }
 
         // Apply Debug Rage/Volatiles post-creation

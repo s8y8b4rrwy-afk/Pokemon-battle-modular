@@ -249,7 +249,9 @@ const Battle = {
         UI.updateHUD(player, 'player'); UI.updateHUD(enemy, 'enemy');
 
         const nameEl = document.getElementById('enemy-name');
-        if (enemy.isBoss) nameEl.classList.add('boss-name'); else nameEl.classList.remove('boss-name');
+        nameEl.classList.remove('boss-name', 'lucky-name');
+        if (enemy.isBoss) nameEl.classList.add('boss-name');
+        if (enemy.isLucky) nameEl.classList.add('lucky-name');
 
         ['opt-fight', 'opt-pkmn', 'opt-pack', 'opt-run'].forEach((id, i) => {
             document.getElementById(id).onmouseenter = () => { if (!this.uiLocked) { Input.focus = i; Input.updateVisuals(); } };
@@ -279,7 +281,9 @@ const Battle = {
             // 1. Appear as Silhouette
             eSprite.style.opacity = 1;
 
-            const introText = enemy.isBoss ? `The ${enemy.name}\nappeared!` : `Wild ${enemy.name}\nappeared!`;
+            const introText = enemy.isBoss ? `The ${enemy.name}\nappeared!` :
+                enemy.isLucky ? `LUCKY ${enemy.name}\nappeared!` :
+                    `Wild ${enemy.name}\nappeared!`;
             const textAnim = UI.typeText(introText);
 
             // 2. Wait (Controlled by Constant)
@@ -294,6 +298,13 @@ const Battle = {
                 document.getElementById('scene').classList.add('boss-intro');
                 await sleep(ANIM.INTRO_BOSS_RUMBLE);
                 document.getElementById('scene').classList.remove('boss-intro');
+            } else if (enemy.isLucky) {
+                if (enemy.cry) AudioEngine.playCry(enemy.cry, 1.0, false);
+                // Unique Lucky Animation
+                AudioEngine.playSfx('shiny');
+                eSprite.classList.add('anim-flash-gold');
+                await sleep(800);
+                eSprite.classList.remove('anim-flash-gold');
             } else {
                 if (enemy.cry) AudioEngine.playCry(enemy.cry, 1.0, false);
             }

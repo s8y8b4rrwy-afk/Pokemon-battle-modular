@@ -41,6 +41,10 @@ const ENCOUNTER_CONFIG = {
     BOSS_STREAK_TRIGGER: 5,     // Every 5 wins, high boss chance
     BOSS_STREAK_CHANCE: 0.95,   // 95% chance on streak turns
 
+    LUCKY_CHANCE: 0.05,         // 5% chance (1/20) for independent roll
+    LUCKY_PITY_THRESHOLD: 5,    // After 5 battles without one...
+    LUCKY_PITY_CHANCE: 0.50,    // ...chance becomes 50% (1/2)
+
     SHINY_CHANCE: 0.05,         // 1/20 chance (Generous for a simulation)
 
     // Level Scaling (Relative to Player)

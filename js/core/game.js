@@ -1,11 +1,13 @@
 const Game = {
     tempSelection: null, tempSelectionList: [], party: [], activeSlot: 0, enemyMon: null, selectedItemKey: null,
     inventory: {
-        potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
+        potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, fullheal: 0,
+        antidote: 0, paralyzeheal: 0, burnheal: 0, iceheal: 0, awakening: 0,
+        pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
         rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
     },
     state: 'START', selectedPartyIndex: -1, forcedSwitch: false, previousState: 'SELECTION', wins: 0, bossesDefeated: 0,
-    playerName: 'PLAYER', currentSummaryIndex: 0, savedBattleState: null,
+    playerName: 'PLAYER', currentSummaryIndex: 0, savedBattleState: null, battlesSinceLucky: 0,
 
     // --- SCREEN SHIMS ---
     showSelectionScreen(params) { return SelectionScreen.open(params); },
@@ -58,7 +60,7 @@ const Game = {
         StorageSystem.save({
             party: this.party, inventory: this.inventory, wins: this.wins,
             bossesDefeated: this.bossesDefeated, activeSlot: this.activeSlot, playerName: this.playerName,
-            enemyMon: currentEnemy,
+            enemyMon: currentEnemy, battlesSinceLucky: this.battlesSinceLucky,
             weather: (this.state === 'BATTLE') ? Battle.weather : { type: 'none', turns: 0 },
             delayedMoves: (this.state === 'BATTLE') ? Battle.delayedMoves : []
         });
@@ -85,6 +87,7 @@ const Game = {
         this.activeSlot = data.activeSlot || 0;
         this.playerName = data.playerName || 'PLAYER';
         this.enemyMon = data.enemyMon || null;
+        this.battlesSinceLucky = data.battlesSinceLucky || 0;
 
         // Hold state for Battle to pick up
         this.savedBattleState = {
@@ -184,7 +187,9 @@ const Game = {
         StorageSystem.wipe();
         this.party = []; this.wins = 0; this.bossesDefeated = 0;
         this.inventory = {
-            potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
+            potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, fullheal: 0,
+            antidote: 0, paralyzeheal: 0, burnheal: 0, iceheal: 0, awakening: 0,
+            pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
             rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
         };
         if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
@@ -266,7 +271,8 @@ const Game = {
 
             // Default Inventory
             this.inventory = {
-                'potion': potions, 'pokeball': balls, 'superpotion': 0, 'hyperpotion': 0, 'maxpotion': 0, 'greatball': 0, 'ultraball': 0, 'masterball': 0, 'revive': 0, 'maxrevive': 0, 'elixir': 0, 'bicycle': 1, 'pokedex': 1,
+                'potion': potions, 'pokeball': balls, 'superpotion': 0, 'hyperpotion': 0, 'maxpotion': 0, 'greatball': 0, 'ultraball': 0, 'masterball': 0, 'revive': 0, 'maxrevive': 0, 'fullheal': 0,
+                'antidote': 0, 'paralyzeheal': 0, 'burnheal': 0, 'iceheal': 0, 'awakening': 0, 'elixir': 0, 'bicycle': 1, 'pokedex': 1,
                 rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
             };
 
@@ -528,19 +534,63 @@ const Game = {
             await checkRage();
         };
 
+        const checkFieldRecovery = async () => {
+            for (const member of this.party) {
+                if (member.status) {
+                    member.statusTurnCount = (member.statusTurnCount || 0) + 1;
+                    if (member.statusTurnCount >= 2) {
+                        const oldStatus = member.status;
+                        member.status = null;
+                        member.statusTurnCount = 0;
+
+                        let msg = `${member.name} recovered from\nits status!`;
+                        if (oldStatus === 'poison') msg = `${member.name} extracted the\npoison!`;
+                        else if (oldStatus === 'burn') msg = `${member.name} healed its\nburn!`;
+                        else if (oldStatus === 'paralysis') msg = `${member.name} shook off the\nparalysis!`;
+                        else if (oldStatus === 'freeze') msg = `${member.name} melted the\nice!`;
+                        else if (oldStatus === 'sleep') msg = `${member.name} woke up!`;
+
+                        await DialogManager.show(msg, { lock: true });
+
+                        if (member === this.party[this.activeSlot]) {
+                            UI.updateHUD(member, 'player');
+                        }
+                    }
+                } else {
+                    member.statusTurnCount = 0;
+                }
+            }
+            await checkLoot();
+        };
+
         if (p.volatiles.substituteHP > 0) {
             if (p.volatiles.originalSprite) document.getElementById('player-sprite').src = p.volatiles.originalSprite;
             p.volatiles.substituteHP = 0; p.volatiles.originalSprite = null;
             AudioEngine.playSfx('swoosh');
             await DialogManager.show("The SUBSTITUTE\\nfaded away!", { lock: true });
-            await checkLoot();
-        } else await checkLoot();
+            await checkFieldRecovery();
+        } else await checkFieldRecovery();
     },
 
     async tryMidBattleDrop(enemy) {
         let chance = DEBUG.ENABLED && DEBUG.LOOT.MID_BATTLE_RATE !== null ? DEBUG.LOOT.MID_BATTLE_RATE : LOOT_SYSTEM.DROP_RATE_MID_BATTLE;
+
+        // Lucky Pokemon ALWAYS drop items on hit
+        if (enemy.isLucky) chance = 1.0;
+
         if (RNG.roll(chance)) {
-            const key = Mechanics.getLoot(enemy, this.wins, 0); this.inventory[key]++; AudioEngine.playSfx('catch_success');
+            // Lucky drops can be Rogue items
+            let key;
+            if (enemy.isLucky && RNG.roll(0.5)) {
+                key = Mechanics.getRogueLoot();
+                this.inventory[key]++;
+                this.party.forEach(p => StatCalc.recalculate(p)); // update stats immediately for passive items
+            } else {
+                key = Mechanics.getLoot(enemy, this.wins, 0);
+                this.inventory[key]++;
+            }
+
+            AudioEngine.playSfx('catch_success');
             await UI.typeText(`Oh! ${enemy.name} dropped\na ${ITEMS[key].name}.`);
         }
     },

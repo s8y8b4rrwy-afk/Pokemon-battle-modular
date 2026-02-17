@@ -26,6 +26,7 @@ const DEBUG = {
         LEVEL: null,       // Level (1-100). Set null for auto-scaling.
         SHINY: null,    // true = Always Shiny, false = Never Shiny, null = Random.
         IS_BOSS: null,  // true = Boss stats & music.
+        IS_LUCKY: true, // true = Force Lucky Status
         RAGE: null,     // Start with Rage (0 = None, 1 = !, 2 = !!, 3 = MAX).
 
         // Major Status (Persistent)
