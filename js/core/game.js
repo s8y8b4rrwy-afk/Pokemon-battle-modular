@@ -340,16 +340,19 @@ const Game = {
 
 
     // --- EXP & WINS ---
-    async distributeExp(amount, targetIndices, isBossReward) {
-        if (isBossReward) { AudioEngine.playSfx('exp'); await UI.typeText(`The team gained\n${amount} EXP. Points!`); }
+    async distributeExp(amount, targetIndices, isSpecialReward) {
+        if (isSpecialReward) {
+            AudioEngine.playSfx('exp');
+            await UI.typeText(`The team gained\na boosted ${amount} EXP!`);
+        }
         for (const index of targetIndices) {
             const p = this.party[index];
             if (!p || p.currentHp <= 0) continue;
             if (index === this.activeSlot) {
-                if (!isBossReward) await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
+                if (!isSpecialReward) await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
                 await this.gainExpAnim(amount, p);
             } else {
-                if (!isBossReward) await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
+                if (!isSpecialReward) await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
                 p.exp += amount;
                 if (p.exp >= p.nextLvlExp) await this.processLevelUp(p);
             }
@@ -615,7 +618,7 @@ const Game = {
         }
 
         if (targets.length > 0) {
-            await this.distributeExp(amt, targets, this.enemyMon.isBoss);
+            await this.distributeExp(amt, targets, this.enemyMon.isBoss || this.enemyMon.isLucky);
         } else {
             await this.finishWin();
         }

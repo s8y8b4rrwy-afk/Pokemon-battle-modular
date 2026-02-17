@@ -24,6 +24,7 @@ const EncounterManager = {
         // Debug Override
         if (typeof DEBUG !== 'undefined' && DEBUG.ENABLED && DEBUG.ENEMY.IS_LUCKY !== null) {
             isLucky = DEBUG.ENEMY.IS_LUCKY;
+            if (isLucky) isBoss = false; // Mutually exclusive
         }
 
         // Update Counter
@@ -162,8 +163,8 @@ const EncounterManager = {
             enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp / 8));
             enemy.currentHp = enemy.maxHp;
 
-            // Force Safe/Healing Moves
-            const luckyMoves = ['SPLASH', 'RECOVER', 'SOFT BOILED', 'MILK DRINK', 'REST', 'AMNESIA', 'BARRIER', 'LIGHT SCREEN'];
+            // Force Safe Moves (No healing, just passive/stat moves)
+            const luckyMoves = ['SPLASH', 'AMNESIA', 'BARRIER', 'LIGHT SCREEN', 'REFLECT', 'HARDEN', 'GROWL', 'TAIL WHIP'];
             enemy.moves = [];
             for (let i = 0; i < 4; i++) {
                 const rndMove = luckyMoves[Math.floor(Math.random() * luckyMoves.length)];
