@@ -136,7 +136,7 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 
 ### 🍀 Lucky Pokémon Encounters
 - **Rare Event** — 5% chance (1/20) to encounter a "Lucky" Pokémon.
-- **Distinctive** — Gold name text and unique "flash" intro animation.
+- **Distinctive** — **Blue** name text and unique "flash" intro animation.
 - **High Reward** — Guaranteed item drop on every hit. 50% chance for rare "Roguelike" stat-boosting items.
 - **Uncatchable** — Too lucky to be caught! Deflects standard Poké Balls.
 - **Master Ball Interaction** — Playfully swats Master Balls back to the player (Refunded).
