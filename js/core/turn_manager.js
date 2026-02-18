@@ -129,6 +129,9 @@ const TurnManager = {
 
             // 3. RAGE PROCESSING (End of Turn)
             await RageManager.processRage(battle);
+
+            // 4. ROGUE ITEM DECAY
+            await Game.processRogueTurn();
         }
     },
 

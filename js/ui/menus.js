@@ -196,7 +196,28 @@ const BattleMenus = {
             div.innerHTML = `<span>${data.name}</span> <span>x${displayCount}</span>`;
 
             const showDesc = () => {
-                document.getElementById('pack-desc').innerText = data.desc;
+                let desc = data.desc;
+                if (data.type === 'rogue') {
+                    const stack = Game.rogueItemState && Game.rogueItemState[key] ? Game.rogueItemState[key] : [];
+                    const count = Game.inventory[key] || 0;
+
+                    if (count > 0) {
+                        let buffVal = 0;
+                        if (typeof ROGUE_CONFIG !== 'undefined') {
+                            if (key === 'rogue_xp') buffVal = count * ROGUE_CONFIG.XP_BOOST_PER_STACK;
+                            else if (key === 'rogue_shiny') buffVal = count * ROGUE_CONFIG.SHINY_BOOST_PER_STACK;
+                            else if (key === 'rogue_crit') buffVal = count * ROGUE_CONFIG.CRIT_BOOST_PER_STACK;
+                            else buffVal = count * ROGUE_CONFIG.STAT_BOOST_PER_STACK;
+                        }
+                        const newest = stack.length > 0 ? stack[stack.length - 1] : null;
+                        const turns = newest ? newest.turns : (ROGUE_CONFIG.ROGUE_ITEM_LIFETIME || 5);
+                        // Format nicely
+                        const buffPct = (buffVal * 100).toFixed(1).replace(/\.0$/, '');
+                        desc += `\nBuff: +${buffPct}% | Newest decays in: ${turns} turns`;
+                    }
+                }
+
+                document.getElementById('pack-desc').innerText = desc;
                 if (data.img) {
                     document.querySelector('.bag-icon').style.backgroundImage = `url('${data.img}')`;
                 }

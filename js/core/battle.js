@@ -498,6 +498,8 @@ const Battle = {
         AudioEngine.playSfx('run');
         await UI.typeText('Got away safely!');
 
+        await Game.processRogueTurn();
+
         // CRITICAL: Clear battle state so "Continue" doesn't reload it
         Game.state = 'START';
         Game.enemyMon = null;

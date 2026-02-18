@@ -189,8 +189,8 @@ const EncounterManager = {
             enemy.name = "LUCKY " + enemy.name;
             enemy.catchRate = 0; // Uncatchable via standard means
 
-            // WEAKENED: 1/8th of Max HP
-            enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp / 8));
+            // WEAKENED
+            enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * 0.8));
             enemy.currentHp = enemy.maxHp;
 
             // Force Safe Moves (No healing, just passive/stat moves)

@@ -58,7 +58,7 @@ const ENCOUNTER_CONFIG = {
         173, // Cleffa
         201, // Unown
         242, // Blissey
-        531  // Audino (Future proofing)
+        //  531  // Audino (Future proofing)
     ],
 
     UNOWN_FORMS: [
@@ -95,6 +95,7 @@ const ROGUE_CONFIG = {
     CRIT_BOOST_PER_STACK: 0.05,  // +5% crit chance per Lens
     XP_BOOST_PER_STACK: 0.10,    // +10% EXP gain per Charm
     SHINY_BOOST_PER_STACK: 0.005,// +0.5% shiny chance per Charm
+    ROGUE_ITEM_LIFETIME: 10,      // Turns before a rogue item decays
 };
 
 const ROGUE_LOOT = {

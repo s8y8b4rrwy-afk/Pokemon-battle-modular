@@ -6,6 +6,7 @@ const Game = {
         pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
         rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
     },
+    rogueItemState: {},
     state: 'START', selectedPartyIndex: -1, forcedSwitch: false, previousState: 'SELECTION', wins: 0, bossesDefeated: 0,
     playerName: 'PLAYER', currentSummaryIndex: 0, savedBattleState: null, battlesSinceLucky: 0,
 
@@ -61,6 +62,7 @@ const Game = {
             party: this.party, inventory: this.inventory, wins: this.wins,
             bossesDefeated: this.bossesDefeated, activeSlot: this.activeSlot, playerName: this.playerName,
             enemyMon: currentEnemy, battlesSinceLucky: this.battlesSinceLucky,
+            rogueItemState: this.rogueItemState,
             weather: (this.state === 'BATTLE') ? Battle.weather : { type: 'none', turns: 0 },
             delayedMoves: (this.state === 'BATTLE') ? Battle.delayedMoves : []
         });
@@ -72,6 +74,7 @@ const Game = {
 
         this.party = data.party || [];
         this.inventory = data.inventory || {};
+        this.rogueItemState = data.rogueItemState || {};
         this.wins = data.wins || 0;
 
         // --- MIGRATION: Ensure new items (Pokedex, Bicycle) exist in old saves ---
@@ -79,8 +82,19 @@ const Game = {
         if (this.inventory.bicycle === undefined) this.inventory.bicycle = 1;
 
         // --- ROGUE MIGRATION ---
+        // --- ROGUE MIGRATION ---
         ['rogue_attack', 'rogue_defense', 'rogue_sp_attack', 'rogue_sp_defense', 'rogue_speed', 'rogue_hp', 'rogue_crit', 'rogue_xp', 'rogue_shiny'].forEach(k => {
             if (this.inventory[k] === undefined) this.inventory[k] = 0;
+
+            // Integrity Check: Ensure state exists for items we have
+            if (this.inventory[k] > 0) {
+                if (!this.rogueItemState[k]) this.rogueItemState[k] = [];
+                // Fill missing instances
+                while (this.rogueItemState[k].length < this.inventory[k]) {
+                    const lifetime = (typeof ROGUE_CONFIG !== 'undefined' && ROGUE_CONFIG.ROGUE_ITEM_LIFETIME) ? ROGUE_CONFIG.ROGUE_ITEM_LIFETIME : 5;
+                    this.rogueItemState[k].push({ turns: lifetime });
+                }
+            }
         });
 
         this.bossesDefeated = data.bossesDefeated || 0;
@@ -233,6 +247,7 @@ const Game = {
             pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
             rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
         };
+        this.rogueItemState = {}; // Tracks individual item lifetimes
         this.handleDebug();
 
         // Use ScreenManager for Selection
@@ -330,6 +345,7 @@ const Game = {
                 'antidote': 0, 'paralyzeheal': 0, 'burnheal': 0, 'iceheal': 0, 'awakening': 0, 'elixir': 0, 'bicycle': 1, 'pokedex': 1,
                 rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
             };
+            this.rogueItemState = {};
 
             // Full Debug Inventory Override
             this.handleDebug();
@@ -394,6 +410,74 @@ const Game = {
     // These remain largely unchanged, just compacted slightly for cleanliness
 
 
+
+    // --- ROGUE LOGIC ---
+    addRogueItem(key) {
+        if (!this.inventory[key]) this.inventory[key] = 0;
+        this.inventory[key]++;
+
+        if (!this.rogueItemState) this.rogueItemState = {};
+        if (!this.rogueItemState[key]) this.rogueItemState[key] = [];
+
+        // Add new instance with full lifetime
+        // Use default lifetime from settings or fallback to 5
+        const lifetime = (typeof ROGUE_CONFIG !== 'undefined' && ROGUE_CONFIG.ROGUE_ITEM_LIFETIME) ? ROGUE_CONFIG.ROGUE_ITEM_LIFETIME : 5;
+        this.rogueItemState[key].push({ turns: lifetime });
+    },
+
+    async processRogueTurn() {
+        if (!this.rogueItemState) return;
+
+        let changed = false;
+        let expiredNames = [];
+
+        for (const key in this.rogueItemState) {
+            const list = this.rogueItemState[key];
+            if (!list || list.length === 0) continue;
+
+            const nextList = [];
+            for (const item of list) {
+                item.turns--;
+                if (item.turns > 0) {
+                    nextList.push(item);
+                } else {
+                    changed = true;
+                }
+            }
+
+            this.rogueItemState[key] = nextList;
+
+            // Sync Inventory Count
+            const prevCount = this.inventory[key] || 0;
+            if (prevCount !== nextList.length) {
+                // If items were lost
+                if (prevCount > nextList.length) {
+                    const name = (typeof ITEMS !== 'undefined' && ITEMS[key]) ? ITEMS[key].name : key;
+                    expiredNames.push(name);
+                }
+                this.inventory[key] = nextList.length;
+            }
+        }
+
+        if (changed) {
+            // Recalculate stats for all party members as buffs might have expired
+            this.party.forEach(p => StatCalc.recalculate(p));
+
+            if (expiredNames.length > 0 && typeof DialogManager !== 'undefined') {
+                // Group notifications to avoid spamming 1 line per item
+                // User requested max 2 lines per text box.
+                for (let i = 0; i < expiredNames.length; i += 2) {
+                    const n1 = expiredNames[i];
+                    const n2 = expiredNames[i + 1];
+                    let msg = `${n1}\ndecayed!`;
+                    if (n2) {
+                        msg = `${n1} and\n${n2} decayed!`;
+                    }
+                    await DialogManager.show(msg, { lock: true });
+                }
+            }
+        }
+    },
 
     // --- EXP & WINS ---
     async distributeExp(amount, targetIndices, isSpecialReward) {
@@ -573,7 +657,7 @@ const Game = {
 
             if (RNG.roll(rogueRate)) {
                 const key = Mechanics.getRogueLoot();
-                this.inventory[key]++;
+                this.addRogueItem(key);
 
                 // Recalculate stats immediately to apply passive boosts
                 this.party.forEach(p => StatCalc.recalculate(p));
@@ -584,7 +668,7 @@ const Game = {
                 // Multi-drop for Bosses
                 if (this.enemyMon.isBoss && RNG.roll(0.5)) {
                     const key2 = Mechanics.getRogueLoot();
-                    this.inventory[key2]++;
+                    this.addRogueItem(key2);
                     this.party.forEach(p => StatCalc.recalculate(p));
                     await DialogManager.show(`And another one!\nFound ${ITEMS[key2].name}!`, { lock: true });
                 }
@@ -642,7 +726,7 @@ const Game = {
             let key;
             if (enemy.isLucky && RNG.roll(0.5)) {
                 key = Mechanics.getRogueLoot();
-                this.inventory[key]++;
+                this.addRogueItem(key);
                 this.party.forEach(p => StatCalc.recalculate(p)); // update stats immediately for passive items
             } else {
                 key = Mechanics.getLoot(enemy, this.wins, 0);
@@ -655,6 +739,7 @@ const Game = {
     },
 
     async handleWin(wasCaught) {
+        await this.processRogueTurn();
         Battle.cleanup(); this.wins++; if (this.enemyMon.isBoss) this.bossesDefeated++;
         document.getElementById('streak-box').innerText = `WINS: ${this.wins}`; this.state = 'BATTLE';
         if (!wasCaught) this.enemyMon.currentHp = 0;
@@ -681,6 +766,7 @@ const Game = {
     },
 
     async handleLoss() {
+        await this.processRogueTurn();
         UI.textEl.classList.remove('full-width');
         if (this.party.some(p => p.currentHp > 0)) {
             const selectedIndex = await new Promise(resolve => {
