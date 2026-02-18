@@ -118,4 +118,4 @@ Use `ScreenManager` globally to move between screens:
 ## Best Practices
 - **Never call `UI.hide('screen')` manually** for navigation; use `ScreenManager.pop()`.
 - **Use `onResume`** to refresh data (like HP bars or item counts) if they might have changed while a sub-screen was open.
-- **Unify Text**: Use `UI.typeText(text, cb, fast, 'target-el-id')` to take advantage of the typing engine on your custom screen.
+- **Unify Text**: Use `DialogManager.show(text, { targetId: '...' })` to display text on your screen. This handles queuing, typing sounds, and advance arrows automatically. Avoid calling `UI.typeText` directly if you need sequential dialogue or input waiting.

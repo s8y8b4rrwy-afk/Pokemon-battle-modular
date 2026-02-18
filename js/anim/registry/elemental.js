@@ -487,7 +487,7 @@ const createDrainAnim = (intensity = 'low') => {
                 },
                 {
                     type: "spriteSilhouette",
-                    target: "attacker",
+                    target: "defender",
                     color: color,
                     duration: 600,
                     hold: 200
@@ -626,9 +626,9 @@ AnimFramework.register('aurora-beam', [
 
 AnimFramework.register('heat-wave', [
     { type: 'sfx', sound: 'fire' },
-    { type: 'bgColor', color: '#ff4500', duration: 800 },
     {
         type: 'parallel', steps: [
+            { type: 'bgColor', color: '#ff4500', duration: 800 },
             { type: 'wave', intensity: 3, duration: 800, speed: 100 },
             {
                 type: 'stream', from: { x: 160, y: 50 }, to: 'defender',
@@ -789,3 +789,305 @@ AnimFramework.register('hail', [
         ]
     }
 ]);
+
+// --- NEW ELEMENTAL ANIMATIONS ---
+
+AnimFramework.register('aqua-jet', [
+    { type: 'sfx', sound: 'water' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 100 }, // Ultra fast
+    {
+        type: 'stream', from: 'attacker', to: 'defender',
+        count: 10, interval: 20, spread: 10, travelTime: 200,
+        size: 5, color: '#1e90ff', outline: '#87cefa'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 200 }
+]);
+
+AnimFramework.register('liquidation', [
+    { type: 'sfx', sound: 'water' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'claw', // Sword-like slash
+                color: '#00008b', outline: '#1e90ff', width: 60, height: 10, // Long thin slash
+                duration: 300, animation: 'strike'
+            },
+            { type: 'screenFx', class: 'fx-water', duration: 400 }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('freeze-dry', [
+    { type: 'sfx', sound: 'ice' },
+    {
+        type: 'parallel', steps: [
+            { type: 'filter', target: 'defender', filter: 'sepia(1) hue-rotate(180deg) saturate(0.5)', duration: 800 }, // Dried look
+            {
+                type: 'formation', target: 'defender', pattern: 'ring',
+                shape: 'rock', particleSize: 12, color: '#b0e0e6', outline: '#ffffff', // Ice rocks
+                duration: 800, stagger: 40
+            }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('ice-shard', [
+    { type: 'sfx', sound: 'ice' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 5, interval: 80, travelTime: 250,
+        projectile: {
+            width: 10, height: 6,
+            styles: { background: '#e0ffff', border: '1px solid #87ceeb', transform: 'rotate(45deg)' }
+        }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('overheat', [
+    { type: 'sfx', sound: 'fire' },
+    { type: 'bgColor', color: '#8b0000', duration: 800 },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 600 }, // Recoil shake
+            {
+                type: 'stream', from: 'attacker', to: 'defender',
+                count: 40, interval: 15, spread: 30, travelTime: 400,
+                size: 8, color: '#ff4500', outline: '#8b0000'
+            }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 600 }
+]);
+
+AnimFramework.register('discharge', [
+    { type: 'sfx', sound: 'electric' },
+    { type: 'bgColor', color: '#ffd700', duration: 600 },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-electric', duration: 800 },
+            {
+                type: 'formation', target: 'scene', pattern: 'ring', // Hit everything
+                shape: 'lightning', particleSize: 15, color: '#ffff00', outline: '#b8860b',
+                duration: 800, stagger: 20
+            }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 500 }
+]);
+
+AnimFramework.register('magma-storm', [
+    { type: 'sfx', sound: 'fire' },
+    {
+        type: 'formation', target: 'defender', pattern: 'ring',
+        shape: 'fire', particleSize: 15, color: '#8b0000', outline: '#ff4500',
+        duration: 1200, stagger: 50
+    },
+    { type: 'spriteShake', target: 'defender', duration: 800 }
+]);
+
+AnimFramework.register('lava-plume', [
+    { type: 'sfx', sound: 'fire' },
+    {
+        type: 'formation', target: 'attacker', pattern: 'rise', // Plume rising
+        shape: 'fire', particleSize: 20, color: '#ff8c00', outline: '#8b0000',
+        duration: 800, stagger: 30
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-fire', duration: 600 },
+            { type: 'spriteShake', target: 'defender', duration: 500 }
+        ]
+    }
+]);
+
+AnimFramework.register('fire-fang', [
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    { type: 'sfx', sound: 'fire' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'claw', // Teeth
+                color: '#ff4500', outline: '#8b0000', width: 30, height: 30,
+                duration: 300, animation: 'strike'
+            },
+            { type: 'particles', position: 'defender', count: 5, spread: 20, duration: 300, particleStyles: { background: '#ff4500' } }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('blast-burn', [
+    { type: 'sfx', sound: 'explosion' },
+    { type: 'bgColor', color: '#ff4500', duration: 1000 },
+    {
+        type: 'formation', target: 'defender', pattern: 'fireBlast', // Kanji
+        shape: 'fire', particleSize: 20, color: '#ff0000', outline: '#8b0000',
+        duration: 1000, stagger: 50
+    },
+    { type: 'screenFx', class: 'fx-fire', duration: 1200 }
+]);
+
+AnimFramework.register('heat-crash', [
+    { type: 'spriteMove', target: 'attacker', preset: 'slam' },
+    { type: 'sfx', sound: 'fire' },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-fire', duration: 500 },
+            { type: 'tilt', angle: 6, duration: 300 },
+            { type: 'spriteShake', target: 'defender', duration: 400 }
+        ]
+    }
+]);
+
+AnimFramework.register('water-pulse', [
+    { type: 'sfx', sound: 'water' },
+    { type: 'wave', intensity: 5, duration: 800, speed: 200 },
+    {
+        type: 'formation', target: 'defender', pattern: 'ring',
+        shape: 'water', particleSize: 10, color: '#1e90ff', outline: '#00008b',
+        duration: 600, stagger: 20
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('brine', [
+    { type: 'sfx', sound: 'water' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 6, interval: 60, travelTime: 300,
+        projectile: {
+            width: 10, height: 10,
+            styles: { background: '#00ced1', borderRadius: '50%', border: '1px solid #008b8b' }
+        }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('aqua-ring', [
+    { type: 'sfx', sound: 'heal' },
+    {
+        type: 'formation', target: 'attacker', pattern: 'ring',
+        shape: 'water', particleSize: 10, color: '#e0ffff', outline: '#00ced1',
+        duration: 1500, stagger: 50
+    },
+    { type: 'flash', color: '#e0ffff', duration: 400, opacity: 0.3 }
+]);
+
+AnimFramework.register('muddy-water', [
+    { type: 'sfx', sound: 'water' },
+    { type: 'bgColor', color: '#556b2f', duration: 800 },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'stream', from: 'attacker', to: 'defender',
+                count: 30, interval: 20, spread: 200, travelTime: 500,
+                size: 7, color: '#8b4513', outline: '#2f4f4f' // Muddy colors
+            },
+            { type: 'screenFx', class: 'fx-water', duration: 800 }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 500 }
+]);
+
+AnimFramework.register('thunder-fang', [
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    { type: 'sfx', sound: 'electric' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'claw',
+                color: '#ffd700', outline: '#daa520', width: 30, height: 30,
+                duration: 300, animation: 'strike'
+            },
+            { type: 'flash', color: '#ffd700', duration: 100, opacity: 0.5 }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('wild-charge', [
+    { type: 'sfx', sound: 'electric' },
+    { type: 'bgColor', color: '#ffd700', duration: 300 },
+    { type: 'spriteMove', target: 'attacker', preset: 'charge' },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-electric', duration: 500 },
+            { type: 'spriteShake', target: 'defender', duration: 500 }
+        ]
+    },
+    { type: 'spriteMove', target: 'attacker', preset: 'recoil' }
+]);
+
+AnimFramework.register('zap-cannon', [
+    { type: 'sfx', sound: 'charge' },
+    { type: 'flash', color: '#ffff00', duration: 400, opacity: 0.5 },
+    {
+        type: 'beam', from: 'attacker', to: 'defender', duration: 600,
+        width: 30, height: 30, beamStyles: {
+            background: 'radial-gradient(circle, #fff, #ffd700, #b8860b)',
+            borderRadius: '50%', boxShadow: '0 0 20px #ffd700'
+        }
+    },
+    { type: 'sfx', sound: 'explosion' },
+    { type: 'spriteShake', target: 'defender', duration: 600 }
+]);
+
+AnimFramework.register('icicle-crash', [
+    { type: 'sfx', sound: 'ice' },
+    {
+        type: 'volley', from: { x: 150, y: -50 }, to: 'defender', // Fall from sky
+        count: 5, interval: 100, travelTime: 400,
+        projectile: {
+            width: 20, height: 40,
+            styles: { background: '#e0ffff', border: '1px solid #87ceeb', borderRadius: '0 0 50% 50%' } // Icicle shape
+        }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 500 }
+]);
+
+AnimFramework.register('ice-fang', [
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    { type: 'sfx', sound: 'ice' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'claw',
+                color: '#e0ffff', outline: '#87ceeb', width: 30, height: 30,
+                duration: 300, animation: 'strike'
+            },
+            { type: 'screenFx', class: 'fx-ice', duration: 200 }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('sheer-cold', [
+    { type: 'sfx', sound: 'ice' },
+    { type: 'bgColor', color: '#e0ffff', duration: 1500 },
+    {
+        type: 'parallel', steps: [
+            { type: 'filter', target: 'scene', filter: 'brightness(1.2) contrast(1.2) hue-rotate(180deg)', duration: 1000 },
+            { type: 'screenFx', class: 'fx-ice', duration: 1000 }
+        ]
+    },
+    { type: 'flash', color: '#fff', duration: 500, opacity: 0.8 }, // Whiteout
+    { type: 'invert', target: 'defender', duration: 500 }
+]);
+
+AnimFramework.register('haze', [
+    { type: 'sfx', sound: 'ice' },
+    { type: 'screenFx', class: 'fx-ice', duration: 800 },
+    {
+        type: 'parallel', steps: [
+            { type: 'bgColor', color: '#dcdcdc', duration: 800 }, // Grey fog
+            {
+                type: 'particles', position: 'scene', count: 30, spread: 200, duration: 1000,
+                particleStyles: { background: '#f5f5f5', opacity: 0.6, borderRadius: '50%' }
+            }
+        ]
+    }
+]);
+

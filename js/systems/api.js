@@ -45,6 +45,14 @@ const API = {
         } catch (e) { return null; }
     },
 
+    async getFormData(formIdOrName) {
+        try {
+            const res = await fetch(`${this.base}/pokemon-form/${formIdOrName}`);
+            if (!res.ok) return null;
+            return await res.json();
+        } catch (e) { return null; }
+    },
+
     async getBST(id) {
         const data = await this.getPokemonData(id);
         if (!data) return 0;
@@ -75,10 +83,8 @@ const API = {
                 : (Math.random() < 0.05); // 5% natural chance
 
             // 4. Fetch Moves (Smart Selection)
-            let selectedMoveNames = [];
-            if (overrides.moves && Array.isArray(overrides.moves)) {
-                selectedMoveNames = overrides.moves;
-            } else if (typeof GAME_BALANCE !== 'undefined' && GAME_BALANCE.MOVE_GEN_SMART) {
+            let chosen = [];
+            if (typeof GAME_BALANCE !== 'undefined' && GAME_BALANCE.MOVE_GEN_SMART) {
                 const allMoves = data.moves.map(m => {
                     // Find a relevant level-up entry (prefer G/S/C)
                     const levelEntry = m.version_group_details.find(d =>
@@ -104,8 +110,6 @@ const API = {
                     ...allMoves.filter(m => m.isEgg),
                     ...allMoves.filter(m => m.level !== null && m.level > level && m.level <= level + (GAME_BALANCE.MOVE_GEN_HIGHER_LEVEL_REACH || 10))
                 ].filter((v, i, a) => a.findIndex(t => t.name === v.name) === i); // Unique
-
-                let chosen = [];
 
                 // 3. Rare chance to include special moves (GUARANTEED FOR BOSSES)
                 const isBoss = overrides.isBoss || false;
@@ -141,13 +145,22 @@ const API = {
                         chosen.push(fallbackPool[idx]);
                     }
                 }
-
-                selectedMoveNames = chosen;
             } else {
                 // Fallback: Pick 4 random moves from the pool
                 const pool = data.moves.map(m => m.move.name).sort(() => 0.5 - Math.random());
-                selectedMoveNames = pool.slice(0, 4);
+                chosen = pool.slice(0, 4);
             }
+
+            // --- APPLY SPARSE DEBUG OVERRIDES ---
+            if (overrides.moves && Array.isArray(overrides.moves)) {
+                overrides.moves.forEach((moveKey, index) => {
+                    if (moveKey !== null && moveKey !== undefined) {
+                        chosen[index] = moveKey;
+                    }
+                });
+            }
+
+            let selectedMoveNames = chosen;
 
             // Fire all requests at once
             const movePromises = selectedMoveNames.map(name => this.getMove(name));
@@ -156,13 +169,28 @@ const API = {
             const validMoves = fetchedMoves.filter(m => m !== null);
 
             // 5. Determine Sprites
-            const vCrystal = data.sprites.versions['generation-ii']['crystal'];
-            let front = isShiny ? vCrystal.front_shiny_transparent : vCrystal.front_transparent;
-            let back = isShiny ? vCrystal.back_shiny_transparent : vCrystal.back_transparent;
+            let spriteRef = data.sprites;
+            let nameSuffix = "";
+            if (overrides.form) {
+                const formData = await this.getFormData(overrides.form);
+                if (formData) {
+                    spriteRef = formData.sprites;
+                    if (overrides.appendFormName && formData.form_name) {
+                        nameSuffix = " " + formData.form_name.toUpperCase();
+                    }
+                }
+            }
+
+            const vCrystal = (spriteRef.versions && spriteRef.versions['generation-ii'])
+                ? spriteRef.versions['generation-ii']['crystal']
+                : null;
+
+            let front = vCrystal ? (isShiny ? vCrystal.front_shiny_transparent : vCrystal.front_transparent) : null;
+            let back = vCrystal ? (isShiny ? vCrystal.back_shiny_transparent : vCrystal.back_transparent) : null;
 
             // Fallback
-            if (!front) front = isShiny ? data.sprites.front_shiny : data.sprites.front_default;
-            if (!back) back = isShiny ? data.sprites.back_shiny : data.sprites.back_default;
+            if (!front) front = isShiny ? spriteRef.front_shiny : spriteRef.front_default;
+            if (!back) back = isShiny ? spriteRef.back_shiny : spriteRef.back_default;
 
             const nextLvlExp = Math.pow(level + 1, 3) - Math.pow(level, 3);
             const bst = getStat('hp') + getStat('attack') + getStat('defense') + getStat('special-attack') + getStat('special-defense') + getStat('speed');
@@ -184,7 +212,7 @@ const API = {
             // 7. Assemble Object
             return {
                 id: data.id,
-                name: data.name.toUpperCase(),
+                name: data.name.toUpperCase() + nameSuffix,
                 level: level,
                 maxHp: stats.hp,
                 currentHp: stats.hp,
@@ -207,7 +235,9 @@ const API = {
                 speciesUrl: data.species ? data.species.url : null,
                 failedCatches: 0,
                 rageLevel: 0,
-                isHighTier: bst > 480
+                isHighTier: bst > 480,
+                form: overrides.form || null,
+                pokeball: overrides.pokeball || 'pokeball'
             };
         } catch (e) {
             console.error("Pokemon Fetch Error:", e);
@@ -258,20 +288,48 @@ const API = {
         }
     },
 
-    // Check for moves learned at a specific level (for evolution)
+    // Check for moves learned at a specific level (strictly prioritized by version)
     async getLearnableMoves(pokemonIdOrName, level) {
         try {
-            const res = await fetch(`${this.base}/pokemon/${pokemonIdOrName}`);
-            const data = await res.json();
+            const data = await this.getPokemonData(pokemonIdOrName);
+            if (!data) return [];
 
             const learnable = [];
             for (const m of data.moves) {
-                // Check version details (using 'red-blue' or 'gold-silver' or generic 'level-up')
-                // For simplified logic, we check any version that has level-up at this level
-                const levelUpEntry = m.version_group_details.find(d =>
-                    d.move_learn_method.name === 'level-up' &&
-                    d.level_learned_at === level
+                // Priority list of versions to check
+                const versions = ['crystal', 'gold-silver', 'red-blue-yellow'];
+
+                // Find if THIS specific move is learned at THIS level in ANY of the versions
+                // But we only want ONE version of the facts.
+                // If a pokemon exists in Crystal, we use Crystal's facts.
+
+                // 1. First, check if the Pokemon HAS ANY level-up data in Crystal/Gold/Silver
+                const hasGen2Data = m.version_group_details.some(d =>
+                    ['crystal', 'gold-silver'].includes(d.version_group.name) && d.move_learn_method.name === 'level-up'
                 );
+
+                let levelUpEntry;
+                if (hasGen2Data) {
+                    // Strictly use Gen 2 level
+                    levelUpEntry = m.version_group_details.find(d =>
+                        ['crystal', 'gold-silver'].includes(d.version_group.name) &&
+                        d.move_learn_method.name === 'level-up' &&
+                        d.level_learned_at === level
+                    );
+                } else {
+                    // Fallback: This is a newer Pokemon, find the earliest version it appeared in
+                    // or just find the first level-up entry that matches the level.
+                    // To avoid the "shotgun" effect, we filter to only ONE version group.
+                    const allLevelUpEntries = m.version_group_details.filter(d => d.move_learn_method.name === 'level-up');
+                    if (allLevelUpEntries.length > 0) {
+                        // Pick the version used by the first entry we find in the moves list
+                        const firstVersion = allLevelUpEntries[0].version_group.name;
+                        levelUpEntry = allLevelUpEntries.find(d =>
+                            d.version_group.name === firstVersion &&
+                            d.level_learned_at === level
+                        );
+                    }
+                }
 
                 if (levelUpEntry) {
                     learnable.push(m.move.name);
@@ -281,6 +339,27 @@ const API = {
         } catch (e) {
             console.error("Move Learn Check Error", e);
             return [];
+        }
+    },
+
+    async getRandomSpecialMove(pokemonIdOrName) {
+        try {
+            const data = await this.getPokemonData(pokemonIdOrName);
+            if (!data) return null;
+
+            // Find all moves that are learned via machine or tutor
+            const specialMoves = data.moves.filter(m =>
+                m.version_group_details.some(d => ['machine', 'tutor'].includes(d.move_learn_method.name))
+            );
+
+            if (specialMoves.length === 0) return null;
+
+            // Pick one randomly
+            const randomMove = specialMoves[Math.floor(Math.random() * specialMoves.length)];
+            return randomMove.move.name;
+        } catch (e) {
+            console.error("Special Move Fetch Error", e);
+            return null;
         }
     },
 

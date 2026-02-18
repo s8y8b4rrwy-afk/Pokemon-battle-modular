@@ -12,6 +12,7 @@ const EvolutionScreen = {
         this.pokemon = params.pokemon;
         this.targetData = params.targetData;
         this.resolve = params.resolve;
+        this.learnSpecialMove = params.learnSpecialMove || false;
 
         if (!this.pokemon || !this.targetData) {
             console.error("EvolutionScreen missing params");
@@ -54,10 +55,11 @@ const EvolutionScreen = {
 
     async startSequence() {
         this.state = 'ANIMATING';
+        const evoOptions = { targetId: 'evo-text', arrowId: 'evo-advance-arrow', parentId: 'evo-dialog' };
 
         // 1. Initial message
         if (this.pokemon.cry) AudioEngine.playCry(this.pokemon.cry);
-        await this.typeText(`What?\n${this.pokemon.name} is evolving!`);
+        await DialogManager.show(`What?\n${this.pokemon.name} is evolving!`, evoOptions);
         AudioEngine.playSfx('fanfair');
 
         // 2. Fetch data
@@ -74,8 +76,7 @@ const EvolutionScreen = {
         }
 
         if (!this.newData) {
-            await this.typeText(`...But it failed!`);
-            await this.wait(2000);
+            await DialogManager.show(`...But it failed!`, evoOptions);
             this.close();
             return;
         }
@@ -142,9 +143,8 @@ const EvolutionScreen = {
         }
 
         // 6. Final success message
-        await this.typeText(`Congratulations! Your ${oldName}\nevolved into ${this.newData.name}!`);
         if (this.pokemon.cry) AudioEngine.playCry(this.pokemon.cry);
-        await this.wait(2500);
+        await DialogManager.show(`Congratulations! Your ${oldName}\nevolved into ${this.newData.name}!`, evoOptions);
 
         // 7. Check for new moves
         await this.checkLearnMoves();
@@ -153,28 +153,19 @@ const EvolutionScreen = {
     },
 
     async checkLearnMoves() {
-        if (!API.getLearnableMoves) return;
+        if (typeof MoveLearnScreen === 'undefined') return;
 
-        const newMoves = await API.getLearnableMoves(this.newData.id, this.pokemon.level);
-        for (const move of newMoves) {
-            if (this.pokemon.moves.find(m => m.name === move.toUpperCase())) continue;
+        const evoOptions = { targetId: 'evo-text', arrowId: 'evo-advance-arrow', parentId: 'evo-dialog' };
 
-            if (this.pokemon.moves.find(m => m.name === move.toUpperCase())) continue;
+        // 1. Natural Level-up Moves for the NEW species at current level
+        await MoveLearnScreen.checkAndLearn(this.pokemon, this.pokemon.level, evoOptions);
 
-            // Trigger Move Learn Flow
-            if (typeof MoveLearnScreen !== 'undefined' && typeof DialogManager !== 'undefined') {
-                await MoveLearnScreen.tryLearn(this.pokemon, move);
-            } else {
-                // Fallback (Legacy)
-                if (this.pokemon.moves.length < 4) {
-                    const mData = await API.getMove(move);
-                    if (mData) {
-                        this.pokemon.moves.push(mData);
-                        if (typeof DialogManager !== 'undefined') {
-                            await DialogManager.show(`${this.pokemon.name} learned ${move}!`);
-                        }
-                    }
-                }
+        // 2. Special/Debug Move (if requested in params)
+        if (this.learnSpecialMove && typeof API.getRandomSpecialMove === 'function') {
+            const specialMoveName = await API.getRandomSpecialMove(this.pokemon.id);
+            if (specialMoveName) {
+                await DialogManager.show(`${this.pokemon.name} is feeling\ninspired!`, { lock: true, ...evoOptions });
+                await MoveLearnScreen.tryLearn(this.pokemon, specialMoveName, evoOptions);
             }
         }
     },
@@ -183,22 +174,7 @@ const EvolutionScreen = {
         return new Promise(resolve => setTimeout(resolve, ms));
     },
 
-    typeText(str) {
-        return new Promise(resolve => {
-            const el = document.getElementById('evo-text');
-            if (!el) { resolve(); return; }
-            el.innerHTML = "";
-            let i = 0;
-            const timer = setInterval(() => {
-                el.innerText += str.charAt(i);
-                i++;
-                if (i >= str.length) {
-                    clearInterval(timer);
-                    setTimeout(resolve, 500);
-                }
-            }, 30);
-        });
-    },
+
 
     close() {
         ScreenManager.pop();

@@ -42,13 +42,15 @@ const PokedexData = {
         this.save();
     },
 
-    registerCaught(id) {
+    registerCaught(id, isShiny = false, isBoss = false) {
         if (!this.data[id]) {
             this.data[id] = { seen: true, caught: false, count: 1, shinySeen: false, bossSeen: false };
         }
         const entry = this.data[id];
         entry.caught = true;
         entry.seen = true; // Implicitly seen
+        if (isShiny) entry.shinySeen = true;
+        if (isBoss) entry.bossSeen = true;
         this.save();
     },
 
@@ -71,6 +73,13 @@ const PokedexData = {
             if (Math.random() > 0.5) this.registerCaught(i);
         }
         this.save();
+    },
+
+    registerTeam(party) {
+        if (!party || !Array.isArray(party)) return;
+        party.forEach(p => {
+            if (p && p.id) this.registerCaught(p.id, p.isShiny, p.isBoss);
+        });
     },
 
     getCounts() {

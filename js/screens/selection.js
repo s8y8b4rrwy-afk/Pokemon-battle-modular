@@ -171,6 +171,9 @@ const SelectionScreen = {
         Game.wins = 0;
         Game.bossesDefeated = 0;
 
+        // Register in Pokedex
+        if (typeof PokedexData !== 'undefined') PokedexData.registerTeam(Game.party);
+
         Game.save();
 
         UI.hide('selection-screen'); // Safety

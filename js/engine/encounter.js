@@ -52,13 +52,28 @@ const EncounterManager = {
         }
 
         // 4. Build Specs
+        let specsId = RNG.int(1, 251);
+        if (isLucky && ENCOUNTER_CONFIG.LUCKY_SPECIES && ENCOUNTER_CONFIG.LUCKY_SPECIES.length > 0) {
+            specsId = ENCOUNTER_CONFIG.LUCKY_SPECIES[Math.floor(Math.random() * ENCOUNTER_CONFIG.LUCKY_SPECIES.length)];
+        }
+
         let specs = {
-            id: RNG.int(1, 251),
+            id: specsId,
             level: RNG.int(min, max),
             isBoss: isBoss,
             isLucky: isLucky,
             overrides: { isBoss: isBoss }
         };
+
+        // Universal Unown Form Support
+        if (specsId === 201 && ENCOUNTER_CONFIG.UNOWN_FORMS) {
+            const forms = ENCOUNTER_CONFIG.UNOWN_FORMS;
+            specs.overrides.form = forms[Math.floor(Math.random() * forms.length)];
+        }
+
+        if (isLucky) {
+            specs.overrides.shiny = false;
+        }
 
         // 5. Apply DEBUG Overrides (Cleanly separated)
         if (typeof DEBUG !== 'undefined' && DEBUG.ENABLED) {
@@ -82,7 +97,7 @@ const EncounterManager = {
             shinyChance += (Game.inventory.rogue_shiny || 0) * boost;
         }
 
-        if (!specs.overrides.hasOwnProperty('shiny') && RNG.roll(shinyChance)) {
+        if (!specs.isLucky && !specs.overrides.hasOwnProperty('shiny') && RNG.roll(shinyChance)) {
             specs.overrides.shiny = true;
         }
 
@@ -98,7 +113,7 @@ const EncounterManager = {
             attempts++;
 
             // 1. Level-Up/Evolution Integrity Check
-            if (!specs.isBoss) {
+            if (!specs.isBoss && !specs.isLucky) {
                 const minLvl = await API.getMinLevel(specs.id);
                 if (specs.level < minLvl) {
                     specs.id = RNG.int(1, 251);
@@ -110,19 +125,34 @@ const EncounterManager = {
             const bst = await API.getBST(specs.id);
             const isHighTier = bst >= ENCOUNTER_CONFIG.HI_TIER_BST_THRESHOLD;
 
+            // --- DYNAMIC SCALING (New) ---
+            const bstFloor = Math.min(ENCOUNTER_CONFIG.SCALING_BST_FLOOR_MAX, wins * ENCOUNTER_CONFIG.SCALING_BST_FLOOR_PER_WIN);
+
+            // Calculate High Tier Probability (Scales from 10% to 85% by win 50)
+            const winProgress = Math.min(1, wins / ENCOUNTER_CONFIG.SCALING_HI_TIER_WINS_TARGET);
+            const hiTierProb = ENCOUNTER_CONFIG.SCALING_HI_TIER_START_PROB +
+                (winProgress * (ENCOUNTER_CONFIG.SCALING_HI_TIER_MAX_PROB - ENCOUNTER_CONFIG.SCALING_HI_TIER_START_PROB));
+
+            // Filtering Logic
             if (specs.isBoss) {
                 // If this is a boss but we rolled a "weak" pokemon, try to find a stronger one
                 if (!isHighTier && Math.random() < ENCOUNTER_CONFIG.HI_TIER_BOSS_PROBABILITY) {
                     specs.id = RNG.int(1, 251);
                     continue;
                 }
-            } else {
-                // For wild encounters, legendaries/high-tier are restricted
+            } else if (!specs.isLucky) {
+                // BST Floor: Reject pokemon that are too weak for this round
+                if (bst < bstFloor) {
+                    specs.id = RNG.int(1, 251);
+                    continue;
+                }
+
+                // High Tier Check: Scales with progression
                 if (isHighTier) {
                     const earlyGame = (wins < ENCOUNTER_CONFIG.HI_TIER_MIN_WINS && specs.level < ENCOUNTER_CONFIG.HI_TIER_MIN_LEVEL);
 
-                    // Too early for legendaries or just failed the rarity roll (Wild high-tiers are 10% rare)
-                    if (earlyGame || Math.random() < 0.90) {
+                    // In early game or if we fail the (now scaling) rarity roll, re-roll
+                    if (earlyGame || Math.random() > hiTierProb) {
                         specs.id = RNG.int(1, 251);
                         continue;
                     }

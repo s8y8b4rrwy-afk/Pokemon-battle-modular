@@ -30,8 +30,14 @@ const PartyScreen = {
         }
 
         const len = Game.party.length; // Length is the Close Button index
-        const isForced = Game.forcedSwitch || Game.state === 'OVERFLOW';
-        const maxFocus = isForced ? len - 1 : len;
+        const isOverflow = (Game.state === 'OVERFLOW');
+        const isForced = Game.forcedSwitch && !isOverflow; // Normal forced switch (e.g. faint)
+
+        // Navigation rules:
+        // - In Overflow: Max focus is the 7th Pokemon (index 6)
+        // - In Forced: Max focus is the last Pokemon (index len - 1)
+        // - Otherwise: Max focus is the Close button (index len)
+        const maxFocus = isOverflow ? (len - 1) : (isForced ? len - 1 : len);
 
         if (key === 'ArrowDown') {
             Input.focus = Math.min(maxFocus, Input.focus + 1);
@@ -45,16 +51,29 @@ const PartyScreen = {
         }
         if (['z', 'Z', 'Enter'].includes(key)) {
             AudioEngine.playSfx('select');
-            if (!isForced && Input.focus === len) document.getElementById('party-close-btn').click();
-            else if (Input.focus < len) document.querySelectorAll('.party-slot')[Input.focus].click();
+            if (Input.focus === len && !isForced && !isOverflow) {
+                const closeBtn = document.getElementById('party-close-btn');
+                if (closeBtn) (/** @type {HTMLElement} */ (closeBtn)).click();
+            }
+            else if (Input.focus < len) {
+                const slots = document.querySelectorAll('.party-slot');
+                if (slots[Input.focus]) (/** @type {HTMLElement} */ (slots[Input.focus])).click();
+            }
             return true;
         }
         if (key === 'x' || key === 'X') {
             AudioEngine.playSfx('select');
             if (Game.state === 'HEAL') {
                 ScreenManager.pop();
-            } else if (!isForced) {
-                BattleMenus.uiToMenu();
+            } else if (isOverflow) {
+                this.release(6); // X cancels the catch by releasing the new pokemon
+            } else {
+                const closeBtn = document.getElementById('party-close-btn');
+                if (closeBtn && closeBtn.style.display !== 'none') {
+                    (/** @type {HTMLElement} */ (closeBtn)).click();
+                } else if (!isForced) {
+                    BattleMenus.uiToMenu();
+                }
             }
             return true;
         }
@@ -77,7 +96,8 @@ const PartyScreen = {
         }
         if (['z', 'Z', 'Enter'].includes(key)) {
             AudioEngine.playSfx('select');
-            document.querySelectorAll('#party-context .ctx-btn')[Input.focus].click();
+            const btns = document.querySelectorAll('#party-context .ctx-btn');
+            if (btns[Input.focus]) (/** @type {HTMLElement} */ (btns[Input.focus])).click();
             return true;
         }
         if (key === 'x' || key === 'X') {
@@ -91,6 +111,12 @@ const PartyScreen = {
 
     // --- Legacy / Internal Logic ---
     open(forced) {
+        // --- BUFF/REPAIR: Self-heal bugged saves with 7 pokemon ---
+        if (Game.party.length > 6) {
+            Game.state = 'OVERFLOW';
+            forced = true; // Force it open
+        }
+
         if (Battle.uiLocked && !forced && !['OVERFLOW', 'HEAL'].includes(Game.state)) return;
 
         // Prevent switching when trapped (unless forced)
@@ -101,7 +127,10 @@ const PartyScreen = {
 
         if (Game.state === 'BATTLE' && !forced) Battle.lastMenuIndex = Input.focus;
 
-        if (!['OVERFLOW', 'HEAL'].includes(Game.state)) Game.state = 'PARTY';
+        // --- BUFF/REPAIR: Ensure overflow state is prioritized ---
+        if (Game.party.length > 6) Game.state = 'OVERFLOW';
+        else if (!['OVERFLOW', 'HEAL'].includes(Game.state)) Game.state = 'PARTY';
+
         Game.forcedSwitch = forced;
         // UI.show managed by ScreenManager usually, but doubling up is safe
         UI.show('party-screen');
@@ -116,16 +145,17 @@ const PartyScreen = {
 
         if (Game.state === 'OVERFLOW') {
             header.innerText = "PARTY FULL! RELEASE ONE.";
-            closeBtn.innerText = "SELECT TO RELEASE";
-            closeBtn.style.pointerEvents = "none";
+            closeBtn.style.display = "none"; // Hide button as requested, slot 7 handles release
         } else if (Game.state === 'HEAL') {
             header.innerText = "USE ON WHICH PKMN?";
             closeBtn.innerText = "CANCEL";
+            closeBtn.style.display = "block";
             closeBtn.onclick = () => { AudioEngine.playSfx('select'); ScreenManager.pop(); }; // Returns to BAG
         } else {
             header.innerText = "POKEMON PARTY";
-            closeBtn.onclick = forced ? null : () => { AudioEngine.playSfx('select'); BattleMenus.uiToMenu(); };
-            if (forced) closeBtn.style.display = "none";
+            closeBtn.innerText = "CLOSE";
+            closeBtn.style.display = forced ? "none" : "block";
+            closeBtn.onclick = () => { AudioEngine.playSfx('select'); BattleMenus.uiToMenu(); };
         }
         this.render();
         Input.setMode('PARTY');
@@ -195,10 +225,16 @@ const PartyScreen = {
     },
 
     release(index) {
+        const isOverflow = (Game.state === 'OVERFLOW');
         this.closeContext();
         if (typeof SummaryScreen !== 'undefined') SummaryScreen.close();
 
         const releasedMon = Game.party[index];
+        const wasActive = (index === Game.activeSlot);
+
+        // Immediate state reset to stop the "Overflow" mode visuals/logic
+        if (isOverflow) Game.state = 'BATTLE';
+
         Game.party.splice(index, 1);
 
         if (typeof ScreenManager !== 'undefined') {
@@ -215,11 +251,35 @@ const PartyScreen = {
             }
         };
 
+        // Adjust active slot if we released something before it
         if (index < Game.activeSlot) Game.activeSlot--;
-        if (index === Game.activeSlot) {
-            if (Game.activeSlot >= Game.party.length) Game.activeSlot = Game.party.length - 1;
-            Battle.animateSwap(releasedMon, Game.party[Game.activeSlot], onComplete);
+
+        if (wasActive) {
+            // Case 1: Releasing the active pokemon during overflow
+            // We want the newly caught pokemon (previously at index 6, now index 5)
+            // to jump into the active spot and play the swap animation.
+            if (isOverflow && index !== 6) {
+                const newMon = Game.party.pop(); // Take the new catch from the end
+                Game.party.splice(index, 0, newMon); // Move it to the (index 0 usually) slot
+                Game.activeSlot = index;
+                Battle.animateSwap(releasedMon, Game.party[Game.activeSlot], onComplete);
+            }
+            // Case 2: Releasing the newly caught pokemon itself
+            else if (isOverflow && index === 6) {
+                UI.typeText(`Bye bye, ${releasedMon.name}!`, onComplete);
+            }
+            // Case 3: Normal release of active pokemon (not overflow)
+            else {
+                if (Game.party.length > 0) {
+                    if (Game.activeSlot >= Game.party.length) Game.activeSlot = Game.party.length - 1;
+                    Battle.animateSwap(releasedMon, Game.party[Game.activeSlot], onComplete);
+                } else {
+                    UI.typeText(`Bye bye, ${releasedMon.name}!`, onComplete);
+                }
+            }
         } else {
+            // Case 4: Releasing a pokemon that is NOT on the field
+            // User requested no animation here, just the farewell text.
             UI.typeText(`Bye bye, ${releasedMon.name}!`, onComplete);
         }
     },
@@ -237,6 +297,21 @@ const PartyScreen = {
         if (Game.selectedItemKey === 'maxrevive') p.currentHp = p.maxHp;
 
         if (data.type === 'heal') p.currentHp = Math.min(p.maxHp, p.currentHp + data.heal);
+
+        if (data.pocket === 'debug') {
+            this.render();
+            if (typeof ScreenManager !== 'undefined') ScreenManager.clear();
+            else UI.hideAll(['party-screen', 'pack-screen', 'action-menu']);
+
+            Game.state = 'BATTLE';
+            // Store the target index so Battle can use it
+            Game.selectedPartyIndex = index;
+
+            setTimeout(() => {
+                Battle.performItem(Game.selectedItemKey);
+            }, 300);
+            return;
+        }
 
         Game.inventory[Game.selectedItemKey]--;
         AudioEngine.playSfx('heal');

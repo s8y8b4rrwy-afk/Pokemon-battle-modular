@@ -47,21 +47,25 @@ const EnvironmentManager = {
         }
     },
 
-    async tickWeather() {
+    async displayWeatherEffects() {
         if (this.weather.type !== 'none') {
             const currentType = this.weather.type;
+            // Trigger background visual tick
+            const animKey = `weather-${currentType}`;
+            if (AnimFramework.has(animKey)) {
+                await AnimFramework.play(animKey, {});
+            }
+
+            const fx = WEATHER_FX[currentType];
+            if (fx && fx.continue) await UI.typeText(fx.continue);
+        }
+    },
+
+    async decrementWeather() {
+        if (this.weather.type !== 'none') {
             this.weather.turns--;
             if (this.weather.turns <= 0) {
                 await this.setWeather('none');
-            } else {
-                // Trigger background visual tick
-                const animKey = `weather-${currentType}`;
-                if (AnimFramework.has(animKey)) {
-                    await AnimFramework.play(animKey, {});
-                }
-
-                const fx = WEATHER_FX[currentType];
-                if (fx && fx.continue) await UI.typeText(fx.continue);
             }
         }
     },

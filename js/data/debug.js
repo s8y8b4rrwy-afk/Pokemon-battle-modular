@@ -1,10 +1,33 @@
-// --- DEBUG SETTINGS ------------------------
-// Change ENABLED to true to activate these overrides
+// --- DEBUG SETTINGS & DOCUMENTATION ------------------------
+/**
+ * HOW TO USE DEBUG SETTINGS:
+ * 
+ * 1. ENABLED: Set to 'true' to activate any of these overrides.
+ * 2. GIVE_ALL_ITEMS: If true, your inventory is automatically filled with 
+ *    every item in the game database on start/load.
+ * 3. ROGUE_QUANTITY: Sets the quantity for "stackable" rogue items (Caries, Lenses).
+ * 4. ENEMY / PLAYER / LOOT Blocks:
+ *    - Set specific IDs (Pokedex number) to force which Pokemon appears.
+ *    - Set LEVELS to force specific level scaling.
+ *    - Use 'null' on any setting to let the game use its natural RNG.
+ *    - SHINY: Set true to force shiny, false to disable, null for random.
+ * 5. PLAYER.MOVES: 
+ *    - You can provide an array of move names (e.g., ['thunder', 'fly']).
+ *    - If you set a slot to 'null', the game will automatically fill it with
+ *       a level-appropriate move (e.g., ['fly', null, 'surf', null]).
+ */
+
 const DEBUG = {
     ENABLED: true,
     BATTLE_LOGS: true, // Set to true to see detailed battle logs in console
 
-    // Customize your starting items (Quantity)
+    // --- AUTOMATED TESTING SETTINGS ---
+    GIVE_ALL_ITEMS: true,    // Automatically populate inventory with EVERYTHING in ITEMS
+    ROGUE_QUANTITY: 10,      // Default quantity for the "Rogue" stackable items (0-99)
+    BASE_ITEM_QUANTITY: 20,  // Default quantity for standard items (Potions, Balls)
+
+    // Customize your starting items (Manual Overrides)
+    // NOTE: If GIVE_ALL_ITEMS is true, these will still override those keys if provided
     INVENTORY: {
         potion: 20,
         superpotion: 20,
@@ -12,42 +35,39 @@ const DEBUG = {
         maxpotion: 20,
         revive: 20,
         maxrevive: 20,
-        pokeball: 20,
-        greatball: 20,
-        ultraball: 20,
-        masterball: 20,
+        pokeball: 50,
+        greatball: 50,
+        ultraball: 50,
+        masterball: 99,
         bicycle: 1,
         pokedex: 1
     },
 
     // Force specific Enemy attributes
     ENEMY: {
-        ID: null,       // Pokedex Number (e.g. 150 = Mewtwo). Set null for random.
-        LEVEL: null,       // Level (1-100). Set null for auto-scaling.
+        ID: null,       // Pokedex Number (e.g. 150 = Mewtwo).
+        LEVEL: null,    // Level (1-100).
         SHINY: null,    // true = Always Shiny, false = Never Shiny, null = Random.
         IS_BOSS: null,  // true = Boss stats & music.
-        IS_LUCKY: true, // true = Force Lucky Status
+        IS_LUCKY: null, // Set true to force Lucky status (and specific species).
         RAGE: null,     // Start with Rage (0 = None, 1 = !, 2 = !!, 3 = MAX).
 
         // Major Status (Persistent)
-        // Options: 'brn' (Burn), 'par' (Paralysis), 'slp' (Sleep), 'frz' (Freeze), 'psn' (Poison)
+        // Options: 'brn', 'par', 'slp', 'frz', 'psn'
         STATUS: null,
 
         // Volatile Status (Temporary / Wear off)
-        // e.g. { confused: 3 } (Confused for 3 turns)
         VOLATILES: null,
 
         // Stat Stages (Buffs/Debuffs)
-        // Keys: atk, def, spa (Sp. Atk), spd (Sp. Def), spe, acc, eva
-        // Range: -6 (Min) to +6 (Max)
-        // e.g. { atk: 6, def: -2 }
+        // Keys: atk, def, spa, spd, spe, acc, eva (-6 to +6)
         STAGES: null
     },
 
     // Force specific Player attributes
     PLAYER: {
-        ID: 1,       // Pokedex Number (e.g. 249 = Lugia).
-        LEVEL: 15,    // Level (1-100).
+        ID: 133,       // Pokedex Number (e.g. 249 = Lugia).
+        LEVEL: null,    // Level (1-100).
         SHINY: null,    // true/false.
         RAGE: 0,        // Start with Rage (0-3).
 
@@ -55,17 +75,14 @@ const DEBUG = {
         STATUS: null,
 
         // Volatile Status: e.g. { confused: 5 }
-        VOLATILES: { sleep: 3 },
+        VOLATILES: null,
 
         // Stat Stages: e.g. { atk: 6, spe: 6 }
         STAGES: null,
 
-        // Force specific items
-        // NOTE: Uses INVENTORY above for quantities
-
         // Force specific moves (Array of lowercase strings with dashes)
-        // e.g. ['fly', 'dig', 'solar-beam', 'protect']
-        MOVES: ['transform', 'thunder', 'ice-beam', 'flamethrower']
+        // If a slot is null, it will be auto-filled by the generator.
+        MOVES: ['hyper-beam', null, null, null]
     },
 
     // Control Drop Rates

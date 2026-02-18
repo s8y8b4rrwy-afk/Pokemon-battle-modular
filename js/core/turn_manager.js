@@ -114,6 +114,13 @@ const TurnManager = {
             await this.processDelayedMoves(battle);
             if (await FaintManager.checkFaints(battle, ['player', 'enemy'])) return 'STOP_BATTLE';
 
+            // 0. Weather Check/Clear (Clears BEFORE damage phase if turns are out)
+            await EnvironmentManager.decrementWeather();
+
+            // 1. Weather message ("rages") only if still active
+            await EnvironmentManager.displayWeatherEffects();
+
+            // 2. Damage Phase (Weather Damage + Status)
             await battle.processEndTurnEffects(battle.p, true);
             if (await FaintManager.checkFaints(battle, ['player', 'enemy'])) return 'STOP_BATTLE';
 
@@ -122,8 +129,6 @@ const TurnManager = {
 
             // 3. RAGE PROCESSING (End of Turn)
             await RageManager.processRage(battle);
-
-            await EnvironmentManager.tickWeather();
         }
     },
 
@@ -404,10 +409,26 @@ const TurnManager = {
         battle.p = newMon;
         battle.participants.add(Game.activeSlot);
 
-        // 2. Text First
-        await UI.typeText(`Go! ${newMon.name}!`);
+        // 2. Text First (Non-blocking)
+        const textPromise = UI.typeText(`Go! ${newMon.name}!`, null, false, 'text-content', 0);
 
-        // 3. Pokeball Poof & Start Animation (Mirroring Battle.js logic exactly)
+        // 3. Pokeball Drop Animation
+        const ballKey = newMon.pokeball || 'pokeball';
+        const ballData = ITEMS[ballKey] || ITEMS.pokeball;
+
+        const ball = document.createElement('div');
+        ball.className = `pokeball-anim ${ballData.css || ''}`;
+        ball.style.left = '52px'; // Center with smoke (60) - half ball width (8)
+        ball.style.bottom = '50px'; // Bottom at smoke y (150) -> 200 - 150 = 50
+        ball.style.animation = 'ballDrop 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+        document.getElementById('scene').appendChild(ball);
+
+        AudioEngine.playSfx('throw');
+        await wait(700); // Wait for drop
+
+        // Remove ball and show poof
+        if (ball.parentNode) ball.parentNode.removeChild(ball);
+
         AudioEngine.playSfx('ball');
 
         UI.resetSprite(sprite);
@@ -428,6 +449,7 @@ const TurnManager = {
 
         await wait(1000); // Allow full animation and cry to finish
         sprite.classList.remove('anim-enter');
+        await textPromise;
 
         // 4. HP Bar Slide In
         AudioEngine.playSfx('swoosh');

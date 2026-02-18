@@ -40,6 +40,11 @@ const DialogManager = {
         const task = this.queue[0];
         const prevLockState = (typeof Battle !== 'undefined') ? Battle.uiLocked : false;
 
+        // Custom IDs from options
+        const targetId = task.options.targetId || 'text-content';
+        const arrowId = task.options.arrowId || 'advance-arrow';
+        const parentId = task.options.parentId || 'dialog-box';
+
         if (task.type === 'text') {
             this.isTyping = true;
 
@@ -55,14 +60,14 @@ const DialogManager = {
                     } else {
                         await Promise.race([
                             new Promise(r => setTimeout(r, task.options.delay)),
-                            this.waitForInput()
+                            this.waitForInput(arrowId)
                         ]);
                     }
                 } else {
-                    await this.waitForInput();
+                    await this.waitForInput(arrowId);
                 }
 
-                this._cleanupInputHandler();
+                this._cleanupInputHandler(arrowId);
 
                 if (task.options.lock && typeof Battle !== 'undefined' && !prevLockState) {
                     Battle.uiLocked = false;
@@ -72,7 +77,7 @@ const DialogManager = {
                 this.queue.shift();
                 if (task.resolve) task.resolve();
                 this.processQueue();
-            }, task.options.fast, 'text-content', 0);
+            }, task.options.fast, targetId, 0);
 
         } else if (task.type === 'choice') {
             this.isTyping = true;
@@ -84,7 +89,7 @@ const DialogManager = {
             // 1. Show Text
             await UI.typeText(task.text, () => {
                 // 2. Render Choices ONLY after typing finishes
-                this.renderChoices(task.choices);
+                this.renderChoices(task.choices, parentId);
 
                 // 3. Wait for Input
                 Input.setMode('DIALOG_CHOICE');
@@ -102,23 +107,22 @@ const DialogManager = {
                     this.activeResolver = null;
                     this.processQueue();
                 };
-            }, task.options.fast, 'text-content', 0);
+            }, task.options.fast, targetId, 0);
         }
     },
 
     // --- UI Rendering ---
-    renderChoices(choices) {
-        const menu = document.getElementById('action-menu'); // Reuse or new?
-        // Using a dedicated choice box is better, but let's reuse action-menu for specific cases or create a generic one.
-        // For simplicity/compatibility, let's assume we repurposed the 'action-menu' or created a simple overlay.
+    renderChoices(choices, parentId = 'dialog-box') {
+        const parent = document.getElementById(parentId) || document.getElementById('dialog-box');
 
-        // Actually, let's use a temporary overlay in the dialog box
         let el = document.getElementById('dialog-choice-box');
         if (!el) {
             el = document.createElement('div');
             el.id = 'dialog-choice-box';
             el.className = 'choice-box';
-            document.getElementById('dialog-box').appendChild(el);
+            parent.appendChild(el);
+        } else if (el.parentElement !== parent) {
+            parent.appendChild(el);
         }
 
         el.innerHTML = '';
@@ -196,8 +200,8 @@ const DialogManager = {
         else if (choices.length > 0) choices[0].classList.add('focused');
     },
 
-    waitForInput() {
-        const arrow = document.getElementById('advance-arrow');
+    waitForInput(arrowId = 'advance-arrow') {
+        const arrow = document.getElementById(arrowId);
         if (arrow) arrow.classList.remove('hidden');
 
         return new Promise(resolve => {
@@ -211,7 +215,7 @@ const DialogManager = {
                 }
 
                 if (trigger) {
-                    this._cleanupInputHandler();
+                    this._cleanupInputHandler(arrowId);
                     AudioEngine.playSfx('select');
                     resolve();
                 }
@@ -223,13 +227,13 @@ const DialogManager = {
         });
     },
 
-    _cleanupInputHandler() {
+    _cleanupInputHandler(arrowId = 'advance-arrow') {
         if (this._currentHandler) {
             window.removeEventListener('keydown', this._currentHandler);
             window.removeEventListener('click', this._currentHandler);
             this._currentHandler = null;
         }
-        const arrow = document.getElementById('advance-arrow');
+        const arrow = document.getElementById(arrowId);
         if (arrow) arrow.classList.add('hidden');
         this._currentResolver = null;
     }

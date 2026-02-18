@@ -116,9 +116,10 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 - Team-wide EXP distribution on defeat
 
 ### 🐣 Generation & Selection
-- **Level-Appropriate Moves** — Movesets favor recently learned moves over generic level 1 moves.
-- **Elite/Egg Moves** — 10% chance for wild Pokémon (100% for bosses) to know moves above their level or egg-only moves.
-- **Evolution Validation** — Evolved Pokémon (e.g. Charizard) will not appear in the wild below their natural evolution level (Level 36).
+- **Dynamic Power Scaling** — Pokémon encounters get progressively stronger as you win battles. A dynamic BST (Base Stat Total) floor filters out weak base-stage Pokémon (like Pidgey or Caterpie) as you reach higher rounds.
+- **High-Tier Progression** — The chance to encounter Legendary and Pseudo-Legendary Pokémon scales from 10% (early game) to 85% (Round 50+).
+- **Gen II Movesets (Crystal-Focused)** — Pokémon follow strict level-up paths from Pokémon Crystal/Gold/Silver.
+- **Special Learning Moments** — Customizable chance (`MOVE_LEARN_SPECIAL_CHANCE`) on level-up to learn a rare move from TM/Tutor pools with unique dialogue.
 - **First-Stage Starters** — Starter selection screen is filtered to only show basic forms (no middle or final evolutions).
 - **Performance Optimized** — Full caching system for species and evolution data to minimize API latency.
 
@@ -131,7 +132,8 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 ### 🐣 Catch System
 - Accurate Gen II catch formula
 - Poké Ball shake animations (1–3 shakes)
-- Party management with overflow release mechanic (max 6)
+- **Party Overflow Overhaul** — 7th Pokémon slot is temporary; choosing to release the active Pokémon now triggers a specific replacement animation with the new catch.
+- **Enhanced UX** — Removed redundant buttons in overflow; keyboard navigation and 'X' key canceling now work reliably.
 - Caught Pokémon receive partial HP restoration
 
 ### 🍀 Lucky Pokémon Encounters
@@ -342,6 +344,36 @@ const DEBUG = {
 ---
 
 ## 📝 Recent Updates
+
+### v1.8.0 - Evolution UI & Modular Dialogue (Feb 2026)
+**Visual Polish & Refactoring:**
+- ✨ **Evolution UI Overhaul**: Evolution and move learning now occur within the dedicated evolution screen text box, preventing context-switching to the battle background.
+- ✨ **Modular Dialogue**: `DialogManager` now supports dynamic targeting (`targetId`, `arrowId`, `parentId`), allowing any screen to leverage the standardized typing engine.
+- ✨ **Dynamic Choice Boxes**: The "Yes/No" choice system now intelligently parents itself to the active screen's dialog container.
+- 🎵 **Audio Polish**: Optimized Pokemon cry timing during evolution to play immediately as the congratulations message appears.
+
+### v1.7.0 - Party Screen UX & Overflow Overhaul (Feb 2026)
+**Better Team Management:**
+- 🔄 **Smart Replacement**: Releasing the active Pokémon during overflow now triggers a proper swap animation where the newly caught Pokémon takes the field.
+- 🛠️ **Session Self-Healing**: Implemented a repair system that detects bugged saves with 7 Pokémon and forces an overflow resolution on load or menu open.
+- ⌨️ **Keyboard & UX Polish**: Restored keyboard navigation for full-party menus, fixed "Close" button visibility, and mapped the 'X' key to cancel catches/menus consistently.
+- 🧹 **Minimalist Overflow**: Removed redundant buttons during release sequences, prioritizing direct Pokémon selection for a cleaner Gen II feel.
+
+### v1.6.0 - Dynamic Encounter Scaling & Power Progression (Feb 2026)
+**Fixing the "Pidgey Problem":**
+- 📈 **Dynamic BST Floor**: Implemented a scaling Base Stat Total floor that increases per win. At Round 50, weak base-forms are completely filtered out in favor of fully evolved threats (BST floor of 480).
+- 📈 **High-Tier Scaling**: The probability of keeping a "High-Tier" (Legendary/Pseudo) roll now scales from 10% in the early game to 85% by Round 50.
+- 📈 **Win-Based Difficulty**: High rounds now feel significantly more challenging as the game naturally favors evolved Pokémon.
+- ⚙️ **Configurable Progression**: Added new scaling constants to `settings.js` for easy tuning of the difficulty curve.
+- 🧪 **Special Moves**: Integrated `MOVE_LEARN_SPECIAL_CHANCE` into the game balance settings for move learning control.
+
+### v1.5.0 - Crystal Movesets & Special Learning (Feb 2026)
+**Authentic Progression:**
+- 💎 **Crystal Prioritization**: Pokémon now strictly follow their Pokémon Crystal movesets during level-up.
+- 💎 **Cross-Gen Fallback**: Pokémon from Gen 3+ automatically lock to their debut generation's moveset to prevent move duplication.
+- 💎 **Special Learning Moments**: 15% chance after any level gain to learn a rare move from the Pokémon's TM/Tutor pools.
+- 💬 **Unique Dialogue**: Added special text sequences for rare move learning events.
+- ⚙️ **API Overhaul**: Refined `getLearnableMoves` and added `getRandomSpecialMove` for intelligent progression.
 
 ### v1.4.0 - Lucky Pokémon & Pity System (Feb 2026)
 **New Encounter Type:**

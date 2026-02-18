@@ -735,20 +735,53 @@ AnimFramework.register('surf', [
 ]);
 
 AnimFramework.register('waterfall', [
+    { type: 'spriteMove', target: 'attacker', preset: 'shake' },
     { type: 'spriteMove', target: 'attacker', preset: 'jump' },
     { type: 'sfx', sound: 'water' },
     {
-        type: 'parallel', steps: [
+        type: 'parallel',
+        steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'water',
-                color: '#1e90ff', outline: '#fff', width: 40, height: 60,
-                duration: 500, animation: 'strike'
+                type: 'overlay',
+                target: 'defender',
+                shape: 'water',
+                color: '#1e90ff',
+                outline: '#fff',
+                width: 40,
+                height: 60,
+                duration: 500,
+                animation: 'strike'
             },
-            { type: 'screenFx', class: 'fx-water', duration: 500 },
-            { type: 'spriteShake', target: 'defender', duration: 400 }
+            {
+                type: 'bgColor',
+                class: 'fx-shake',
+                duration: 500,
+                target: 'defender',
+                animation: 'grow',
+                color: '#00c7fc',
+                outline: null,
+                width: 24,
+                height: 24,
+                intensity: 9,
+                speed: 4
+            },
+            { type: 'spriteShake', target: 'defender', duration: 400 },
+            { type: 'wait', ms: 200 },
+            {
+                type: 'particles',
+                ms: 200,
+                position: 'defender',
+                count: 8,
+                spread: 40,
+                gravity: 0,
+                speed: 10,
+                color: '#0061ff',
+                duration: 600
+            }
         ]
     }
 ]);
+
 
 AnimFramework.register('bubble-beam', [
     { type: 'sfx', sound: 'water' },

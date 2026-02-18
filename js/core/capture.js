@@ -98,6 +98,22 @@ const CaptureManager = {
             ball.classList.add('pokeball-caught');
 
             Game.state = 'CAUGHT_ANIM';
+
+            // Register in Pokedex (Before resetting name/boss status)
+            if (typeof PokedexData !== 'undefined') PokedexData.registerCaught(enemy.id, enemy.isShiny, enemy.isBoss);
+
+            // NORMALIZE BOSS IF CAUGHT
+            if (enemy.isBoss) {
+                enemy.isBoss = false;
+                if (enemy.name.startsWith("BOSS ")) {
+                    enemy.name = enemy.name.replace("BOSS ", "");
+                }
+                // Revert Boss HP boost
+                if (enemy.stats && enemy.stats.hp) {
+                    enemy.maxHp = enemy.stats.hp;
+                }
+            }
+
             await UI.typeText(`Gotcha!\n${enemy.name} was caught!`);
             const scene = document.getElementById('scene');
             if (scene.contains(ball)) scene.removeChild(ball);
@@ -106,6 +122,7 @@ const CaptureManager = {
             enemy.failedCatches = 0;
             enemy.currentHp = Math.min(enemy.maxHp, enemy.currentHp + Math.floor(enemy.maxHp * 0.2));
 
+            enemy.pokeball = ballKey;
             Game.party.push(enemy);
 
             if (Game.party.length > 6) {

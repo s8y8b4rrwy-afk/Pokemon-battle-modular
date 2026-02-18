@@ -91,6 +91,7 @@ const Mechanics = {
         const Lp = attacker.level;
         let gain = Math.floor(((b * L) / 5) * Math.pow((2 * L + 10) / (L + Lp + 10), 2.5)) + 1;
         if (enemy.isBoss) gain = Math.floor(gain * 1.5);
+        if (enemy.isLucky) gain = Math.floor(gain * 3.0); // Triple XP for Lucky
         if (wasCaught) gain = Math.floor(gain * 0.8);
 
         // Rogue Boost (XP)

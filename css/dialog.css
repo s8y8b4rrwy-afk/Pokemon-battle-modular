@@ -47,7 +47,8 @@
 }
 
 /* Advance Arrow (Blinking) */
-#advance-arrow {
+#advance-arrow,
+#evo-advance-arrow {
     position: absolute;
     bottom: 8px;
     right: 12px;
@@ -60,7 +61,8 @@
     z-index: 1001;
 }
 
-#advance-arrow.hidden {
+#advance-arrow.hidden,
+#evo-advance-arrow.hidden {
     display: none;
 }
 

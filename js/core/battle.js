@@ -326,10 +326,9 @@ const Battle = {
                 document.getElementById('player-hud').classList.add('hud-active');
                 this.uiLocked = false; this.uiToMenu();
             } else {
-                await UI.typeText(`Go! ${player.name}!`);
-
-                AudioEngine.playSfx('swoosh');
+                const textPromise = UI.typeText(`Go! ${player.name}!`, null, false, 'text-content', 0);
                 await this.triggerPlayerEntry(player);
+                await textPromise;
 
                 // 6. Player HUD In
                 AudioEngine.playSfx('swoosh');
@@ -347,6 +346,24 @@ const Battle = {
     },
 
     async triggerPlayerEntry(mon) {
+        // --- BALL DROP ANIMATION ---
+        const ballKey = mon.pokeball || 'pokeball';
+        const ballData = ITEMS[ballKey] || ITEMS.pokeball;
+
+        const ball = document.createElement('div');
+        ball.id = 'entry-ball';
+        ball.className = `pokeball-anim ${ballData.css || ''}`;
+        ball.style.left = '52px'; // Center with smoke (60) - half ball width (8)
+        ball.style.bottom = '50px'; // Bottom at smoke y (150) -> 200 - 150 = 50
+        ball.style.animation = 'ballDrop 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+        document.getElementById('scene').appendChild(ball);
+
+        AudioEngine.playSfx('throw');
+        await wait(700); // Wait for drop
+
+        // Remove ball and show poof
+        if (ball.parentNode) ball.parentNode.removeChild(ball);
+
         AudioEngine.playSfx('ball');
         const sprite = document.getElementById('player-sprite');
 
@@ -492,11 +509,15 @@ const Battle = {
 
     async processItem(itemKey) {
         const data = ITEMS[itemKey];
-        if (Game.inventory[itemKey] > 0) {
-            Game.inventory[itemKey]--;
-        } else {
-            await UI.typeText("You don't have any!");
-            return 'CONTINUE';
+        const isDebug = data && data.pocket === 'debug';
+
+        if (!isDebug) {
+            if (Game.inventory[itemKey] > 0) {
+                Game.inventory[itemKey]--;
+            } else {
+                await UI.typeText("You don't have any!");
+                return 'CONTINUE';
+            }
         }
 
         if (data.type === 'ball') {
@@ -522,6 +543,16 @@ const Battle = {
             await UI.typeText(`You used a\n${data.name}!`);
             await UI.typeText("But it failed!");
             Game.inventory[itemKey]++;
+        } else if (data.pocket === 'debug') {
+            const p = Game.party[Game.selectedPartyIndex];
+            if (itemKey === 'debug_force_evo') p.pendingDebugEvo = true;
+            if (itemKey === 'debug_force_evo_move') p.pendingDebugEvoMove = true;
+
+            await UI.typeText(`DEBUG OVERRIDE:\n${data.name}!`);
+            AudioEngine.playSfx('explosion');
+
+            // Nuclear damage to enemy to trigger normal faint flow
+            await this.applyDamage(this.e, this.e.currentHp, 'normal', 'DEBUG');
         }
         return 'CONTINUE';
     },

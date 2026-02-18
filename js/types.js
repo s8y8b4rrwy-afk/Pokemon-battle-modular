@@ -288,6 +288,17 @@
  */
 
 /**
+ * @typedef {Object} DialogOptions
+ * @property {boolean} [lock]
+ * @property {boolean} [fast]
+ * @property {number} [delay]
+ * @property {boolean} [noSkip]
+ * @property {string} [targetId]
+ * @property {string} [arrowId]
+ * @property {string} [parentId]
+ */
+
+/**
  * @typedef {Object} ItemEntry
  * @property {string} name
  * @property {number} [heal]
@@ -305,10 +316,26 @@
  * @typedef {Object} DialogManager
  * @property {Array} queue
  * @property {boolean} isTyping
- * @property {(text: string, options?: Object) => Promise<void>} show
- * @property {(text: string, choices?: string[], options?: Object) => Promise<string>} ask
- * @property {(choices: string[]) => void} renderChoices
+ * @property {(text: string, options?: DialogOptions) => Promise<void>} show
+ * @property {(text: string, choices?: string[], options?: DialogOptions) => Promise<string>} ask
+ * @property {(choices: string[], parentId?: string) => void} renderChoices
  * @property {() => void} hideChoices
  * @property {() => void} processQueue
  * @property {(key: string) => boolean} handleInput
+ */
+
+/**
+ * @typedef {Object} APISystem
+ * @property {string} base
+ * @property {Object} cache
+ * @property {(id: number) => Promise<boolean>} checkFirstStage
+ * @property {(id: number) => Promise<Object>} getPokemonData
+ * @property {(id: number) => Promise<number>} getBST
+ * @property {(id: number, level: number, overrides?: Object) => Promise<Pokemon>} getPokemon
+ * @property {(idOrName: string|number) => Promise<Object>} getMove
+ * @property {(speciesUrl: string) => Promise<Object>} getEvolutionChain
+ * @property {(pokemonIdOrName: string|number, level: number) => Promise<string[]>} getLearnableMoves
+ * @property {(pokemonIdOrName: string|number) => Promise<string|null>} getRandomSpecialMove
+ * @property {(id: number) => Promise<number>} getMinLevel
+ * @property {(ailment: string) => string|null} normalizeAilment
  */

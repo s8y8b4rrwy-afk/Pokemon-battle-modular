@@ -25,9 +25,10 @@ A systematic guide to adding new content to the Pokemon Battle Modular system, e
 
 ### Move Generation Rules
 When a Pokémon is generated (Wild, Boss, or Starter), its moves are selected dynamically:
-1. **Level-Up Pool**: Favors moves learned closest to the Pokémon's current level.
+1. **Gen 2 Prioritization**: The system strictly follows **Pokémon Crystal** and **Gold/Silver** level-up tables. If a Pokémon didn't exist in Gen 2, it defaults to its debut generation's moveset to ensure a consistent, non-redundant growth path.
 2. **Elite Moves**: 10% base chance (100% for Bosses) to include an Egg move or High-level move.
-3. **Natural Count**: Pokémon only show up with the number of moves they would naturally know at that level (plus any elite moves).
+3. **Special Learning Moment**: Every level-up has a **15% chance** to trigger a "Special Learning" event where the Pokémon wants to learn a move from its **TM or Tutor pool** that it wouldn't normally learn by level.
+4. **Natural Count**: Pokémon only show up with the number of moves they would naturally know at that level (plus any elite moves).
 
 ### 2. Add to MOVE_DEX (if unique)
 Location: `js/data/moves.js`

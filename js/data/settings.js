@@ -1,6 +1,7 @@
 // --- GAME BALANCE CONTROLLER ---
 // Tweak difficulty, RNG, and rewards here.
 const GAME_BALANCE = {
+    DEBUG_MODE: true,
     // Battle Math
     CRIT_CHANCE_PLAYER: 0.0625, // 6.25%
     CRIT_CHANCE_BOSS: 0.15,     // 15%
@@ -31,7 +32,8 @@ const GAME_BALANCE = {
     MOVE_GEN_SMART: true,       // Enable level-appropriate move selection
     MOVE_GEN_SPECIAL_CHANCE: 0.20, // 20% chance to have an egg move or higher level move
     MOVE_GEN_SPECIAL_COUNT_2_CHANCE: 0.35, // Of that 20%, 35% chance to have 2 special moves instead of 1
-    MOVE_GEN_HIGHER_LEVEL_REACH: 15 // How many levels above current level to look for "special" moves
+    MOVE_GEN_HIGHER_LEVEL_REACH: 15, // How many levels above current level to look for "special" moves
+    MOVE_LEARN_SPECIAL_CHANCE: 0.15 // 15% chance to learn a special (TM/Tutor) move after level up
 };
 
 // --- ENCOUNTER CONFIGURATION ---
@@ -47,6 +49,25 @@ const ENCOUNTER_CONFIG = {
 
     SHINY_CHANCE: 0.05,         // 1/20 chance (Generous for a simulation)
 
+    // Species that can be "Lucky"
+    LUCKY_SPECIES: [
+        35,  // Clefairy
+        36,  // Clefable
+        113, // Chansey
+        132, // Ditto
+        173, // Cleffa
+        201, // Unown
+        242, // Blissey
+        531  // Audino (Future proofing)
+    ],
+
+    UNOWN_FORMS: [
+        'unown-a', 'unown-b', 'unown-c', 'unown-d', 'unown-e', 'unown-f', 'unown-g',
+        'unown-h', 'unown-i', 'unown-j', 'unown-k', 'unown-l', 'unown-m', 'unown-n',
+        'unown-o', 'unown-p', 'unown-q', 'unown-r', 'unown-s', 'unown-t', 'unown-u',
+        'unown-v', 'unown-w', 'unown-x', 'unown-y', 'unown-z', 'unown-exclamation', 'unown-question'
+    ],
+
     // Level Scaling (Relative to Player)
     WILD_LEVEL_MIN: -5,         // Player Level - 5
     WILD_LEVEL_MAX: -2,         // Player Level - 2
@@ -57,7 +78,14 @@ const ENCOUNTER_CONFIG = {
     HI_TIER_BST_THRESHOLD: 420,  // Threshold for "Powerful" Pokemon
     HI_TIER_MIN_WINS: 10,        // Wins required to see naturally in wild
     HI_TIER_MIN_LEVEL: 18,       // Level required to see naturally in wild
-    HI_TIER_BOSS_PROBABILITY: 0.60 // Chance a boss re-rolls to find a high-tier candidate
+    HI_TIER_BOSS_PROBABILITY: 0.60, // Chance a boss re-rolls to find a high-tier candidate
+
+    // SCALING LOGIC (New)
+    SCALING_HI_TIER_START_PROB: 0.10, // Start with 10% chance for hi-tier (90% rejection)
+    SCALING_HI_TIER_MAX_PROB: 0.85,   // Scale up to 85% chance for hi-tier
+    SCALING_HI_TIER_WINS_TARGET: 50,  // Reach max probability at 50 wins
+    SCALING_BST_FLOOR_PER_WIN: 7,     // Increase BST floor by 7 per win
+    SCALING_BST_FLOOR_MAX: 480        // Never floor above this BST
 };
 
 // --- ROGUELIKE MECHANICS ---

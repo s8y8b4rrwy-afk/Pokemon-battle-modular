@@ -110,6 +110,37 @@ const Game = {
         return true;
     },
 
+    handleDebug() {
+        if (!DEBUG.ENABLED) {
+            if (typeof GAME_BALANCE !== 'undefined') GAME_BALANCE.DEBUG_MODE = false;
+            return;
+        }
+
+        // Sync flags
+        if (typeof GAME_BALANCE !== 'undefined') GAME_BALANCE.DEBUG_MODE = true;
+
+        // 1. Apply standard overrides from debug.js
+        if (DEBUG.INVENTORY) {
+            Object.assign(this.inventory, DEBUG.INVENTORY);
+        }
+
+        // 2. Comprehensive Item Fill
+        if (DEBUG.GIVE_ALL_ITEMS && typeof ITEMS !== 'undefined') {
+            for (const key in ITEMS) {
+                const item = ITEMS[key];
+                // Decide quantity based on item type
+                let qty = DEBUG.BASE_ITEM_QUANTITY || 20;
+                if (item.type === 'rogue') qty = DEBUG.ROGUE_QUANTITY || 10;
+                if (item.type === 'key') qty = 1;
+
+                // Apply quantity (preserve manual overrides if they are higher)
+                if (this.inventory[key] === undefined || this.inventory[key] < qty) {
+                    this.inventory[key] = qty;
+                }
+            }
+        }
+    },
+
     // --- FLOW CONTROL ---
     startNameInput() {
         ScreenManager.push('NAME_INPUT');
@@ -127,7 +158,10 @@ const Game = {
         Battle.uiLocked = true;
 
         if (this.load()) {
-            if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
+            this.handleDebug();
+
+            // Sync Pokedex with party
+            if (typeof PokedexData !== 'undefined') PokedexData.registerTeam(this.party);
 
             // Hide everything and clear the stack properly
             if (typeof ScreenManager !== 'undefined') {
@@ -149,6 +183,13 @@ const Game = {
             }
 
             this.state = 'BATTLE';
+
+            // --- BUFF/REPAIR: Force overflow release if party is bugged at 7 ---
+            if (this.party.length > 6) {
+                this.state = 'OVERFLOW';
+                setTimeout(() => this.openParty(true), 500);
+                return;
+            }
 
             // RESUME LOGIC
             if (this.enemyMon && this.enemyMon.currentHp > 0) {
@@ -192,7 +233,7 @@ const Game = {
             pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
             rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
         };
-        if (DEBUG.ENABLED) Object.assign(this.inventory, DEBUG.INVENTORY);
+        this.handleDebug();
 
         // Use ScreenManager for Selection
         if (typeof ScreenManager !== 'undefined') {
@@ -233,6 +274,20 @@ const Game = {
     },
 
     async startNewBattle(isFirst = false) {
+        // --- DEBUG: Pending Evolutions ---
+        // We MUST do this before setting state to BATTLE or resetting the scene
+        // to prevent UI interference
+        for (const mon of this.party) {
+            if (mon && (mon.pendingDebugEvo || mon.pendingDebugEvoMove)) {
+                const learnMove = !!mon.pendingDebugEvoMove;
+                mon.pendingDebugEvo = false;
+                mon.pendingDebugEvoMove = false;
+                if (typeof Evolution !== 'undefined') {
+                    await Evolution.forceEvolveByItem(mon, learnMove);
+                }
+            }
+        }
+
         this.state = 'BATTLE';
         Battle.resetScene();
 
@@ -277,9 +332,7 @@ const Game = {
             };
 
             // Full Debug Inventory Override
-            if (DEBUG.ENABLED && DEBUG.INVENTORY) {
-                Object.assign(this.inventory, DEBUG.INVENTORY);
-            }
+            this.handleDebug();
         } else {
             // Restore Volatiles for existing party (Reset all, not just active)
             this.party.forEach(p => {
@@ -330,6 +383,9 @@ const Game = {
         img.onload = launch;
         img.onerror = launch;
         img.src = this.enemyMon.frontSprite;
+
+        // Ensure party is registered in Pokedex (Catch-all for new starters/backups)
+        if (typeof PokedexData !== 'undefined') PokedexData.registerTeam(this.party);
 
         this.save();
     },
@@ -396,18 +452,17 @@ const Game = {
             await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to\nLevel ${p.level}!`, { lock: true });
 
             // 2. CHECK MOVES FOR EVERY LEVEL GAINED
-            if (typeof API.getLearnableMoves === 'function' && typeof MoveLearnScreen !== 'undefined' && typeof DialogManager !== 'undefined') {
+            if (typeof MoveLearnScreen !== 'undefined') {
                 for (const lvl of levelsGained) {
-                    const newMoves = await API.getLearnableMoves(p.id, lvl);
-                    for (const moveName of newMoves) {
-                        // Check if already known (By ID or normalized Name)
-                        const isKnown = p.moves.some(m =>
-                            m.id === moveName ||
-                            m.name === moveName.replace(/-/g, ' ').toUpperCase()
-                        );
+                    await MoveLearnScreen.checkAndLearn(p, lvl);
 
-                        if (!isKnown) {
-                            await MoveLearnScreen.tryLearn(p, moveName);
+                    // --- NEW: SPECIAL MOVE CHANCE (TM/Tutor) ---
+                    const specialChance = GAME_BALANCE.MOVE_LEARN_SPECIAL_CHANCE || 0.15;
+                    if (Math.random() < specialChance) {
+                        const specialMoveName = await API.getRandomSpecialMove(p.id);
+                        if (specialMoveName) {
+                            await DialogManager.show(`Oh! ${p.name}\ngot inspired!`, { lock: true });
+                            await MoveLearnScreen.tryLearn(p, specialMoveName);
                         }
                     }
                 }
@@ -475,6 +530,7 @@ const Game = {
             }
 
             this.save();
+
             await wait(1000);
             this.startNewBattle(false);
         };

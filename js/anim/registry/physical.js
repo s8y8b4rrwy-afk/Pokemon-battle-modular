@@ -655,3 +655,303 @@ AnimFramework.register('sleep-talk', [
         duration: 400, animation: 'fade'
     }
 ]);
+
+// --- NEW PHYSICAL / NORMAL ANIMATIONS ---
+
+AnimFramework.register('fake-out', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 100 },
+    {
+        type: 'overlay', target: 'defender', shape: 'star',
+        color: '#ffffff', outline: '#000000', width: 40, height: 40,
+        duration: 200, animation: 'slam'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 200 }
+]);
+
+AnimFramework.register('facade', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'flash', color: '#ff4500', duration: 300, opacity: 0.4 }, // Guts flame
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    {
+        type: 'overlay', target: 'defender', shape: 'fist',
+        color: '#fff', outline: '#000', width: 50, height: 50,
+        duration: 300, animation: 'slam'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('acrobatics', [
+    { type: 'sfx', sound: 'flying' },
+    { type: 'spriteMove', target: 'attacker', preset: 'jump', duration: 200 },
+    { type: 'wait', ms: 100 },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge', x: 50, y: -50, duration: 200 }, // Aerial strike
+    {
+        type: 'overlay', target: 'defender', shape: 'bird',
+        color: '#87ceeb', outline: '#000', width: 40, height: 40,
+        duration: 300, animation: 'strike'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('gunk-shot', [
+    { type: 'sfx', sound: 'poison' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 1, interval: 0, travelTime: 400,
+        projectile: {
+            width: 30, height: 30, // Big trash can/blob
+            styles: { background: '#4b0082', borderRadius: '10px', border: '2px solid #000' }
+        }
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-poison', duration: 600 },
+            { type: 'particles', position: 'defender', count: 12, spread: 40, duration: 600, particleStyles: { background: '#800080' } }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 500 }
+]);
+
+AnimFramework.register('high-jump-kick', [
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.attackerSprite;
+            sprite.style.transform = 'translateY(-300px)'; // Jump high
+            sprite.style.transition = 'transform 0.4s ease-out';
+        }
+    },
+    { type: 'wait', ms: 400 },
+    { type: 'sfx', sound: 'fighting' },
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.attackerSprite;
+            sprite.style.transform = 'translateY(0)'; // Crash down
+            sprite.style.transition = 'transform 0.2s ease-in';
+        }
+    },
+    { type: 'wait', ms: 150 },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'fist',
+                color: '#b22222', outline: '#000', width: 50, height: 50,
+                duration: 300, animation: 'slam'
+            },
+            { type: 'tilt', angle: 6, duration: 300 },
+            { type: 'spriteShake', target: 'defender', duration: 400 }
+        ]
+    }
+]);
+
+AnimFramework.register('body-press', [
+    { type: 'sfx', sound: 'fighting' },
+    { type: 'spriteMove', target: 'attacker', preset: 'slam' },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-fighting', duration: 600 },
+            { type: 'tilt', angle: 8, duration: 400 },
+            { type: 'spriteShake', target: 'defender', duration: 500 }
+        ]
+    }
+]);
+
+AnimFramework.register('hyper-voice', [
+    { type: 'sfx', sound: 'normal' }, // Should be loud
+    {
+        type: 'formation', target: 'attacker', pattern: 'ring',
+        shape: 'music', particleSize: 15, color: '#000', outline: '#fff',
+        duration: 800, stagger: 40
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'wave', intensity: 5, duration: 800, speed: 150 },
+            { type: 'spriteShake', target: 'defender', duration: 600 }
+        ]
+    }
+]);
+
+AnimFramework.register('boomburst', [
+    { type: 'sfx', sound: 'explosion' },
+    {
+        type: 'parallel', steps: [
+            { type: 'wave', intensity: 10, duration: 1000, speed: 200 },
+            { type: 'flash', color: '#fff', duration: 200, opacity: 0.6 },
+            { type: 'screenFx', class: 'fx-normal', duration: 800 }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 800 }
+]);
+
+AnimFramework.register('swift', [
+    { type: 'sfx', sound: 'normal' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 3, interval: 50, travelTime: 300,
+        projectile: {
+            width: 15, height: 15, // Star shape ideally, but block for now or rotate
+            styles: { background: '#ffd700', clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' }
+        }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('focus-energy', [
+    { type: 'sfx', sound: 'charge' },
+    { type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 600 },
+    { type: 'flash', color: '#ff4500', duration: 400, opacity: 0.4 },
+    {
+        type: 'formation', target: 'attacker', pattern: 'rise',
+        shape: 'fist', particleSize: 12, color: '#ff4500', outline: '#000',
+        duration: 800, stagger: 50
+    }
+]);
+
+AnimFramework.register('minimize', [
+    { type: 'sfx', sound: 'normal' },
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.attackerSprite;
+            sprite.style.transform = 'scale(0.5)';
+            sprite.style.transition = 'transform 0.4s';
+        }
+    },
+    { type: 'wait', ms: 500 },
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.attackerSprite;
+            // Effect persists purely visually until reset
+            setTimeout(() => { sprite.style.transform = ''; }, 1000); // Temporary visual
+        }
+    }
+]);
+
+AnimFramework.register('smoke-screen', [
+    { type: 'sfx', sound: 'normal' },
+    {
+        type: 'particles', position: 'defender', count: 20, spread: 60, duration: 1000,
+        particleStyles: { background: '#696969', opacity: 0.8, borderRadius: '50%' }
+    },
+    { type: 'wait', ms: 500 }
+]);
+
+AnimFramework.register('sweet-kiss', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 300 },
+    {
+        type: 'overlay', target: 'defender', shape: 'heart',
+        color: '#ff69b4', outline: '#ffc0cb', width: 30, height: 30,
+        duration: 400, animation: 'grow'
+    }
+]);
+
+AnimFramework.register('lovely-kiss', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 300 },
+    {
+        type: 'overlay', target: 'defender', shape: 'heart',
+        color: '#ff1493', outline: '#ff69b4', width: 40, height: 40,
+        duration: 400, animation: 'grow'
+    }
+]);
+
+AnimFramework.register('brick-break', [
+    { type: 'sfx', sound: 'fighting' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'claw', // Chop hand
+                color: '#fff', outline: '#000', width: 40, height: 10, // Flat hand
+                duration: 200, animation: 'slam'
+            },
+            { type: 'screenFx', class: 'fx-fighting', duration: 300 }
+        ]
+    },
+    { type: 'sfx', sound: 'damage' }, // Breaking sound
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('cross-chop', [
+    { type: 'sfx', sound: 'fighting' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    {
+        type: 'formation', target: 'defender', pattern: 'xShape',
+        shape: 'fist', particleSize: 15, color: '#b22222', outline: '#000',
+        duration: 300, stagger: 10
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('hammer-arm', [
+    { type: 'sfx', sound: 'fighting' },
+    { type: 'spriteMove', target: 'attacker', preset: 'slam' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'fist',
+                color: '#b22222', outline: '#000', width: 60, height: 60,
+                duration: 400, animation: 'slam'
+            },
+            { type: 'tilt', angle: 6, duration: 300 },
+            { type: 'spriteShake', target: 'defender', duration: 400 }
+        ]
+    }
+]);
+
+AnimFramework.register('seismic-toss', [
+    { type: 'sfx', sound: 'fighting' },
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.defenderSprite; // Lift defender visually? Or just shake world
+            sprite.style.transform = 'translateY(-100px)';
+            sprite.style.transition = 'transform 0.5s';
+        }
+    },
+    { type: 'wait', ms: 500 },
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.defenderSprite;
+            sprite.style.transform = 'translateY(0)'; // Drop
+            sprite.style.transition = 'transform 0.2s cubic-bezier(0.5, 0, 1, 1)';
+        }
+    },
+    { type: 'tilt', angle: 10, duration: 400 },
+    { type: 'spriteShake', target: 'defender', duration: 600 }
+]);
+
+AnimFramework.register('air-cutter', [
+    { type: 'sfx', sound: 'flying' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 4, interval: 100, travelTime: 300,
+        projectile: {
+            width: 30, height: 10, // Blade shape
+            styles: { background: '#e0ffff', border: '1px solid #87ceeb', borderRadius: '50%' }
+        }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('drill-peck', [
+    { type: 'sfx', sound: 'flying' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    {
+        type: 'overlay', target: 'defender', shape: 'bird', // Use bird shape as peck
+        color: '#f0e68c', outline: '#b8860b', width: 40, height: 40,
+        duration: 300, animation: 'strike', count: 3, spread: 20
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('wing-attack', [
+    { type: 'sfx', sound: 'flying' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge', x: 50 }, // Swoop
+    {
+        type: 'overlay', target: 'defender', shape: 'bird', // Wing
+        color: '#dcdcdc', outline: '#a9a9a9', width: 60, height: 60,
+        duration: 300, animation: 'slam'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+

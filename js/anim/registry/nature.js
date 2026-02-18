@@ -193,3 +193,281 @@ AnimFramework.register('stealth-rock', [
         duration: 1000, stagger: 40
     }
 ]);
+
+// --- NEW NATURE ANIMATIONS ---
+
+AnimFramework.register('energy-ball', [
+    { type: 'sfx', sound: 'charge' },
+    { type: 'flash', color: '#32cd32', duration: 400, opacity: 0.5 },
+    {
+        type: 'beam', from: 'attacker', to: 'defender', duration: 600,
+        width: 25, height: 25, beamStyles: {
+            background: 'radial-gradient(circle, #7fff00, #32cd32, #006400)',
+            borderRadius: '50%', boxShadow: '0 0 20px #32cd32'
+        }
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-grass', duration: 600 },
+            { type: 'spriteShake', target: 'defender', duration: 500 }
+        ]
+    }
+]);
+
+AnimFramework.register('leaf-storm', [
+    { type: 'sfx', sound: 'grass' },
+    { type: 'bgColor', color: '#006400', duration: 1000 },
+    {
+        type: 'parallel', steps: [
+            { type: 'wave', intensity: 5, duration: 1200, speed: 200 },
+            {
+                type: 'stream', from: { x: 160, y: -50 }, to: 'defender',
+                count: 40, interval: 15, spread: 250, travelTime: 800,
+                size: 8, color: '#32cd32', outline: '#006400', svgShape: 'leaf'
+            }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 800 }
+]);
+
+AnimFramework.register('grass-knot', [
+    { type: 'sfx', sound: 'grass' },
+    {
+        type: 'formation', target: 'defender', pattern: 'cross',
+        shape: 'leaf', particleSize: 12, color: '#32cd32', outline: '#006400',
+        duration: 800, stagger: 50
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 },
+    { type: 'tilt', angle: 3, duration: 300 } // Tripped
+]);
+
+AnimFramework.register('sticky-web', [
+    { type: 'sfx', sound: 'bug' },
+    {
+        type: 'formation', target: 'defender', pattern: 'ring',
+        shape: 'xShape', particleSize: 10, color: '#d3d3d3', outline: '#a9a9a9', // Web-like
+        duration: 2000, stagger: 100
+    },
+    { type: 'screenFx', class: 'fx-bug', duration: 800 }
+]);
+
+AnimFramework.register('tailwind', [
+    { type: 'sfx', sound: 'flying' },
+    { type: 'spriteMove', target: 'attacker', preset: 'float', duration: 800 },
+    {
+        type: 'stream', from: { x: -50, y: 100 }, to: { x: 350, y: 100 },
+        count: 15, interval: 40, spread: 50, travelTime: 600,
+        size: 4, color: '#e0ffff', outline: '#87ceeb', opacity: 0.5
+    }
+]);
+
+AnimFramework.register('whirlwind', [
+    { type: 'sfx', sound: 'flying' },
+    {
+        type: 'parallel', steps: [
+            { type: 'wave', intensity: 4, duration: 800, speed: 300 },
+            {
+                type: 'stream', from: { x: 350, y: 100 }, to: { x: -50, y: 100 }, // From opponent side
+                count: 30, interval: 20, spread: 200, travelTime: 500,
+                size: 6, color: '#f0ffff', outline: '#b0e0e6'
+            }
+        ]
+    },
+    { type: 'spriteMove', target: 'defender', preset: 'recoil' } // Forced out
+]);
+
+AnimFramework.register('roar', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 400 },
+    {
+        type: 'parallel', steps: [
+            { type: 'wave', intensity: 10, duration: 600, speed: 50 },
+            { type: 'invert', target: 'scene', duration: 400 }
+        ]
+    }
+]);
+
+AnimFramework.register('megahorn', [
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    { type: 'sfx', sound: 'bug' },
+    {
+        type: 'overlay', target: 'defender', shape: 'claw',
+        color: '#9acd32', outline: '#556b2f', width: 60, height: 60,
+        duration: 300, animation: 'slam'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('x-scissor', [
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    { type: 'sfx', sound: 'bug' },
+    {
+        type: 'formation', target: 'defender', pattern: 'xShape',
+        shape: 'claw', particleSize: 30, color: '#9acd32', outline: '#556b2f',
+        duration: 300, stagger: 0 // Instant X
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('signal-beam', [
+    { type: 'sfx', sound: 'bug' },
+    {
+        type: 'beam', from: 'attacker', to: 'defender', duration: 500,
+        width: 10, height: 10, beamStyles: {
+            background: 'linear-gradient(to right, #ff00ff, #00ff00, #ff00ff)', // Multi-color
+            boxShadow: '0 0 10px #00ff00'
+        }
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-bug', duration: 400 },
+            { type: 'spriteShake', target: 'defender', duration: 400 }
+        ]
+    }
+]);
+
+AnimFramework.register('quiver-dance', [
+    { type: 'sfx', sound: 'bug' },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 600 },
+            {
+                type: 'formation', target: 'attacker', pattern: 'ring',
+                shape: 'sparkle', particleSize: 10, color: '#ff69b4', outline: '#c71585',
+                duration: 800, stagger: 40
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('struggle-bug', [
+    { type: 'sfx', sound: 'bug' },
+    {
+        type: 'stream', from: 'attacker', to: 'defender',
+        count: 10, interval: 50, spread: 30, travelTime: 400,
+        size: 4, color: '#9acd32', outline: '#556b2f'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 200 }
+]);
+
+AnimFramework.register('rock-blast', [
+    { type: 'sfx', sound: 'rock' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 4, interval: 150, travelTime: 300,
+        projectile: {
+            width: 15, height: 15,
+            styles: { background: '#8b4513', borderRadius: '50%', border: '2px solid #5d4037' }
+        }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('rock-polish', [
+    { type: 'sfx', sound: 'rock' },
+    { type: 'flash', color: '#fff', duration: 300, opacity: 0.5 },
+    { type: 'spriteMetallic', target: 'attacker', duration: 600, color: 'bronze' } // Polish look
+]);
+
+AnimFramework.register('head-smash', [
+    { type: 'spriteMove', target: 'attacker', preset: 'charge' },
+    { type: 'sfx', sound: 'rock' },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-rock', duration: 600 },
+            { type: 'tilt', angle: 8, duration: 300 },
+            { type: 'spriteShake', target: 'defender', duration: 500 }
+        ]
+    },
+    { type: 'spriteMove', target: 'attacker', preset: 'recoil' }
+]);
+
+AnimFramework.register('rollout', [
+    { type: 'sfx', sound: 'rock' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 400 }, // Simulate rolling with longer lunge
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('bulldoze', [
+    { type: 'spriteMove', target: 'attacker', preset: 'slam' },
+    { type: 'sfx', sound: 'ground' },
+    {
+        type: 'parallel', steps: [
+            { type: 'tilt', angle: 4, duration: 300 },
+            { type: 'screenFx', class: 'fx-ground', duration: 400 },
+            { type: 'spriteShake', target: 'defender', duration: 400 }
+        ]
+    }
+]);
+
+AnimFramework.register('mud-shot', [
+    { type: 'sfx', sound: 'ground' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 3, interval: 100, travelTime: 300,
+        projectile: {
+            width: 12, height: 12,
+            styles: { background: '#5d4037', borderRadius: '50%', border: '1px solid #3e2723' }
+        }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('magnitude', [
+    { type: 'sfx', sound: 'ground' },
+    { type: 'tilt', angle: 10, duration: 600 }, // High intensity
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-ground', duration: 800 },
+            { type: 'spriteShake', target: 'defender', duration: 600 },
+            { type: 'spriteShake', target: 'attacker', duration: 600 }
+        ]
+    }
+]);
+
+AnimFramework.register('seed-bomb', [
+    { type: 'sfx', sound: 'grass' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 1, interval: 0, travelTime: 400,
+        projectile: {
+            width: 20, height: 20,
+            styles: { background: '#deb887', borderRadius: '50%', border: '2px solid #8b4513' }
+        }
+    },
+    { type: 'sfx', sound: 'explosion' },
+    {
+        type: 'parallel', steps: [
+            { type: 'flash', color: '#ffd700', duration: 200, opacity: 0.5 },
+            { type: 'spriteShake', target: 'defender', duration: 400 }
+        ]
+    }
+]);
+
+AnimFramework.register('petal-blizzard', [
+    { type: 'sfx', sound: 'grass' },
+    { type: 'bgColor', color: '#ffb6c1', duration: 1000 },
+    {
+        type: 'stream', from: 'attacker', to: 'defender',
+        count: 50, interval: 10, spread: 250, travelTime: 600,
+        size: 6, color: '#ff69b4', outline: '#c71585', svgShape: 'leaf'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 600 }
+]);
+
+AnimFramework.register('horn-leech', [
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    { type: 'sfx', sound: 'grass' },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'claw',
+                color: '#32cd32', outline: '#006400', width: 30, height: 30,
+                duration: 300, animation: 'strike'
+            },
+            { type: 'spriteShake', target: 'defender', duration: 300 }
+        ]
+    },
+    { type: 'sfx', sound: 'heal' },
+    { type: 'flash', color: '#fff', duration: 300, opacity: 0.3 }
+]);

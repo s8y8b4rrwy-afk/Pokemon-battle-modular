@@ -8,73 +8,80 @@ const MoveLearnScreen = {
     hoverIndex: 0,
 
     // --- Static Helper for Classic Flow ---
-    async tryLearn(pokemon, moveName) {
+    async tryLearn(pokemon, moveName, options = {}) {
         // 1. Fetch Move Data
         const mData = await API.getMove(moveName);
         if (!mData) return false;
 
-        // Hide Battle Menus immediately
-        if (typeof UI !== 'undefined') {
+        // 2. Already Known check (Normalization for safety)
+        const isKnown = pokemon.moves.some(m =>
+            m.id === moveName ||
+            m.name === moveName.replace(/-/g, ' ').toUpperCase()
+        );
+        if (isKnown) return false;
+
+        // Hide Battle Menus immediately (only if in battle)
+        if (typeof UI !== 'undefined' && options.targetId !== 'evo-text') {
             UI.hide('action-menu');
             UI.hide('move-menu');
         }
 
-        // 2. Check Capacity
+        // 3. Check Capacity
         if (pokemon.moves.length < 4) {
             pokemon.moves.push(mData);
-            // Wait for input for simple learn
             AudioEngine.playSfx('funfair');
-            await DialogManager.show(`${pokemon.name} learned\n${mData.name}!`, { lock: true });
-            this._cleanup();
+            await DialogManager.show(`${pokemon.name} learned\n${mData.name}!`, { lock: true, ...options });
             return true;
         }
 
-        // 3. No Room - Interaction (Wait for Input)
-        await DialogManager.show(`${pokemon.name} wants to\nlearn ${mData.name}!`, { lock: true });
-        await DialogManager.show(`But ${pokemon.name} already\nknows 4 moves!`, { lock: true });
+        // 4. No Room - Interaction (Wait for Input)
+        await DialogManager.show(`${pokemon.name} wants to\nlearn ${mData.name}!`, { lock: true, ...options });
+        await DialogManager.show(`But ${pokemon.name} already\nknows 4 moves!`, { lock: true, ...options });
 
         while (true) {
-            // Updated to use options with lock:true
-            const choice = await DialogManager.ask(`Replace a move with\n${mData.name}?`, ['Yes', 'No'], { lock: true });
+            const choice = await DialogManager.ask(`Replace a move with\n${mData.name}?`, ['Yes', 'No'], { lock: true, ...options });
 
             if (choice === 'Yes') {
-                // Returns index of move to forget, or -1 if canceled
                 const forgetIndex = await ScreenManager.pushAndWait('MOVE_LEARN', { pokemon, moveName });
 
-                // IMPORTANT: Check for -1 specifically (canceled in screen)
                 if (forgetIndex !== -1 && forgetIndex !== null && forgetIndex !== undefined) {
                     const oldMove = pokemon.moves[forgetIndex];
 
-                    // The "1, 2, 3 Poof!" sequence in BATTLE DIALOG (Locked/Timed/Non-Skippable)
                     AudioEngine.playSfx('select');
-                    await DialogManager.show(`1, 2, and...`, { lock: true, delay: 800, noSkip: true });
+                    await DialogManager.show(`1, 2, and...`, { lock: true, delay: 800, noSkip: true, ...options });
                     AudioEngine.playSfx('select');
-                    await DialogManager.show(`... ... ...`, { lock: true, delay: 800, noSkip: true });
+                    await DialogManager.show(`... ... ...`, { lock: true, delay: 800, noSkip: true, ...options });
                     AudioEngine.playSfx('swoosh');
-                    await DialogManager.show(`Poof!`, { lock: true, delay: 800, noSkip: true });
+                    await DialogManager.show(`Poof!`, { lock: true, delay: 800, noSkip: true, ...options });
 
-                    await wait(400); // Brief pause for impact
-                    await DialogManager.show(`${pokemon.name} forgot\n${oldMove.name}.`, { lock: true });
+                    await wait(400);
+                    await DialogManager.show(`${pokemon.name} forgot\n${oldMove.name}.`, { lock: true, ...options });
 
                     AudioEngine.playSfx('select');
-                    await DialogManager.show(`And...`, { lock: true, delay: 800, noSkip: true });
+                    await DialogManager.show(`And...`, { lock: true, delay: 800, noSkip: true, ...options });
 
-                    // Actually swap
                     pokemon.moves[forgetIndex] = mData;
 
                     AudioEngine.playSfx('funfair');
-                    await DialogManager.show(`${pokemon.name} learned\n${mData.name}!`, { lock: true });
-                    this._cleanup();
+                    await DialogManager.show(`${pokemon.name} learned\n${mData.name}!`, { lock: true, ...options });
                     return true;
                 }
             }
 
-            const giveUp = await DialogManager.ask(`Give up on learning\n${mData.name}?`, ['Yes', 'No'], { lock: true });
+            const giveUp = await DialogManager.ask(`Give up on learning\n${mData.name}?`, ['Yes', 'No'], { lock: true, ...options });
             if (giveUp === 'Yes') {
-                await DialogManager.show(`${pokemon.name} did not\nlearn ${mData.name}.`, { lock: true });
-                this._cleanup();
+                await DialogManager.show(`${pokemon.name} did not\nlearn ${mData.name}.`, { lock: true, ...options });
                 return false;
             }
+        }
+    },
+
+    // Consolidate the "Check level for moves" logic
+    async checkAndLearn(pokemon, level, options = {}) {
+        if (!API.getLearnableMoves) return;
+        const newMoves = await API.getLearnableMoves(pokemon.id, level);
+        for (const move of newMoves) {
+            await this.tryLearn(pokemon, move, options);
         }
     },
 

@@ -738,3 +738,32 @@
 .anim-flash-gold {
     animation: flashGold 0.8s ease-out;
 }
+
+/* --- BALL DROP --- */
+@keyframes ballDrop {
+    0% {
+        transform: translate(-160px, -120px) rotate(0deg) scale(0.5);
+        opacity: 0;
+    }
+
+    30% {
+        opacity: 1;
+        transform: translate(-80px, -60px) rotate(180deg) scale(1.1);
+    }
+
+    60% {
+        transform: translate(0, 0) rotate(360deg) scale(1);
+    }
+
+    80% {
+        transform: translate(0, -20px) rotate(540deg) scale(1.05);
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(720deg) scale(1);
+    }
+}
+
+.anim-ball-drop {
+    animation: ballDrop 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}

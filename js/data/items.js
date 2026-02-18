@@ -73,5 +73,9 @@ const ITEMS = {
     rogue_hp: { name: "LIFE CANDY", type: 'rogue', pocket: 'key', desc: "Slightly boosts Max HP. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/hp-up.png" },
     rogue_crit: { name: "FOCUS LENS", type: 'rogue', pocket: 'key', desc: "Boosts Critical Hit ratio. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/scope-lens.png" },
     rogue_xp: { name: "XP CHARM", type: 'rogue', pocket: 'key', desc: "Boosts EXP gained from battles. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/lucky-egg.png" },
-    rogue_shiny: { name: "SHINY CHARM", type: 'rogue', pocket: 'key', desc: "Increases chance of finding Shiny Pokemon. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/shiny-charm.png" }
+    rogue_shiny: { name: "SHINY CHARM", type: 'rogue', pocket: 'key', desc: "Increases chance of finding Shiny Pokemon. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/shiny-charm.png" },
+
+    // --- DEBUG ITEMS ---
+    debug_force_evo: { name: "EVO-DEBUG", type: 'debug', pocket: 'debug', desc: "Forces Pokemon to evolve after battle.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/rare-candy.png" },
+    debug_force_evo_move: { name: "EVO+MOVE", type: 'debug', pocket: 'debug', desc: "Forces evolution & learns a random move.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ability-capsule.png" }
 };

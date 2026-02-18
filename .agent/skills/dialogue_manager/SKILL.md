@@ -66,8 +66,25 @@ Both `show` and `ask` accept an `options` object as the last argument:
 | `fast` | `boolean` | `false` | If true, the text types out significantly faster. Good for system messages. |
 | `delay` | `number` | `null` | If set, the message will auto-advance after this many milliseconds. |
 | `noSkip` | `boolean` | `false` | If used with `delay`, prevents the user from skipping the wait time by pressing a key. |
+| `targetId` | `string` | `'text-content'` | The ID of the HTML element where the text should be typed (e.g., `'evo-text'`). |
+| `arrowId` | `string` | `'advance-arrow'` | The ID of the blink-arrow element to show while waiting for input (e.g., `'evo-advance-arrow'`). |
+| `parentId` | `string` | `'dialog-box'` | The container element that should parent the Yes/No choice box (e.g., `'evo-dialog'`). |
 
 ## Common Patterns
+
+### Custom Screen Dialogue
+You can use `DialogManager` on any screen by providing the relevant target IDs. This ensures consistent typing speed, sounds, and input handling across the entire game.
+
+```javascript
+const evoOptions = { 
+    targetId: 'evo-text', 
+    arrowId: 'evo-advance-arrow', 
+    parentId: 'evo-dialog' 
+};
+
+await DialogManager.show("Congratulations!", evoOptions);
+const choice = await DialogManager.ask("Learn HYPER BEAM?", ["Yes", "No"], evoOptions);
+```
 
 ### Blocking Battle Flow
 When implementing move logic or turn events, always `await` the dialogue to ensure the battle doesn't continue while text is typing.

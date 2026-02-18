@@ -147,3 +147,20 @@ AnimFramework.register('metal-sound', [
         ]
     }
 ]);
+
+AnimFramework.register('heavy-slam', [
+    { type: 'sfx', sound: 'steel' },
+    { type: 'spriteMetallic', target: 'attacker', duration: 500, color: 'bronze' },
+    { type: 'spriteMove', target: 'attacker', preset: 'slam' },
+    {
+        type: 'parallel', steps: [
+            { type: 'tilt', angle: 8, duration: 400 },
+            {
+                type: 'overlay', target: 'defender', shape: 'fist',
+                color: '#696969', outline: '#000', width: 60, height: 60,
+                duration: 400, animation: 'slam'
+            },
+            { type: 'spriteShake', target: 'defender', duration: 500 }
+        ]
+    }
+]);

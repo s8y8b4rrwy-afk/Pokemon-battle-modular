@@ -76,10 +76,10 @@ const Evolution = {
         return null;
     },
 
-    async execute(pokemon, targetData) {
+    async execute(pokemon, targetData, learnSpecialMove = false) {
         // Use the new ScreenManager system
         if (typeof ScreenManager !== 'undefined') {
-            await ScreenManager.pushAndWait('EVOLUTION', { pokemon, targetData });
+            await ScreenManager.pushAndWait('EVOLUTION', { pokemon, targetData, learnSpecialMove });
         } else {
             console.error("ScreenManager not found! Evolution cannot screen.");
         }
@@ -97,6 +97,9 @@ const Evolution = {
         oldMon.cry = newMon.cry;
         oldMon.speciesUrl = newMon.speciesUrl;
 
+        // Register in Pokedex
+        if (typeof PokedexData !== 'undefined') PokedexData.registerCaught(oldMon.id, oldMon.isShiny, oldMon.isBoss);
+
         // Copied Properties
         oldMon.icon = newMon.icon;
 
@@ -105,40 +108,36 @@ const Evolution = {
         StatCalc.recalculate(oldMon);
     },
 
-    // DEBUG HELPER
-    async forceEvolve(slotIndex = 0) {
-        const p = Game.party[slotIndex];
-        if (!p) return console.error("No Pokemon in slot " + slotIndex);
+    // DEBUG FORCED EVOLUTION
+    async forceEvolveByItem(pokemon, learnRandomMove = false) {
+        if (!pokemon) return console.error("No Pokemon provided to forceEvolveByItem");
 
-        console.log("Checking evolution for " + p.name);
+        console.log("Forcing debug evolution for " + pokemon.name);
 
-        // 1. Try natural check first
-        let evo = await this.check(p);
+        // 1. Try to find the evolution in the chain
+        const chain = await this.getChain(pokemon);
+        let targetData = null;
 
-        // 2. Force if natural failed
-        if (!evo) {
-            console.log("No natural evolution found. Forcing from chain...");
-            const chain = await this.getChain(p);
+        if (chain) {
+            let currentNode = this.findNodeByUrl(chain, pokemon.speciesUrl);
+            if (!currentNode) currentNode = this.findNode(chain, pokemon.name);
 
-            if (chain) {
-                const node = this.findNode(chain, p.name);
-                if (node && node.evolves_to.length > 0) {
-                    const next = node.evolves_to[0]; // Just take first path
-                    evo = {
-                        speciesName: next.species.name,
-                        speciesUrl: next.species.url,
-                        minLevel: 0 // Ignored by execute
-                    };
-                    console.log("Forcing evolution into: " + next.species.name);
-                } else {
-                    console.warn("This Pokemon is fully evolved or not found in chain.");
-                }
-            } else {
-                console.error("Could not fetch evolution chain.");
+            if (currentNode && currentNode.evolves_to.length > 0) {
+                const next = currentNode.evolves_to[0]; // Take first path
+                targetData = {
+                    speciesName: next.species.name,
+                    speciesUrl: next.species.url,
+                    minLevel: 0
+                };
             }
         }
 
-        if (evo) await this.execute(p, evo);
+        if (targetData) {
+            await this.execute(pokemon, targetData, learnRandomMove);
+        } else {
+            console.warn("This Pokemon has no further evolutions.");
+            await UI.typeText(`${pokemon.name} has no\nfurther evolutions!`);
+        }
     }
 };
 

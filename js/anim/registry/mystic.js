@@ -452,3 +452,307 @@ AnimFramework.register('perish-song', [
         duration: 1500, stagger: 60
     }
 ]);
+
+// --- NEW MYSTIC ANIMATIONS ---
+
+AnimFramework.register('trick-room', [
+    { type: 'sfx', sound: 'psychic' },
+    { type: 'bgColor', color: '#800080', duration: 1500 },
+    {
+        type: 'parallel', steps: [
+            { type: 'wave', intensity: 3, duration: 1500, speed: 50 },
+            {
+                type: 'formation', target: 'scene', pattern: 'ring', // Grid-like feel
+                shape: 'square', particleSize: 8, color: '#ff00ff', outline: '#800080',
+                duration: 1500, stagger: 30
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('aurora-veil', [
+    { type: 'sfx', sound: 'ice' },
+    { type: 'bgColor', color: '#e0ffff', duration: 1000 },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'attacker', shape: 'wall',
+                color: '#e0ffff', outline: '#00ced1', width: 60, height: 60,
+                duration: 1000, animation: 'contain'
+            },
+            {
+                type: 'stream', from: { x: 0, y: -50 }, to: { x: 300, y: -50 }, // Aurora across top
+                count: 30, interval: 30, spread: 20, travelTime: 800,
+                size: 6, color: '#ff69b4', outline: '#00ced1' // Multi-color attempt
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('baton-pass', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'spriteMove', target: 'attacker', preset: 'dodge', duration: 400 },
+    {   // Throw baton
+        type: 'volley', from: 'attacker', to: { x: 400, y: 100 }, // Off screen
+        count: 1, interval: 0, travelTime: 300,
+        projectile: { width: 15, height: 5, styles: { background: '#ff0000', transform: 'rotate(45deg)' } }
+    },
+    { type: 'wait', ms: 200 }
+]);
+
+AnimFramework.register('wish', [
+    { type: 'sfx', sound: 'heal' },
+    {
+        type: 'formation', target: 'attacker', pattern: 'rise',
+        shape: 'star', particleSize: 15, color: '#fffacd', outline: '#ffd700',
+        duration: 2000, stagger: 100
+    },
+    { type: 'flash', color: '#fffacd', duration: 500, opacity: 0.4 }
+]);
+
+AnimFramework.register('healing-wish', [
+    { type: 'sfx', sound: 'heal' },
+    { type: 'flash', color: '#ff69b4', duration: 300, opacity: 0.5 },
+    { type: 'spriteGhost', target: 'attacker', color: '#ffb6c1', duration: 800 },
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.attackerSprite;
+            sprite.style.opacity = '0';
+        }
+    },
+    { type: 'wait', ms: 500 },
+    {
+        type: 'callback', fn: ctx => {
+            // Reset opacity handled by switch logic usually, but here for safety/visual
+        }
+    }
+]);
+
+AnimFramework.register('destiny-bond', [
+    { type: 'sfx', sound: 'ghost' },
+    { type: 'bgColor', color: '#2f002f', duration: 1000 },
+    {
+        type: 'beam', from: 'attacker', to: 'defender', duration: 1000,
+        width: 10, height: 5, beamStyles: { background: '#4b0082' }
+    },
+    {
+        type: 'overlay', target: 'attacker', shape: 'skull',
+        color: '#800080', outline: '#000', width: 40, height: 40,
+        duration: 800, animation: 'fade'
+    },
+    {
+        type: 'overlay', target: 'defender', shape: 'skull',
+        color: '#800080', outline: '#000', width: 40, height: 40,
+        duration: 800, animation: 'fade'
+    }
+]);
+
+AnimFramework.register('aura-sphere', [
+    { type: 'sfx', sound: 'charge' },
+    { type: 'spriteMove', target: 'attacker', preset: 'charge', duration: 300 },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 1, interval: 0, travelTime: 500,
+        projectile: {
+            width: 30, height: 30,
+            styles: { background: 'radial-gradient(circle, #87ceeb, #1e90ff)', borderRadius: '50%', boxShadow: '0 0 15px #1e90ff' }
+        }
+    },
+    { type: 'sfx', sound: 'psychic' },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('stored-power', [
+    { type: 'sfx', sound: 'psychic' },
+    { type: 'formation', target: 'attacker', pattern: 'rise', shape: 'star', particleSize: 10, color: '#FFD700', duration: 600, stagger: 20 },
+    { type: 'wait', ms: 300 },
+    {
+        type: 'beam', from: 'attacker', to: 'defender', duration: 500,
+        width: 20, height: 20, beamStyles: { background: '#ff69b4', boxShadow: '0 0 10px #ff69b4' }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('cosmic-power', [
+    { type: 'sfx', sound: 'heal' },
+    { type: 'bgColor', color: '#191970', duration: 1000 },
+    {
+        type: 'formation', target: 'attacker', pattern: 'ring',
+        shape: 'star', particleSize: 12, color: '#87ceeb', outline: '#ffffff',
+        duration: 1000, stagger: 50
+    }
+]);
+
+AnimFramework.register('psycho-cut', [
+    { type: 'sfx', sound: 'psychic' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    {
+        type: 'overlay', target: 'defender', shape: 'claw', // Using claw akin to cut
+        color: '#ff00ff', outline: '#800080', width: 50, height: 50,
+        duration: 300, animation: 'strike'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('expanding-force', [
+    { type: 'sfx', sound: 'psychic' },
+    { type: 'bgColor', color: '#4b0082', duration: 800 },
+    {
+        type: 'parallel', steps: [
+            { type: 'wave', intensity: 5, duration: 800, speed: 100 },
+            {
+                type: 'formation', target: 'defender', pattern: 'ring',
+                shape: 'spiral', particleSize: 20, color: '#9370db', outline: '#4b0082',
+                duration: 800, stagger: 20
+            }
+        ]
+    }
+]);
+
+AnimFramework.register('shadow-sneak', [
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.attackerSprite;
+            sprite.style.opacity = '0'; // Vanish
+        }
+    },
+    { type: 'sfx', sound: 'ghost' },
+    { type: 'wait', ms: 300 },
+    {
+        type: 'parallel', steps: [
+            {
+                type: 'overlay', target: 'defender', shape: 'fist',
+                color: '#4b0082', outline: '#000', width: 30, height: 30,
+                duration: 200, animation: 'slam'
+            },
+            { type: 'spriteShake', target: 'defender', duration: 200 }
+        ]
+    },
+    {
+        type: 'callback', fn: ctx => {
+            const sprite = ctx.attackerSprite;
+            sprite.style.opacity = '1'; // Reappear
+        }
+    }
+]);
+
+AnimFramework.register('poltergeist', [
+    { type: 'sfx', sound: 'ghost' },
+    { type: 'bgColor', color: '#2f4f4f', duration: 800 },
+    {
+        type: 'formation', target: 'defender', pattern: 'ring', // Items swirling?
+        shape: 'rock', particleSize: 15, color: '#purple', outline: '#000', // Abstract items
+        duration: 800, stagger: 100
+    },
+    { type: 'spriteShake', target: 'defender', duration: 600 }
+]);
+
+AnimFramework.register('astonish', [
+    { type: 'sfx', sound: 'ghost' },
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 100 },
+    { type: 'spriteShake', target: 'defender', duration: 200 }
+]);
+
+AnimFramework.register('shadow-punch', [
+    { type: 'sfx', sound: 'ghost' },
+    {
+        type: 'overlay', target: 'defender', shape: 'fist',
+        color: '#4b0082', outline: '#000000', width: 40, height: 40,
+        duration: 300, animation: 'slam'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('dazzling-gleam', [
+    { type: 'sfx', sound: 'charge' },
+    { type: 'flash', color: '#ffb6c1', duration: 600, opacity: 0.8 },
+    {
+        type: 'formation', target: 'defender', pattern: 'ring',
+        shape: 'star', particleSize: 15, color: '#fff0f5', outline: '#ff69b4',
+        duration: 500, stagger: 20
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('draining-kiss', [
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    { type: 'sfx', sound: 'heal' },
+    {
+        type: 'overlay', target: 'defender', shape: 'heart',
+        color: '#ff69b4', outline: '#c71585', width: 30, height: 30,
+        duration: 400, animation: 'grow'
+    },
+    { type: 'wait', ms: 200 },
+    { type: 'flash', color: '#ffb6c1', duration: 300, opacity: 0.4 } // Heal
+]);
+
+AnimFramework.register('fairy-wind', [
+    { type: 'sfx', sound: 'flying' },
+    {
+        type: 'stream', from: 'attacker', to: 'defender',
+        count: 20, interval: 30, spread: 40, travelTime: 500,
+        size: 5, color: '#ffb6c1', outline: '#ff69b4'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('dark-void', [
+    { type: 'sfx', sound: 'dark' },
+    { type: 'bgColor', color: '#000000', duration: 1500 },
+    {
+        type: 'overlay', target: 'defender', shape: 'zzz',
+        color: '#800080', outline: '#4b0082', width: 30, height: 30,
+        duration: 1000, animation: 'float', count: 5, spread: 30
+    }
+]);
+
+AnimFramework.register('night-daze', [
+    { type: 'sfx', sound: 'dark' },
+    { type: 'bgColor', color: '#C71585', duration: 800 }, // Mangenta-ish
+    { type: 'wave', intensity: 5, duration: 800, speed: 100 },
+    { type: 'spriteShake', target: 'defender', duration: 600 }
+]);
+
+
+AnimFramework.register('foul-play', [
+    { type: 'sfx', sound: 'dark' },
+    {
+        type: 'parallel', steps: [
+            { type: 'invert', target: 'defender', duration: 400 },
+            {
+                type: 'overlay', target: 'defender', shape: 'fist',
+                color: '#000', outline: '#fff', width: 40, height: 40,
+                duration: 300, animation: 'slam'
+            }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('dragon-rush', [
+    { type: 'sfx', sound: 'dragon' },
+    { type: 'bgColor', color: '#4169e1', duration: 500 },
+    { type: 'spriteMove', target: 'attacker', preset: 'charge' },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-dragon', duration: 600 },
+            { type: 'spriteShake', target: 'defender', duration: 500 }
+        ]
+    },
+    { type: 'spriteMove', target: 'attacker', preset: 'recoil' }
+]);
+
+AnimFramework.register('dragon-breath', [
+    { type: 'sfx', sound: 'dragon' },
+    {
+        type: 'stream', from: 'attacker', to: 'defender',
+        count: 20, interval: 25, spread: 30, travelTime: 400,
+        size: 7, color: '#3cb371', outline: '#2e8b57' // Greenish
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-dragon', duration: 400 },
+            { type: 'spriteShake', target: 'defender', duration: 400 }
+        ]
+    }
+]);

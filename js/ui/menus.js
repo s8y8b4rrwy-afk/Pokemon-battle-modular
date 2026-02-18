@@ -4,7 +4,8 @@ const PackScreen = {
     pockets: [
         { id: 'items', name: 'HEALING ITEMS' },
         { id: 'balls', name: 'POKE BALLS' },
-        { id: 'key', name: 'KEY ITEMS' }
+        { id: 'key', name: 'KEY ITEMS' },
+        ...(GAME_BALANCE.DEBUG_MODE ? [{ id: 'debug', name: 'DEBUG' }] : [])
     ],
     nextPocket() {
         this.currentPocketIdx = (this.currentPocketIdx + 1) % this.pockets.length;
@@ -165,7 +166,13 @@ const BattleMenus = {
             'pokedex', 'bicycle'
         ];
 
-        const sortedKeys = Object.keys(Game.inventory).sort((a, b) => {
+        let keysToShow = Object.keys(Game.inventory).filter(k => Game.inventory[k] > 0);
+        if (pocket.id === 'debug') {
+            const debugKeys = Object.keys(ITEMS).filter(k => ITEMS[k].pocket === 'debug');
+            keysToShow = [...new Set([...keysToShow, ...debugKeys])];
+        }
+
+        const sortedKeys = keysToShow.sort((a, b) => {
             const idxA = itemOrder.indexOf(a);
             const idxB = itemOrder.indexOf(b);
             if (idxA !== -1 && idxB !== -1) return idxA - idxB;
@@ -175,60 +182,66 @@ const BattleMenus = {
         });
 
         sortedKeys.forEach((key) => {
-            const count = Game.inventory[key];
-            if (count > 0) {
-                const data = ITEMS[key];
-                if (!data) return;
+            const data = ITEMS[key];
+            if (!data) return;
 
-                // Filter by pocket
-                if (data.pocket !== pocket.id) return;
+            // Filter by pocket
+            if (data.pocket !== pocket.id) return;
 
-                const div = document.createElement('div');
-                div.className = 'pack-item';
-                div.innerHTML = `<span>${data.name}</span> <span>x${count}</span>`;
+            const count = Game.inventory[key] || 0;
+            const displayCount = data.pocket === 'debug' ? '∞' : count;
 
-                const showDesc = () => {
-                    document.getElementById('pack-desc').innerText = data.desc;
-                    if (data.img) {
-                        document.querySelector('.bag-icon').style.backgroundImage = `url('${data.img}')`;
-                    }
-                };
-                const currentIdx = idxCounter;
+            const div = document.createElement('div');
+            div.className = 'pack-item';
+            div.innerHTML = `<span>${data.name}</span> <span>x${displayCount}</span>`;
 
-                div.onmouseover = () => showDesc();
-                div.onmouseenter = () => {
-                    Input.focus = currentIdx;
-                    Input.updateVisuals();
-                    showDesc();
+            const showDesc = () => {
+                document.getElementById('pack-desc').innerText = data.desc;
+                if (data.img) {
+                    document.querySelector('.bag-icon').style.backgroundImage = `url('${data.img}')`;
+                }
+            };
+            const currentIdx = idxCounter;
+
+            div.onmouseover = () => showDesc();
+            div.onmouseenter = () => {
+                Input.focus = currentIdx;
+                Input.updateVisuals();
+                showDesc();
+                AudioEngine.playSfx('select');
+            };
+            div.onclick = async () => {
+                if (key === 'pokedex') {
                     AudioEngine.playSfx('select');
-                };
-                div.onclick = async () => {
-                    if (key === 'pokedex') {
-                        AudioEngine.playSfx('select');
-                        ScreenManager.push('POKEDEX');
-                        return;
-                    }
-                    if (key === 'bicycle') {
-                        AudioEngine.playSfx('error');
-                        await DialogManager.show("OAK: There's a time\nand place for that!");
-                        return;
-                    }
-                    if (data.type === 'rogue') {
-                        AudioEngine.playSfx('select');
-                        return;
-                    }
-                    if (data.type === 'heal' || data.type === 'revive') {
-                        Game.selectedItemKey = key;
-                        Game.state = 'HEAL';
-                        ScreenManager.push('PARTY', { mode: 'HEAL' });
-                    } else {
-                        AudioEngine.playSfx('select');
-                        Battle.performItem(key);
-                    }
-                };
-                list.appendChild(div);
-                idxCounter++;
-            }
+                    ScreenManager.push('POKEDEX');
+                    return;
+                }
+                if (key === 'bicycle') {
+                    AudioEngine.playSfx('error');
+                    await DialogManager.show("OAK: There's a time\nand place for that!");
+                    return;
+                }
+                if (data.type === 'rogue') {
+                    AudioEngine.playSfx('select');
+                    return;
+                }
+                if (data.type === 'debug') {
+                    Game.selectedItemKey = key;
+                    Game.state = 'HEAL'; // Reuse HEAL state mapping for party selection
+                    ScreenManager.push('PARTY', { mode: 'HEAL' });
+                    return;
+                }
+                if (data.type === 'heal' || data.type === 'revive') {
+                    Game.selectedItemKey = key;
+                    Game.state = 'HEAL';
+                    ScreenManager.push('PARTY', { mode: 'HEAL' });
+                } else {
+                    AudioEngine.playSfx('select');
+                    Battle.performItem(key);
+                }
+            };
+            list.appendChild(div);
+            idxCounter++;
         });
 
         // Add "None Found" message if pocket is empty
