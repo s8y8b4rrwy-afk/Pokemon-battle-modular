@@ -50,8 +50,6 @@ const MovesEngine = {
             } else if (result === 'FAIL') {
                 explicitlyFailed = true;
                 didSomething = false;
-            } else if (result === true) {
-                didSomething = true;
             } else {
                 allowSideEffects = true;
             }
@@ -197,9 +195,79 @@ const MovesEngine = {
             return 'IMMUNE';
         }
 
-        // --- FIX: Play Move Animation ---
-        // We only reach here if the move is targeting the user OR if the enemy is not immune.
-        // This prevents the "anim-then-fail" ghost hits against immunities.
+        // --- PRE-ANIMATION CHECKS ---
+        if (move.category === 'status') {
+            // A. Status Ailment Moves (Sleep, Poison, etc)
+            if (!isSelfTarget && move.meta && move.meta.ailment) {
+                const ailmentRaw = move.meta.ailment.name;
+
+                // 1. Substitute Check
+                if (defender.volatiles.substituteHP > 0 && ailmentRaw !== 'confusion') {
+                    await UI.typeText("But it failed!");
+                    return 'FAIL';
+                }
+
+                if (ailmentRaw !== 'none') {
+                    const ailment = EffectsManager.normalizeAilment(ailmentRaw);
+
+                    // 2. Existing Status Check
+                    if (ailment === 'confusion') {
+                        if (defender.volatiles.confused) {
+                            await UI.typeText(`${defender.name} is\nalready confused!`);
+                            return 'FAIL';
+                        }
+                    } else {
+                        // Major Status (Sleep, Poison, etc) - target cannot have ANY major status
+                        if (defender.status) {
+                            await UI.typeText("But it failed!");
+                            return 'FAIL';
+                        }
+                    }
+
+                    // 3. Type-Specific Immunities check (Poison vs Steel, etc)
+                    const isImmune = ((ailment === 'psn' || ailment === 'tox') && (defender.types.includes('poison') || defender.types.includes('steel'))) ||
+                        (ailment === 'brn' && defender.types.includes('fire')) ||
+                        (ailment === 'par' && defender.types.includes('electric')) ||
+                        (ailment === 'frz' && defender.types.includes('ice'));
+
+                    if (isImmune) {
+                        await UI.typeText("It doesn't affect\n" + defender.name + "...");
+                        return 'IMMUNE';
+                    }
+                }
+            }
+
+            // B. Stat Change Moves (Growl, Tail Whip, Swords Dance)
+            if (move.stat_changes && move.stat_changes.length > 0) {
+                // 1. Substitute Check (only for debuffs on enemy)
+                if (!isSelfTarget && defender.volatiles.substituteHP > 0) {
+                    const hasDebuff = move.stat_changes.some(s => s.change < 0);
+                    if (hasDebuff) {
+                        await UI.typeText(`${defender.name} is protected\nby the SUBSTITUTE!`);
+                        return 'FAIL';
+                    }
+                }
+
+                // 2. Limit Check (Don't play anim if nothing will happen)
+                let canChange = false;
+                for (const sc of move.stat_changes) {
+                    const statName = sc.stat.name.replace('special-attack', 'spa').replace('special-defense', 'spd').replace('attack', 'atk').replace('defense', 'def').replace('speed', 'spe');
+                    const currentStage = target.stages[statName];
+
+                    // If trying to lower, must be > -6
+                    if (sc.change < 0 && currentStage > -6) canChange = true;
+                    // If trying to raise, must be < 6
+                    if (sc.change > 0 && currentStage < 6) canChange = true;
+                }
+
+                if (!canChange) {
+                    await UI.typeText("It had no effect!"); // Or "Nothing happened!"
+                    return 'FAIL';
+                }
+            }
+        }
+
+        // --- PLAY ANIMATION ---
         await battle.triggerHitAnim(target, move.type, move.name, attacker);
 
         return false;

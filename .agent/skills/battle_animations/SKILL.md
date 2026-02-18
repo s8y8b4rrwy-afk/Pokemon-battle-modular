@@ -27,9 +27,11 @@ When a move deals damage, the pipeline automatically checks for a registered ani
 ```
 resolveSingleHit → applyDamage(target, amount, type, moveName)
   → triggerHitAnim(target, type, moveName)
-    ① Check: AnimFramework.has(moveName)  → e.g. 'flamethrower'
-    ② Check: AnimFramework.has('fx-'+type) → e.g. 'fx-fire'
-    ③ Fallback: classic inline (screen flash + sprite shake)
+    ① Check (Pre-Anim): Are conditions valid? (Substitute, Status, Type Immunity)
+        → If invalid, log "But it failed!" and STOP.
+    ② Check: AnimFramework.has(moveName)  → e.g. 'flamethrower'
+    ③ Check: AnimFramework.has('fx-'+type) → e.g. 'fx-fire'
+    ④ Fallback: classic inline (screen flash + sprite shake)
 ```
 
 Move names are auto-normalized: `'FLAMETHROWER'` → `'flamethrower'`, `'ICE BEAM'` → `'ice-beam'`.

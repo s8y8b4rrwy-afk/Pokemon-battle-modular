@@ -130,8 +130,6 @@ const MOVE_DEX = {
     'DISABLE': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
-            await BattleAnims.playRegistered('disable', ctx);
             // Check if target has used a move
             if (!target.lastMoveUsed || !target.lastMoveUsed.name) {
                 await UI.typeText("But it failed!");
@@ -143,6 +141,9 @@ const MOVE_DEX = {
                 await UI.typeText("But it failed!");
                 return 'FAIL';
             }
+
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('disable', ctx);
 
             // Apply disable
             target.volatiles.disabled = {
@@ -159,14 +160,14 @@ const MOVE_DEX = {
     'SPIKES': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
-            await BattleAnims.playRegistered('spikes', ctx);
             const side = user === battle.p ? 'enemy' : 'player';
             const current = battle.sideConditions[side].spikes || 0;
             if (current >= 3) {
                 await UI.typeText("Spikes can't be\nadded anymore!");
                 return false;
             }
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('spikes', ctx);
             battle.sideConditions[side].spikes = current + 1;
             AudioEngine.playSfx('clank');
             await UI.typeText(`Spikes were scattered\naround ${side === 'enemy' ? 'the foe' : 'the player'}'s feet!`);
