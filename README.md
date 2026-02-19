@@ -209,7 +209,9 @@ python3 -m http.server 8000
 
 ```
 pokemon-battle-modular/
-├── Pokemon.html              # Main Entry Point
+├── index.html                # Portal / Landing Page (GitHub Pages Entry)
+├── Pokemon.html              # Main Game Entry Point
+├── animation_editor.html      # Animation Editor Tool
 ├── css/                      # Modular Stylesheets (10 files)
 │   ├── base.css              # Root variables, body, game container
 │   ├── utils.css             # Utility classes, focus states, scrollbars

@@ -13,7 +13,8 @@ It is CRITICAL to respect this structure. Do not place files randomly.
 
 ```plaintext
 pokemon-battle-modular/
-├── Pokemon.html          # Main Entry Point (Loads all scripts in order)
+├── index.html            # Portal / Landing Page (GitHub Pages Entry)
+├── Pokemon.html          # Main Game Entry Point (Loads all scripts in order)
 ├── css/
 │   ├── base.css          # Root variables, body, game container, LCD
 │   ├── utils.css         # Hidden, buttons, focus states, scrollbars, retro motion

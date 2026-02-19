@@ -1,7 +1,7 @@
 // --- GAME BALANCE CONTROLLER ---
 // Tweak difficulty, RNG, and rewards here.
 const GAME_BALANCE = {
-    DEBUG_MODE: true,
+    DEBUG_MODE: false,
     // Battle Math
     CRIT_CHANCE_PLAYER: 0.0625, // 6.25%
     CRIT_CHANCE_BOSS: 0.15,     // 15%
@@ -95,7 +95,7 @@ const ROGUE_CONFIG = {
     CRIT_BOOST_PER_STACK: 0.05,  // +5% crit chance per Lens
     XP_BOOST_PER_STACK: 0.10,    // +10% EXP gain per Charm
     SHINY_BOOST_PER_STACK: 0.005,// +0.5% shiny chance per Charm
-    ROGUE_ITEM_LIFETIME: 10,      // Turns before a rogue item decays
+    ROGUE_ITEM_LIFETIME: 20,      // Turns before a rogue item decays
 };
 
 const ROGUE_LOOT = {

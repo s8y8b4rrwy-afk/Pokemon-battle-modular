@@ -18,7 +18,7 @@
  */
 
 const DEBUG = {
-    ENABLED: true,
+    ENABLED: false,
     BATTLE_LOGS: true, // Set to true to see detailed battle logs in console
 
     // --- AUTOMATED TESTING SETTINGS ---

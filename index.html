@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon G/S Battle Modular - Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-gold: #e6ae27;
+            --color-silver: #a0a0a0;
+            --color-bg: #1a1a1a;
+            --color-card: #2a2a2a;
+            --color-text: #ffffff;
+            --font-pixel: 'Press Start 2P', cursive;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-pixel);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #2c3e50 0%, #000000 100%);
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 40px;
+            text-shadow: 4px 4px 0px #000;
+            color: var(--color-gold);
+            line-height: 1.5;
+        }
+
+        .subtitle {
+            font-size: 10px;
+            color: var(--color-silver);
+            margin-bottom: 60px;
+            letter-spacing: 2px;
+        }
+
+        .portal-options {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: var(--color-card);
+            border: 4px solid var(--color-silver);
+            padding: 30px;
+            width: 250px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+        }
+
+        .card:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 12px 12px 0px rgba(0,0,0,0.5);
+            border-color: var(--color-gold);
+            background: #333;
+        }
+
+        .card:active {
+            transform: translate(2px, 2px);
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+        }
+
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .card-desc {
+            font-size: 8px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        .version {
+            position: absolute;
+            bottom: 20px;
+            font-size: 8px;
+            color: #666;
+        }
+
+        /* Particle effects for background */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.2;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .artwork {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .artwork img {
+            width: 100px;
+            filter: drop-shadow(0 0 10px rgba(230, 174, 39, 0.4));
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="artwork">
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/250.png" alt="Ho-Oh">
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/249.png" alt="Lugia">
+        </div>
+
+        <h1>POKÉMON G/S<br>BATTLE MODULAR</h1>
+        <div class="subtitle">PREVIEW PORTAL</div>
+
+        <div class="portal-options">
+            <a href="Pokemon.html" class="card">
+                <div class="card-icon">⚔️</div>
+                <div class="card-title">PLAY GAME</div>
+                <div class="card-desc">Experience the modular Gen II battle simulator.</div>
+            </a>
+
+            <a href="animation_editor.html" class="card">
+                <div class="card-icon">🎬</div>
+                <div class="card-title">ANIM EDITOR</div>
+                <div class="card-desc">Create and test battle animations in real-time.</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="version">v1.8.0 Modular Refactor</div>
+
+    <script>
+        // Simple particle generator
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size = Math.random() * 3 + 1;
+            p.style.width = size + 'px';
+            p.style.height = size + 'px';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.top = Math.random() * 100 + 'vh';
+            p.style.animationDelay = (Math.random() * 20) + 's';
+            p.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            particlesContainer.appendChild(p);
+        }
+    </script>
+</body>
+</html>
