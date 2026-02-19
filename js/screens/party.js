@@ -284,19 +284,103 @@ const PartyScreen = {
         }
     },
 
-    applyItem(index) {
+    async applyItem(index) {
         this.closeContext();
-        SummaryScreen.close();
+        // Only pop the Summary screen if it's actually the active top screen.
+        // Calling SummaryScreen.close() unconditionally would pop the Party screen
+        // itself when Summary is not open, breaking the evo-stone selection menu.
+        const topFrame = ScreenManager.stack[ScreenManager.stack.length - 1];
+        if (topFrame && topFrame.id === 'SUMMARY') {
+            SummaryScreen.close();
+        }
         const p = Game.party[index];
         const data = ITEMS[Game.selectedItemKey];
 
         if (data.type === 'revive' && p.currentHp > 0) { AudioEngine.playSfx('error'); return; }
         if (data.type === 'heal' && (p.currentHp <= 0 || p.currentHp >= p.maxHp)) { AudioEngine.playSfx('error'); return; }
+        if (data.type === 'status_heal' && (p.currentHp <= 0 || !p.status || (data.condition !== 'all' && p.status !== data.condition))) { AudioEngine.playSfx('error'); return; }
+
+        if (data.type === 'evo_stone') {
+            if (p.currentHp <= 0) { AudioEngine.playSfx('error'); return; }
+            if (typeof Evolution !== 'undefined') {
+                const chain = await Evolution.getChain(p);
+                let currentNode = Evolution.findNodeByUrl(chain, p.speciesUrl);
+                if (!currentNode) currentNode = Evolution.findNode(chain, p.name);
+
+                if (!currentNode || currentNode.evolves_to.length === 0) {
+                    AudioEngine.playSfx('error');
+                    UI.show('dialog-box');
+                    UI.typeText("It had no effect.", () => {
+                        setTimeout(() => {
+                            UI.hide('dialog-box');
+                            Input.setMode('PARTY', Game.selectedPartyIndex);
+                        }, 1500);
+                    }, false, 'text-content', 0, true);
+                    return;
+                }
+
+                // Filter evolves_to to Gen 2 only (species ID <= 251)
+                const getSpeciesId = url => parseInt(url.split('/').filter(Boolean).pop());
+                const gen2Evolutions = currentNode.evolves_to.filter(next => getSpeciesId(next.species.url) <= 251);
+
+                if (gen2Evolutions.length > 1) {
+                    Game.selectedPartyIndex = index;
+                    UI.show('party-context');
+                    const ctx = document.getElementById('party-context');
+                    ctx.innerHTML = "";
+
+                    gen2Evolutions.forEach(next => {
+                        const btn = document.createElement('div');
+                        btn.className = 'ctx-btn';
+                        btn.innerText = next.species.name.toUpperCase();
+                        btn.onclick = () => {
+                            p.pendingEvoStone = { speciesName: next.species.name, speciesUrl: next.species.url, minLevel: 0 };
+                            this.finishEvoStone(index, data);
+                        };
+                        const idx = ctx.children.length;
+                        btn.onmouseenter = () => { Input.focus = idx; Input.updateVisuals(); AudioEngine.playSfx('select'); };
+                        ctx.appendChild(btn);
+                    });
+
+                    const cancelBtn = document.createElement('div');
+                    cancelBtn.className = 'ctx-btn';
+                    cancelBtn.innerText = "CANCEL";
+                    cancelBtn.onclick = () => { AudioEngine.playSfx('select'); this.closeContext(); };
+                    const cIdx = ctx.children.length;
+                    cancelBtn.onmouseenter = () => { Input.focus = cIdx; Input.updateVisuals(); AudioEngine.playSfx('select'); };
+                    ctx.appendChild(cancelBtn);
+
+                    Input.setMode('CONTEXT');
+                    return;
+                } else if (gen2Evolutions.length === 1) {
+                    const next = gen2Evolutions[0];
+                    p.pendingEvoStone = { speciesName: next.species.name, speciesUrl: next.species.url, minLevel: 0 };
+                    this.finishEvoStone(index, data);
+                    return;
+                } else {
+                    // All evolutions are Gen 3+ — stone has no effect
+                    AudioEngine.playSfx('error');
+                    UI.show('dialog-box');
+                    UI.typeText("It had no effect.", () => {
+                        setTimeout(() => {
+                            UI.hide('dialog-box');
+                            Input.setMode('PARTY', Game.selectedPartyIndex);
+                        }, 1500);
+                    }, false, 'text-content', 0, true);
+                    return;
+                }
+            } else {
+                AudioEngine.playSfx('error');
+                return;
+            }
+        }
+
 
         if (Game.selectedItemKey === 'revive') p.currentHp = Math.floor(p.maxHp / 2);
         if (Game.selectedItemKey === 'maxrevive') p.currentHp = p.maxHp;
 
         if (data.type === 'heal') p.currentHp = Math.min(p.maxHp, p.currentHp + data.heal);
+        if (data.type === 'status_heal') p.status = null;
 
         if (data.pocket === 'debug') {
             this.render();
@@ -335,6 +419,22 @@ const PartyScreen = {
         // Delay effect to happen IN SCENE
         setTimeout(() => {
             UI.typeText(`Used ${data.name} on ${p.name}!`, () => Battle.endTurnItem());
+        }, 300);
+    },
+
+    finishEvoStone(index, data) {
+        this.closeContext();
+        Game.inventory[Game.selectedItemKey]--;
+        AudioEngine.playSfx('heal');
+
+        if (typeof ScreenManager !== 'undefined') {
+            ScreenManager.clear();
+        } else {
+            UI.hideAll(['party-screen', 'pack-screen', 'action-menu']);
+        }
+        Game.state = 'BATTLE';
+        setTimeout(() => {
+            UI.typeText(`Used ${data.name}!`, () => Battle.endTurnItem());
         }, 300);
     },
 

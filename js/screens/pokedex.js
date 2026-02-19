@@ -381,6 +381,10 @@ const PokedexScreen = {
             const traverse = async (node) => {
                 // Render Node
                 const speciesId = parseInt(node.species.url.split('/').slice(-2, -1)[0]);
+
+                // Gen 2 cap: skip Gen 3+ species entirely
+                if (speciesId > 251) return;
+
                 const isSeen = PokedexData.isSeen(speciesId);
 
                 const stepDiv = document.createElement('div');
@@ -413,38 +417,46 @@ const PokedexScreen = {
                 container.appendChild(stepDiv);
 
                 if (node.evolves_to && node.evolves_to.length > 0) {
-                    // Add arrow
-                    const arrowProps = node.evolves_to[0].evolution_details[0]; // Simplification to first path
-                    let infoText = '';
-                    if (arrowProps) {
-                        if (arrowProps.min_level) infoText = `L.${arrowProps.min_level}`;
-                        else if (arrowProps.item) infoText = 'ITEM'; // Could fetch item name but keeping simple
-                        else if (arrowProps.trigger.name === 'trade') infoText = 'TRADE';
-                        else if (arrowProps.happiness) infoText = 'HAPPINESS';
-                        else infoText = '???';
-                    }
+                    // Filter to Gen 2 evolutions only before deciding whether to draw an arrow
+                    const gen2Children = node.evolves_to.filter(child => {
+                        const childId = parseInt(child.species.url.split('/').slice(-2, -1)[0]);
+                        return childId <= 251;
+                    });
 
-                    const arrowContainer = document.createElement('div');
-                    arrowContainer.style.display = 'flex';
-                    arrowContainer.style.flexDirection = 'column';
-                    arrowContainer.style.alignItems = 'center';
+                    if (gen2Children.length > 0) {
+                        // Add arrow
+                        const arrowProps = gen2Children[0].evolution_details[0]; // Simplification to first path
+                        let infoText = '';
+                        if (arrowProps) {
+                            if (arrowProps.min_level) infoText = `L.${arrowProps.min_level}`;
+                            else if (arrowProps.item) infoText = 'ITEM';
+                            else if (arrowProps.trigger.name === 'trade') infoText = 'TRADE';
+                            else if (arrowProps.happiness) infoText = 'HAPPINESS';
+                            else infoText = '???';
+                        }
 
-                    if (infoText) {
-                        const info = document.createElement('span');
-                        info.className = 'evo-info';
-                        info.innerText = infoText;
-                        arrowContainer.appendChild(info);
-                    }
+                        const arrowContainer = document.createElement('div');
+                        arrowContainer.style.display = 'flex';
+                        arrowContainer.style.flexDirection = 'column';
+                        arrowContainer.style.alignItems = 'center';
 
-                    const arrow = document.createElement('span');
-                    arrow.className = 'evo-arrow';
-                    arrow.innerText = '→';
-                    arrowContainer.appendChild(arrow);
+                        if (infoText) {
+                            const info = document.createElement('span');
+                            info.className = 'evo-info';
+                            info.innerText = infoText;
+                            arrowContainer.appendChild(info);
+                        }
 
-                    container.appendChild(arrowContainer);
+                        const arrow = document.createElement('span');
+                        arrow.className = 'evo-arrow';
+                        arrow.innerText = '→';
+                        arrowContainer.appendChild(arrow);
 
-                    for (const child of node.evolves_to) {
-                        await traverse(child);
+                        container.appendChild(arrowContainer);
+
+                        for (const child of gen2Children) {
+                            await traverse(child);
+                        }
                     }
                 }
             };

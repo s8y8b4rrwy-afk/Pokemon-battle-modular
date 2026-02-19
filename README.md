@@ -98,8 +98,10 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 | Item | Effect |
 |------|--------|
 | Potion / Super / Hyper / Max | Heal 20 / 50 / 200 / Full HP |
-| Revive | Revive fainted Pokémon at 50% HP |
+| Revive / Max Revive | Revive fainted Pokémon at 50% / full HP |
 | Poké Ball / Great / Ultra / Master | Catch wild Pokémon (scaling catch rates) |
+| Antidote / Paralyz Heal / Burn Heal / Ice Heal / Awakening / Full Heal | Cure specific status conditions |
+| **Evolution Stone** | Forces stone-triggered evolution. Shows a choice menu for Pokémon with multiple Gen I/II evolutions (e.g., Eevee). Drops at **Ultra Rare** rate from wild and boss encounters. Only Gen I/II targets (Pokédex #001–251) are shown. |
 
 ### 😤 Rage System (Original Mechanic)
 - Pokémon build **rage** when taking damage or missing attacks
@@ -346,6 +348,13 @@ const DEBUG = {
 ---
 
 ## 📝 Recent Updates
+
+### v1.9.0 - Evolution Stone & Gen 2 Enforcement (Feb 2026)
+**Item & Evolution Polish:**
+- 🪨 **Evolution Stone Fix**: Fixed a bug where using the Evolution Stone on a Pokémon with multiple evolutions (e.g., Eevee) would close the party screen instead of showing the evolution picker. Root cause: `SummaryScreen.close()` was popping the Party screen off the ScreenManager stack when Summary wasn't open.
+- 🪨 **Choice Menu**: When a Pokémon has multiple valid evolutions (e.g., Eevee → VAPOREON / JOLTEON / FLAREON), a clean context menu is shown with just the names — no redundant header label.
+- 🪨 **Gen 2 Filter**: All evolution paths into Pokédex #252+ (Gen 3+) are now filtered out across the entire game — level-up evolution checks (`Evolution.check`), the evo stone menu, and the Pokédex evolution chain display. If all of a Pokémon's evolutions are Gen 3+ only, the stone shows "It had no effect."
+- 🪨 **Droppable Stone**: Changed Evolution Stone pocket from `key` to `items`. It now appears in the regular bag pocket and can be obtained as an Ultra Rare loot drop from wild and boss encounters.
 
 ### v1.8.0 - Evolution UI & Modular Dialogue (Feb 2026)
 **Visual Polish & Refactoring:**

@@ -57,8 +57,14 @@ const Evolution = {
 
         if (!currentNode || currentNode.evolves_to.length === 0) return null;
 
-        // Priority: Match first valid level-up trigger
+        // Helper to extract species ID from PokeAPI URL
+        const getSpeciesId = url => parseInt(url.split('/').filter(Boolean).pop());
+
+        // Priority: Match first valid level-up trigger (Gen 2 only, species ID <= 251)
         for (let next of currentNode.evolves_to) {
+            // Skip Gen 3+ evolutions — game is capped at #251
+            if (getSpeciesId(next.species.url) > 251) continue;
+
             const details = next.evolution_details;
             for (let det of details) {
                 if (det.trigger.name === 'level-up') {
