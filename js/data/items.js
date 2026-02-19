@@ -8,7 +8,8 @@ const RARITY = {
     UNCOMMON: { base: 300, scaling: 1.5 }, // Sometimes finds these
     RARE: { base: 60, scaling: 3.0 }, // Hard to find early, easier later
     ULTRA_RARE: { base: 5, scaling: 6.0 }, // Almost impossible early, possible later
-    LEGENDARY: { base: 0, scaling: 0.3 }  // Masterball (Very rare, increases VERY slowly)
+    LEGENDARY: { base: 0, scaling: 0.3 }, // Masterball (Very rare, increases VERY slowly)
+    LUCKY_RARE: { base: 200, scaling: 2.0 }, // Higher base for Lucky Pokemon drops only
 };
 
 // B. Assign Items to Rarities
@@ -36,9 +37,11 @@ const LOOT_SYSTEM = {
         { key: 'ultraball', ...RARITY.ULTRA_RARE },
         { key: 'maxpotion', ...RARITY.ULTRA_RARE },
         { key: 'maxrevive', ...RARITY.ULTRA_RARE },
-        { key: 'evo_stone', ...RARITY.ULTRA_RARE },
 
-        { key: 'masterball', ...RARITY.LEGENDARY }
+        // Evolution Stone — Rare drop from wild/boss; higher rate from Lucky Pokémon (handled separately in game.js)
+        { key: 'evo_stone', ...RARITY.RARE },
+
+        { key: 'masterball', ...RARITY.LEGENDARY },
     ]
 };
 

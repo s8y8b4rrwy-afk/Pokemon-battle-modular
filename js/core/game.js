@@ -126,12 +126,8 @@ const Game = {
 
     handleDebug() {
         if (!DEBUG.ENABLED) {
-            if (typeof GAME_BALANCE !== 'undefined') GAME_BALANCE.DEBUG_MODE = false;
             return;
         }
-
-        // Sync flags
-        if (typeof GAME_BALANCE !== 'undefined') GAME_BALANCE.DEBUG_MODE = true;
 
         // 1. Apply standard overrides from debug.js
         if (DEBUG.INVENTORY) {
@@ -289,19 +285,6 @@ const Game = {
     },
 
     async startNewBattle(isFirst = false) {
-        // --- DEBUG: Pending Evolutions ---
-        // We MUST do this before setting state to BATTLE or resetting the scene
-        // to prevent UI interference
-        for (const mon of this.party) {
-            if (mon && (mon.pendingDebugEvo || mon.pendingDebugEvoMove)) {
-                const learnMove = !!mon.pendingDebugEvoMove;
-                mon.pendingDebugEvo = false;
-                mon.pendingDebugEvoMove = false;
-                if (typeof Evolution !== 'undefined') {
-                    await Evolution.forceEvolveByItem(mon, learnMove);
-                }
-            }
-        }
 
         this.state = 'BATTLE';
         Battle.resetScene();
@@ -563,6 +546,26 @@ const Game = {
     },
 
     async finishWin() {
+        // --- PENDING EVOLUTIONS (Stone & Debug) ---
+        for (const mon of this.party) {
+            if (mon && mon.pendingEvoStone) {
+                const targetData = mon.pendingEvoStone;
+                mon.pendingEvoStone = null;
+                if (typeof Evolution !== 'undefined') {
+                    await Evolution.execute(mon, targetData, false);
+                }
+            }
+
+            if (mon && (mon.pendingDebugEvo || mon.pendingDebugEvoMove)) {
+                const learnMove = !!mon.pendingDebugEvoMove;
+                mon.pendingDebugEvo = false;
+                mon.pendingDebugEvoMove = false;
+                if (typeof Evolution !== 'undefined') {
+                    await Evolution.forceEvolveByItem(mon, learnMove);
+                }
+            }
+        }
+
         const p = this.party[this.activeSlot];
 
         // 1. Conditional HP restoration (Only if NOT fainted)
@@ -616,6 +619,7 @@ const Game = {
             this.save();
 
             await wait(1000);
+
             this.startNewBattle(false);
         };
 
@@ -722,12 +726,24 @@ const Game = {
         if (enemy.isLucky) chance = 1.0;
 
         if (RNG.roll(chance)) {
-            // Lucky drops can be Rogue items
             let key;
-            if (enemy.isLucky && RNG.roll(0.5)) {
-                key = Mechanics.getRogueLoot();
-                this.addRogueItem(key);
-                this.party.forEach(p => StatCalc.recalculate(p)); // update stats immediately for passive items
+            if (enemy.isLucky) {
+                // Lucky Pokémon drop priority:
+                // 30% → Evolution Stone (signature Lucky reward)
+                // 35% → Rogue stat-boost item
+                // 35% → Normal loot table roll
+                const roll = Math.random();
+                if (roll < 0.30) {
+                    key = 'evo_stone';
+                    this.inventory[key] = (this.inventory[key] || 0) + 1;
+                } else if (roll < 0.65) {
+                    key = Mechanics.getRogueLoot();
+                    this.addRogueItem(key);
+                    this.party.forEach(p => StatCalc.recalculate(p));
+                } else {
+                    key = Mechanics.getLoot(enemy, this.wins, 0);
+                    this.inventory[key]++;
+                }
             } else {
                 key = Mechanics.getLoot(enemy, this.wins, 0);
                 this.inventory[key]++;

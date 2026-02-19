@@ -427,16 +427,29 @@ const PartyScreen = {
         Game.inventory[Game.selectedItemKey]--;
         AudioEngine.playSfx('heal');
 
+        const p = Game.party[index];
+
+        // Clear all screens back to the battle scene
         if (typeof ScreenManager !== 'undefined') {
             ScreenManager.clear();
         } else {
             UI.hideAll(['party-screen', 'pack-screen', 'action-menu']);
         }
         Game.state = 'BATTLE';
+
+        // Evo Stone is FREE — doesn't cost a turn.
+        // Show confirmation, then drop the player straight into the move menu
+        // so they MUST choose an attack (can't open the bag again this turn).
         setTimeout(() => {
-            UI.typeText(`Used ${data.name}!`, () => Battle.endTurnItem());
+            UI.typeText(`${p.name} will evolve\nafter the battle!`, () => {
+                // Go directly to the FIGHT (move selection) menu, bypassing the
+                // action menu so no second item can be used this turn.
+                Battle.uiLocked = false;
+                BattleMenus.uiToMoves();
+            });
         }, 300);
     },
+
 
     shift() {
         const idx = Game.selectedPartyIndex;
