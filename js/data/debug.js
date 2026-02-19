@@ -18,7 +18,7 @@
  */
 
 const DEBUG = {
-    ENABLED: false,
+    ENABLED: true,  // Overridden to false automatically on GitHub Pages (see bottom of block)
     BATTLE_LOGS: true, // Set to true to see detailed battle logs in console
 
     // --- AUTOMATED TESTING SETTINGS ---
@@ -92,6 +92,27 @@ const DEBUG = {
         FORCE_ITEM: null      // Force a specific item ID (e.g. 'masterball').
     }
 };
+
+// --- PRODUCTION GUARD ---
+// Automatically disable ALL debug overrides when running on GitHub Pages.
+// Locally (localhost, 127.0.0.1, or file://) debug stays fully enabled.
+(function () {
+    const hostname = window.location.hostname;
+    const isProduction = hostname.endsWith('github.io') || hostname.endsWith('netlify.app') || hostname.endsWith('vercel.app');
+    if (isProduction) {
+        DEBUG.ENABLED = false;
+        DEBUG.BATTLE_LOGS = false;
+        DEBUG.GIVE_ALL_ITEMS = false;
+        DEBUG.INVENTORY = {};
+        DEBUG.ENEMY = { ID: null, LEVEL: null, SHINY: null, IS_BOSS: null, IS_LUCKY: null, RAGE: null, STATUS: null, VOLATILES: null, STAGES: null };
+        DEBUG.PLAYER = { ID: null, LEVEL: null, SHINY: null, RAGE: 0, STATUS: null, VOLATILES: null, STAGES: null, MOVES: null };
+        DEBUG.LOOT = { WIN_RATE: null, MID_BATTLE_RATE: null, FORCE_ITEM: null };
+        console.log('[GAME] Production mode: Debug disabled.');
+    } else {
+        console.log('[GAME] Development mode: Debug active.');
+    }
+})();
+
 
 // --- DEBUG CONSOLE HELPERS ---
 // Teaching a move: DebugTeach(0, 'hyper-beam')
