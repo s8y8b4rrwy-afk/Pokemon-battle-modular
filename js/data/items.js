@@ -59,7 +59,8 @@ const ITEMS = {
     masterball: { name: "MASTER BALL", type: 'ball', pocket: 'balls', rate: 255, desc: "The best Ball. It catches without fail.", css: 'master', img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png" },
     bicycle: { name: "BICYCLE", type: 'key', pocket: 'key', desc: "A folding bicycle for traveling faster.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/bicycle.png" },
     pokedex: { name: "POKEDEX", type: 'key', pocket: 'key', desc: "A high-tech encyclopedia that records Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/pokedex.png" },
-    evo_stone: { name: "EVOLUTION STONE", type: 'evo_stone', pocket: 'items', desc: "A peculiar stone that can force certain species of Pokemon to evolve.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/moon-stone.png" },
+    evo_stone: { name: "EVOLUTION STONE", type: 'evo_stone', pocket: 'key', desc: "A mysterious stone pulsing with ancient energy. It can magically trigger the evolution of any Pokemon, bypassing the need to level up.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/moon-stone.png" },
+
 
 
     // --- STATUS HEALERS ---
