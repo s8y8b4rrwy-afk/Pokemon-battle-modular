@@ -110,6 +110,7 @@ const ScreenManager = {
             case 'EVOLUTION': return EvolutionScreen;
             case 'MOVE_LEARN': return MoveLearnScreen;
             case 'POKEDEX': return PokedexScreen;
+            case 'SETTINGS': return SettingsScreen;
             // Add others...
             default: return null;
         }
@@ -128,7 +129,8 @@ const ScreenManager = {
             'NAME_INPUT': 'name-screen',
             'EVOLUTION': 'evolution-screen',
             'MOVE_LEARN': 'move-learn-screen',
-            'POKEDEX': 'pokedex-screen'
+            'POKEDEX': 'pokedex-screen',
+            'SETTINGS': 'settings-screen'
         };
         const domId = map[id] || id; // Fallback
         if (action === 'show') UI.show(domId);

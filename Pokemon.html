@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="css/explosion.css">
     <link rel="stylesheet" href="css/evolution.css">
     <link rel="stylesheet" href="css/move_learn.css">
+    <link rel="stylesheet" href="css/settings.css">
     <link rel="stylesheet" href="css/dialog.css">
 </head>
 
@@ -32,20 +33,7 @@
             <!-- Start Screen -->
             <div id="start-screen">
                 <div class="start-title">POKEMON<br>GOLD & SILVER<br>SIMULATION</div>
-                <div class="start-btn" onclick="ScreenManager.getScreen('TITLE').checkSave()">CLICK TO START</div>
-                <div class="toggle-box" onclick="Game.toggleLcd()">
-                    <div class="checkbox" id="lcd-check"></div>
-                    <span>RETRO FILTER</span>
-                </div>
-                <!-- NEW: Retro Motion Toggle -->
-                <div class="toggle-box" onclick="Game.toggleRetroMotion()">
-                    <div class="checkbox" id="motion-check"></div>
-                    <span>RETRO MOTION</span>
-                </div>
-                <div class="toggle-box" onclick="APICache.clear(); alert('API Cache Cleared!');">
-                    <div style="font-size: 8px; color: #aaa; text-decoration: underline;">CLEAR API CACHE</div>
-                </div>
-                <div style="font-size: 6px; color: #888; margin-top: 20px;">Z: CONFIRM | X: BACK | ARROWS: MOVE</div>
+                <div style="font-size: 8px; color: #888; margin-top: 20px;">LOADING...</div>
             </div>
 
             <!-- Name Input Screen -->
@@ -64,9 +52,8 @@
                     <div class="cont-opt" id="opt-continue" onclick="ScreenManager.getScreen('CONTINUE').confirm()">
                         CONTINUE</div>
                     <div class="cont-opt" id="opt-pokedex" onclick="ScreenManager.push('POKEDEX')">POKEDEX</div>
+                    <div class="cont-opt" id="opt-settings" onclick="ScreenManager.push('SETTINGS')">OPTIONS</div>
                     <div class="cont-opt" id="opt-newgame" onclick="ScreenManager.push('NAME_INPUT')">NEW GAME</div>
-                    <div class="cont-opt" id="opt-clearcache" onclick="APICache.clear(); alert('API Cache Cleared!');">
-                        CLEAR API CACHE</div>
                 </div>
                 <div class="save-info-box">
                     <div class="save-row" style="color:yellow" id="save-name">PLAYER</div>
@@ -261,6 +248,13 @@
                 </div>
             </div>
 
+            <!-- SETTINGS SCREEN -->
+            <div id="settings-screen" class="hidden">
+                <div class="settings-header">OPTIONS</div>
+                <div id="settings-list" class="settings-list"></div>
+                <div class="settings-footer">Z: CONFIRM | ARROWS: MOVE | X: BACK</div>
+            </div>
+
             <!-- Battle Scene -->
             <div class="scene hidden" id="scene">
                 <div id="fx-container"
@@ -384,6 +378,7 @@
     <script src="js/screens/evolution_screen.js"></script>
     <script src="js/screens/move_learn.js"></script>
     <script src="js/screens/pokedex.js"></script>
+    <script src="js/screens/settings.js"></script>
 
     <script>
         // --- INITIALIZATION ---

@@ -62,7 +62,8 @@ const Input = {
                 .filter(b => b.style.display !== 'none');
             if (Input.focus >= btns.length) Input.focus = btns.length - 1;
             return btns[Input.focus];
-        }
+        },
+        'SETTINGS': () => document.getElementById(`settings-opt-${Input.focus}`)
     },
 
     updateVisuals() {
@@ -134,7 +135,8 @@ const Input = {
             if (k === 'ArrowDown') SummaryScreen.nav(1);
             if (k === 'ArrowUp') SummaryScreen.nav(-1);
             if (['z', 'Z', 'Enter'].includes(k)) document.querySelectorAll('.sum-buttons .confirm-btn')[Input.focus].click();
-        }
+        },
+        'SETTINGS': (k) => ScreenManager.activeScreen?.handleInput(k)
     },
 
     handleKey(e) {

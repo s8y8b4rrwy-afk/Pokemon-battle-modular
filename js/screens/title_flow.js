@@ -2,8 +2,8 @@ const TitleScreen = {
     id: 'TITLE',
 
     onEnter(params = {}) {
-        this.resetInternalState();
-        Input.setMode('START'); // Legacy mode for visual updater
+        // Skip the click-to-start title screen — go directly to Save check
+        this.checkSave();
     },
 
     onExit() {
@@ -12,43 +12,15 @@ const TitleScreen = {
     },
 
     onResume() {
-        this.resetInternalState();
-        Input.setMode('START');
-    },
-
-    resetInternalState() {
-        // Start screen is clean slate
-        UI.hideAll(['scene', 'dialog-box', 'summary-panel', 'streak-box', 'pack-screen', 'party-screen', 'action-menu', 'move-menu', 'selection-screen', 'continue-screen', 'name-screen']);
-        UI.show('start-screen');
-    },
-
-    handleInput(key) {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
-            Game.toggleLcd();
-            AudioEngine.playSfx('select');
-            return true;
-        }
-
-        if (['z', 'Z', 'Enter'].includes(key)) {
-            // Transition to CONTINUE screen logic
-            AudioEngine.init();
-            this.checkSave();
-            return true;
-        }
-
-        return false;
+        // If we pop back to Title, we should probably stay on the Save screen
+        this.checkSave();
     },
 
     // --- Continue / New Game Logic ---
-    // Ideally this could be a sub-screen or state, but let's keep it here for now
     checkSave() {
-        AudioEngine.init();
-        AudioEngine.playSfx('select');
         if (StorageSystem.exists()) {
-            // Show Continue Screen
             ScreenManager.push('CONTINUE');
         } else {
-            // Go straight to Name Input (New Game)
             ScreenManager.push('NAME_INPUT');
         }
     }
@@ -134,10 +106,9 @@ const ContinueScreen = {
         } else if (choice === 1) {
             ScreenManager.push('POKEDEX');
         } else if (choice === 2) {
-            ScreenManager.replace('NAME_INPUT');
+            ScreenManager.push('SETTINGS');
         } else {
-            APICache.clear();
-            alert('API Cache Cleared!');
+            ScreenManager.replace('NAME_INPUT');
         }
     }
 };
