@@ -1,0 +1,7 @@
+node_modules/
+package-lock.json
+package.json
+test_chain.js
+test_evo.js
+test_script.sh
+.DS_Store

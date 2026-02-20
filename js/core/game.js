@@ -395,7 +395,7 @@ const Game = {
 
 
     // --- ROGUE LOGIC ---
-    addRogueItem(key) {
+    async addRogueItem(key) {
         if (!this.inventory[key]) this.inventory[key] = 0;
         this.inventory[key]++;
 
@@ -406,6 +406,10 @@ const Game = {
         // Use default lifetime from settings or fallback to 5
         const lifetime = (typeof ROGUE_CONFIG !== 'undefined' && ROGUE_CONFIG.ROGUE_ITEM_LIFETIME) ? ROGUE_CONFIG.ROGUE_ITEM_LIFETIME : 5;
         this.rogueItemState[key].push({ turns: lifetime });
+
+        if (typeof TutorialManager !== 'undefined') {
+            await TutorialManager.checkTutorial(key);
+        }
     },
 
     async processRogueTurn() {
@@ -652,6 +656,7 @@ const Game = {
             // 1. Normal Loot
             if (RNG.roll(rate)) {
                 const key = Mechanics.getLoot(this.enemyMon, this.wins, levelDiff); this.inventory[key]++; AudioEngine.playSfx('funfair');
+                if (typeof TutorialManager !== 'undefined') await TutorialManager.checkTutorial(key);
                 await DialogManager.show(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`, { lock: true });
             }
 
@@ -661,7 +666,7 @@ const Game = {
 
             if (RNG.roll(rogueRate)) {
                 const key = Mechanics.getRogueLoot();
-                this.addRogueItem(key);
+                await this.addRogueItem(key);
 
                 // Recalculate stats immediately to apply passive boosts
                 this.party.forEach(p => StatCalc.recalculate(p));
@@ -672,7 +677,7 @@ const Game = {
                 // Multi-drop for Bosses
                 if (this.enemyMon.isBoss && RNG.roll(0.5)) {
                     const key2 = Mechanics.getRogueLoot();
-                    this.addRogueItem(key2);
+                    await this.addRogueItem(key2);
                     this.party.forEach(p => StatCalc.recalculate(p));
                     await DialogManager.show(`And another one!\nFound ${ITEMS[key2].name}!`, { lock: true });
                 }
@@ -736,17 +741,20 @@ const Game = {
                 if (roll < 0.30) {
                     key = 'evo_stone';
                     this.inventory[key] = (this.inventory[key] || 0) + 1;
+                    if (typeof TutorialManager !== 'undefined') await TutorialManager.checkTutorial(key);
                 } else if (roll < 0.65) {
                     key = Mechanics.getRogueLoot();
-                    this.addRogueItem(key);
+                    await this.addRogueItem(key);
                     this.party.forEach(p => StatCalc.recalculate(p));
                 } else {
                     key = Mechanics.getLoot(enemy, this.wins, 0);
                     this.inventory[key]++;
+                    if (typeof TutorialManager !== 'undefined') await TutorialManager.checkTutorial(key);
                 }
             } else {
                 key = Mechanics.getLoot(enemy, this.wins, 0);
                 this.inventory[key]++;
+                if (typeof TutorialManager !== 'undefined') await TutorialManager.checkTutorial(key);
             }
 
             AudioEngine.playSfx('catch_success');

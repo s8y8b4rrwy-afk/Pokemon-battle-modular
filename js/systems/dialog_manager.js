@@ -138,11 +138,18 @@ const DialogManager = {
                 if (typeof Input !== 'undefined') Input.updateVisuals();
                 else this.updateFocus(document.querySelectorAll('#dialog-choice-box .choice-item'));
             };
-            div.onclick = () => {
+
+            const selectChoice = () => {
                 if (this.activeResolver) {
                     this.activeResolver(c);
                     AudioEngine.playSfx('select');
                 }
+            };
+
+            div.onclick = selectChoice;
+            div.ontouchstart = (e) => {
+                e.preventDefault(); // Prevent double-triggering with click
+                selectChoice();
             };
 
             el.appendChild(div);
@@ -210,7 +217,7 @@ const DialogManager = {
                 if (e.type === 'keydown') {
                     const k = e.key.toLowerCase();
                     if (k === 'z' || k === 'enter' || k === 'x') trigger = true;
-                } else if (e.type === 'click') {
+                } else if (e.type === 'click' || e.type === 'touchstart') {
                     trigger = true;
                 }
 
@@ -224,6 +231,7 @@ const DialogManager = {
             this._currentResolver = resolve;
             window.addEventListener('keydown', handler);
             window.addEventListener('click', handler);
+            window.addEventListener('touchstart', handler, { passive: true });
         });
     },
 
@@ -231,6 +239,7 @@ const DialogManager = {
         if (this._currentHandler) {
             window.removeEventListener('keydown', this._currentHandler);
             window.removeEventListener('click', this._currentHandler);
+            window.removeEventListener('touchstart', this._currentHandler);
             this._currentHandler = null;
         }
         const arrow = document.getElementById(arrowId);

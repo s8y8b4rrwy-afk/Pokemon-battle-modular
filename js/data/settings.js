@@ -1,7 +1,6 @@
 // --- GAME BALANCE CONTROLLER ---
 // Tweak difficulty, RNG, and rewards here.
 const GAME_BALANCE = {
-    DEBUG_MODE: false,
     // Battle Math
     CRIT_CHANCE_PLAYER: 0.0625, // 6.25%
     CRIT_CHANCE_BOSS: 0.15,     // 15%
@@ -112,6 +111,7 @@ const ROGUE_LOOT = {
         { key: 'rogue_hp', weight: 80 },
         { key: 'rogue_crit', weight: 40 },
         { key: 'rogue_xp', weight: 30 },
+        { key: 'evo_stone', weight: 15 },
         { key: 'rogue_shiny', weight: 10 }
     ]
 };

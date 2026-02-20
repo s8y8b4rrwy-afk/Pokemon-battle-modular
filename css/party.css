@@ -105,6 +105,8 @@
     bottom: 10px;
     right: 10px;
     width: 90px;
+    max-height: 180px;
+    overflow-y: auto;
     background: white;
     border: 2px solid #202020;
     z-index: 350;

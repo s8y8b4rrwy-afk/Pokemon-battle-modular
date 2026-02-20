@@ -5,7 +5,7 @@ const PackScreen = {
         { id: 'items', name: 'HEALING ITEMS' },
         { id: 'balls', name: 'POKE BALLS' },
         { id: 'key', name: 'KEY ITEMS' },
-        ...(GAME_BALANCE.DEBUG_MODE ? [{ id: 'debug', name: 'DEBUG' }] : [])
+        ...(DEBUG.ENABLED ? [{ id: 'debug', name: 'DEBUG' }] : [])
     ],
     nextPocket() {
         this.currentPocketIdx = (this.currentPocketIdx + 1) % this.pockets.length;
@@ -252,7 +252,7 @@ const BattleMenus = {
                     ScreenManager.push('PARTY', { mode: 'HEAL' });
                     return;
                 }
-                if (data.type === 'heal' || data.type === 'revive') {
+                if (data.type === 'heal' || data.type === 'revive' || data.type === 'status_heal' || data.type === 'evo_stone') {
                     Game.selectedItemKey = key;
                     Game.state = 'HEAL';
                     ScreenManager.push('PARTY', { mode: 'HEAL' });
