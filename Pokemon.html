@@ -42,6 +42,9 @@
                     <div class="checkbox" id="motion-check"></div>
                     <span>RETRO MOTION</span>
                 </div>
+                <div class="toggle-box" onclick="APICache.clear(); alert('API Cache Cleared!');">
+                    <div style="font-size: 8px; color: #aaa; text-decoration: underline;">CLEAR API CACHE</div>
+                </div>
                 <div style="font-size: 6px; color: #888; margin-top: 20px;">Z: CONFIRM | X: BACK | ARROWS: MOVE</div>
             </div>
 
@@ -62,6 +65,8 @@
                         CONTINUE</div>
                     <div class="cont-opt" id="opt-pokedex" onclick="ScreenManager.push('POKEDEX')">POKEDEX</div>
                     <div class="cont-opt" id="opt-newgame" onclick="ScreenManager.push('NAME_INPUT')">NEW GAME</div>
+                    <div class="cont-opt" id="opt-clearcache" onclick="APICache.clear(); alert('API Cache Cleared!');">
+                        CLEAR API CACHE</div>
                 </div>
                 <div class="save-info-box">
                     <div class="save-row" style="color:yellow" id="save-name">PLAYER</div>
@@ -342,6 +347,7 @@
     <script src="js/data/items.js"></script>
 
     <script src="js/systems/audio.js"></script>
+    <script src="js/systems/api_cache.js"></script>
     <script src="js/systems/api.js"></script>
     <script src="js/systems/storage.js"></script>
     <script src="js/systems/pokedex_data.js"></script>

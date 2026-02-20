@@ -328,8 +328,8 @@ const PokedexScreen = {
         document.getElementById('detail-types').innerText = `TYPE: ${types}`;
 
         // Description (Flavor Text)
-        const speciesRes = await fetch(data.species.url);
-        const speciesData = await speciesRes.json();
+        const speciesData = await API.getSpeciesData(data.species.url);
+        if (!speciesData) return;
 
         // Find a Gen 2 entry if possible (Gold, Silver, Crystal)
         const gen2Games = ['gold', 'silver', 'crystal'];
@@ -352,7 +352,7 @@ const PokedexScreen = {
         document.getElementById('detail-weight').innerText = (data.weight / 10).toFixed(1) + 'kg';
 
         // Evolution Chain
-        this.renderEvoChain(speciesData.evolution_chain.url);
+        this.renderEvoChain(data.species.url);
     },
 
     closeDetails() {
@@ -360,16 +360,16 @@ const PokedexScreen = {
         document.getElementById('dex-detail-panel').classList.remove('visible');
     },
 
-    async renderEvoChain(url) {
+    async renderEvoChain(speciesUrl) {
         const container = document.getElementById('detail-evo-chain');
         container.innerHTML = 'Loading Chain...';
 
         try {
-            // We can reuse API.getEvolutionChain? It returns the chain object.
-            // But we need to traverse it.
-            const res = await fetch(url); // Or use API helper if public? API.getEvolutionChain is async and returns chain obj.
-            const data = await res.json();
-            const chain = data.chain;
+            const chain = await API.getEvolutionChain(speciesUrl);
+            if (!chain) {
+                container.innerHTML = 'No data.';
+                return;
+            }
 
             container.innerHTML = ''; // Clear
 

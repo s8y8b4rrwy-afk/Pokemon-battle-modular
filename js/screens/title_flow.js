@@ -100,13 +100,13 @@ const ContinueScreen = {
 
     handleInput(key) {
         if (key === 'ArrowUp') {
-            Input.focus = (Input.focus - 1 + 3) % 3;
+            Input.focus = (Input.focus - 1 + 4) % 4;
             Input.updateVisuals();
             AudioEngine.playSfx('select');
             return true;
         }
         if (key === 'ArrowDown') {
-            Input.focus = (Input.focus + 1) % 3;
+            Input.focus = (Input.focus + 1) % 4;
             Input.updateVisuals();
             AudioEngine.playSfx('select');
             return true;
@@ -133,8 +133,11 @@ const ContinueScreen = {
             Game.loadGame();
         } else if (choice === 1) {
             ScreenManager.push('POKEDEX');
-        } else {
+        } else if (choice === 2) {
             ScreenManager.replace('NAME_INPUT');
+        } else {
+            APICache.clear();
+            alert('API Cache Cleared!');
         }
     }
 };

@@ -1,9 +1,13 @@
 const API = {
     base: 'https://pokeapi.co/api/v2',
+
+    // Fallback in-memory cache for speed during session
     cache: {
         species: {},
         evolution: {},
-        pokemon: {}
+        pokemon: {},
+        moves: {},
+        forms: {}
     },
 
     // Helper: Convert PokeAPI ailment names to short codes
@@ -22,34 +26,80 @@ const API = {
 
     async checkFirstStage(id) {
         try {
-            if (this.cache.species[id]) return this.cache.species[id].evolves_from_species === null;
-            const res = await fetch(`${this.base}/pokemon-species/${id}`);
-            if (!res.ok) return true;
-            const data = await res.json();
-            this.cache.species[id] = data;
+            const data = await this.getSpeciesData(id);
+            if (!data) return true;
             return data.evolves_from_species === null;
         } catch (e) {
             return true;
         }
     },
 
-    // Fast check for level-appropriateness before full fetch
     async getPokemonData(id) {
-        if (this.cache.pokemon[id]) return this.cache.pokemon[id];
+        const cacheKey = id.toString();
+        if (this.cache.pokemon[cacheKey]) return this.cache.pokemon[cacheKey];
+
+        // Try Persistent Cache
+        const pCache = await APICache.get('pokemon', cacheKey);
+        if (pCache) {
+            this.cache.pokemon[cacheKey] = pCache;
+            return pCache;
+        }
+
         try {
             const res = await fetch(`${this.base}/pokemon/${id}`);
             if (!res.ok) return null;
             const data = await res.json();
-            this.cache.pokemon[id] = data;
+
+            // Save to both caches
+            this.cache.pokemon[cacheKey] = data;
+            await APICache.set('pokemon', cacheKey, data);
+
+            return data;
+        } catch (e) { return null; }
+    },
+
+    async getSpeciesData(idOrUrl) {
+        const id = idOrUrl.toString().split('/').filter(Boolean).pop();
+        if (this.cache.species[id]) return this.cache.species[id];
+
+        const pCache = await APICache.get('species', id);
+        if (pCache) {
+            this.cache.species[id] = pCache;
+            return pCache;
+        }
+
+        try {
+            const url = idOrUrl.toString().startsWith('http') ? idOrUrl : `${this.base}/pokemon-species/${id}`;
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            const data = await res.json();
+
+            this.cache.species[id] = data;
+            await APICache.set('species', id, data);
+
             return data;
         } catch (e) { return null; }
     },
 
     async getFormData(formIdOrName) {
+        const cacheKey = formIdOrName.toString();
+        if (this.cache.forms[cacheKey]) return this.cache.forms[cacheKey];
+
+        const pCache = await APICache.get('forms', cacheKey);
+        if (pCache) {
+            this.cache.forms[cacheKey] = pCache;
+            return pCache;
+        }
+
         try {
             const res = await fetch(`${this.base}/pokemon-form/${formIdOrName}`);
             if (!res.ok) return null;
-            return await res.json();
+            const data = await res.json();
+
+            this.cache.forms[cacheKey] = data;
+            await APICache.set('forms', cacheKey, data);
+
+            return data;
         } catch (e) { return null; }
     },
 
@@ -247,12 +297,21 @@ const API = {
 
     // Helper to fetch single move (used by getPokemon and Metronome)
     async getMove(idOrName) {
+        const cacheKey = idOrName.toString();
+        if (this.cache.moves[cacheKey]) return this.cache.moves[cacheKey];
+
+        const pCache = await APICache.get('moves', cacheKey);
+        if (pCache) {
+            this.cache.moves[cacheKey] = pCache;
+            return pCache;
+        }
+
         try {
             const res = await fetch(`${this.base}/move/${idOrName}`);
             if (!res.ok) return null;
             const mData = await res.json();
 
-            return {
+            const moveData = {
                 name: mData.name.replace(/-/g, ' ').toUpperCase(),
                 id: mData.name,
                 type: mData.type.name,
@@ -268,18 +327,35 @@ const API = {
                 max_hits: mData.meta ? mData.meta.max_hits : null,
                 desc: mData.flavor_text_entries ? (mData.flavor_text_entries.find(f => f.language.name === 'en') || {}).flavor_text : "No description available."
             };
+
+            this.cache.moves[cacheKey] = moveData;
+            await APICache.set('moves', cacheKey, moveData);
+
+            return moveData;
         } catch (e) { return null; }
     },
 
     async getEvolutionChain(speciesUrl) {
         try {
             // 1. Get Species Data
-            const sRes = await fetch(speciesUrl);
-            const sData = await sRes.json();
+            const sData = await this.getSpeciesData(speciesUrl);
+            if (!sData) return null;
 
             // 2. Get Evolution Chain
+            const chainId = sData.evolution_chain.url.split('/').filter(Boolean).pop();
+            if (this.cache.evolution[chainId]) return this.cache.evolution[chainId].chain;
+
+            const pCache = await APICache.get('evolution', chainId);
+            if (pCache) {
+                this.cache.evolution[chainId] = pCache;
+                return pCache.chain;
+            }
+
             const cRes = await fetch(sData.evolution_chain.url);
             const cData = await cRes.json();
+
+            this.cache.evolution[chainId] = cData;
+            await APICache.set('evolution', chainId, cData);
 
             return cData.chain;
         } catch (e) {
@@ -365,23 +441,25 @@ const API = {
 
     async getMinLevel(id) {
         try {
-            let sData = this.cache.species[id];
-            if (!sData) {
-                const sRes = await fetch(`${this.base}/pokemon-species/${id}`);
-                if (!sRes.ok) return 1;
-                sData = await sRes.json();
-                this.cache.species[id] = sData;
-            }
+            let sData = await this.getSpeciesData(id);
+            if (!sData) return 1;
 
             if (!sData.evolution_chain) return 1;
             const chainId = sData.evolution_chain.url.split('/').filter(Boolean).pop();
 
             let cData = this.cache.evolution[chainId];
             if (!cData) {
-                const cRes = await fetch(sData.evolution_chain.url);
-                if (!cRes.ok) return 1;
-                cData = await cRes.json();
-                this.cache.evolution[chainId] = cData;
+                const pCache = await APICache.get('evolution', chainId);
+                if (pCache) {
+                    cData = pCache;
+                    this.cache.evolution[chainId] = cData;
+                } else {
+                    const cRes = await fetch(sData.evolution_chain.url);
+                    if (!cRes.ok) return 1;
+                    cData = await cRes.json();
+                    this.cache.evolution[chainId] = cData;
+                    await APICache.set('evolution', chainId, cData);
+                }
             }
 
             // DFS to find the species in the chain and its min level
