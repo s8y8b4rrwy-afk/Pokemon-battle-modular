@@ -45,6 +45,12 @@ const DialogManager = {
         const arrowId = task.options.arrowId || 'advance-arrow';
         const parentId = task.options.parentId || 'dialog-box';
 
+        // LIFT MAIN DIALOG Z-INDEX ONLY
+        if (parentId === 'dialog-box') {
+            const box = document.getElementById('dialog-box');
+            if (box) box.style.zIndex = '5000';
+        }
+
         if (task.type === 'text') {
             this.isTyping = true;
 
@@ -73,6 +79,11 @@ const DialogManager = {
                     Battle.uiLocked = false;
                 }
 
+                const parentId = task.options.parentId || 'dialog-box';
+                if (parentId === 'dialog-box') {
+                    const box = document.getElementById('dialog-box');
+                    if (box) box.style.zIndex = '20'; // LOWER Z-INDEX AFTER TASK
+                }
                 this.isTyping = false;
                 this.queue.shift();
                 if (task.resolve) task.resolve();
@@ -102,6 +113,11 @@ const DialogManager = {
                         Battle.uiLocked = false;
                     }
 
+                    const parentId = task.options.parentId || 'dialog-box';
+                    if (parentId === 'dialog-box') {
+                        const box = document.getElementById('dialog-box');
+                        if (box) box.style.zIndex = '20'; // LOWER Z-INDEX AFTER TASK
+                    }
                     this.queue.shift();
                     if (task.resolve) task.resolve(choice);
                     this.activeResolver = null;

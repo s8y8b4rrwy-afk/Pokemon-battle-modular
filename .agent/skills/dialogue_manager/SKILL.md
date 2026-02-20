@@ -108,7 +108,27 @@ await DialogManager.show("I'm the leader here.");
 const ready = await DialogManager.ask("Are you ready?", ["Yes", "No"]);
 ```
 
-## Visuals
+## Layering & Z-Index Standards
+The `DialogManager` uses a dynamic Z-index system to ensure prompts remain visible over any other game screen:
+
+- **Baseline**: When finished or idle, the `#dialog-box` sits at `z-index: 20`.
+- **Elevation**: During an active `show()` or `ask()` task, the manager lifts the container (default `#dialog-box`) to `z-index: 5000`.
+- **Screen Compatibility**: 
+    - Most overlay screens (Bag, Party, Pokedex, Summary) use `z-index: 3000`.
+    - This allows the dialogue to pop **over** these screens when using items or confirming actions.
+    - Custom containers (like `#evo-dialog`) are **not** automatically lifted; their layering must be managed by their respective screens.
+
+## Visuals & Styles
+
 - **Text Box**: Uses the standard battle text box (`#text-content`).
-- **Choice Box**: dynamic overlay that appears over the text box or action area.
-- **Advance Arrow**: Automatically shown when waiting for user input.
+- **Choice Box**: Dynamic overlay that appears over the text box or action area.
+- **Advance Arrow**: Blinking indicator shown when waiting for user input.
+- **Menu Style (`menu-style`)**: An optional class for the dialogue box that provides a white background and black text.
+    - **Usage**: Manually apply `box.classList.add('menu-style')` before showing a prompt in non-battle menus (like "NEW GAME" confirmation).
+    - Example:
+      ```javascript
+      const box = document.getElementById('dialog-box');
+      box.classList.add('menu-style');
+      await DialogManager.ask("Really start over?", ["Yes", "No"]);
+      box.classList.remove('menu-style');
+      ```

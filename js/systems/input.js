@@ -13,7 +13,7 @@ const Input = {
     // --- 1. VISUAL HIGHLIGHTING LOGIC ---
     visuals: {
         'BATTLE': () => document.getElementById(['opt-fight', 'opt-pkmn', 'opt-pack', 'opt-run'][Input.focus]),
-        'CONTINUE': () => document.getElementById(['opt-continue', 'opt-pokedex', 'opt-newgame', 'opt-clearcache'][Input.focus]),
+        'CONTINUE': () => document.getElementById(['opt-continue', 'opt-pokedex', 'opt-settings', 'opt-newgame'][Input.focus]),
         'DIALOG_CHOICE': () => document.querySelectorAll('#dialog-choice-box .choice-item')[Input.focus],
 
         'MOVES': () => {
@@ -164,7 +164,8 @@ const Input = {
         }
 
         // Global Lock Check (Allows specific system menus to remain interactive)
-        if (Battle.uiLocked && !['START', 'CONTINUE', 'NAME', 'DIALOG_CHOICE', 'PARTY', 'CONTEXT', 'SUMMARY'].includes(this.mode)) return;
+        const isLocked = (typeof Battle !== 'undefined') ? Battle.uiLocked : false;
+        if (isLocked && !['START', 'CONTINUE', 'NAME', 'DIALOG_CHOICE', 'PARTY', 'CONTEXT', 'SUMMARY', 'SETTINGS'].includes(this.mode)) return;
 
         // 2. Global Back Button (X)
         if (k === 'x' || k === 'X') {

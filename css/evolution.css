@@ -9,7 +9,7 @@
     height: 100%;
     background: #fff;
     /* or match battle gradient? usually white or specialized bg */
-    z-index: 100;
+    z-index: 3000;
     display: flex;
     flex-direction: column;
     justify-content: center;

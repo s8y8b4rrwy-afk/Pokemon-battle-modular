@@ -74,6 +74,23 @@ const SettingsScreen = {
             el.className = 'settings-item';
             el.id = `settings-opt-${idx}`;
 
+            el.onmouseover = () => {
+                Input.focus = idx;
+                Input.updateVisuals();
+            };
+
+            el.onclick = () => {
+                const opt = this.options[idx];
+                if (opt.type === 'toggle') {
+                    opt.toggle();
+                    AudioEngine.playSfx('select');
+                    this.updateOptionVisual(idx);
+                } else if (opt.type === 'action') {
+                    AudioEngine.playSfx('select');
+                    opt.action();
+                }
+            };
+
             const nameSpan = document.createElement('span');
             nameSpan.innerText = opt.name;
             el.appendChild(nameSpan);

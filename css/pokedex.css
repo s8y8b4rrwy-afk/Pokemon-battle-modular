@@ -7,7 +7,7 @@
     height: 100%;
     background: #e0f8cf;
     /* Classic Game Boy Light Green */
-    z-index: 100;
+    z-index: 3000;
     display: flex;
     flex-direction: column;
     font-family: inherit;
@@ -154,7 +154,7 @@
     width: 100%;
     height: 100%;
     background: #e0f8cf;
-    z-index: 200;
+    z-index: 3100;
     /* Above index header */
     display: none;
     flex-direction: column;

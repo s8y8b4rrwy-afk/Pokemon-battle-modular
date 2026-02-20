@@ -99,8 +99,8 @@ const ContinueScreen = {
         return false;
     },
 
-    confirm() {
-        const choice = Input.focus; // 0 = Continue, 1 = Pokedex, 2 = New Game
+    async confirm() {
+        const choice = Input.focus; // 0 = Continue, 1 = Pokedex, 2 = Options, 3 = New Game
         if (choice === 0) {
             Game.loadGame();
         } else if (choice === 1) {
@@ -108,7 +108,23 @@ const ContinueScreen = {
         } else if (choice === 2) {
             ScreenManager.push('SETTINGS');
         } else {
-            ScreenManager.replace('NAME_INPUT');
+            // New Game Confirmation
+            Input.setMode('NONE');
+            const box = document.getElementById('dialog-box');
+            box.classList.add('menu-style');
+            UI.show('dialog-box');
+
+            const ok = await DialogManager.ask("DELETE ALL DATA AND START OVER?", ["NO", "YES"]);
+
+            UI.hide('dialog-box');
+            box.classList.remove('menu-style');
+
+            if (ok === "YES") {
+                ScreenManager.replace('NAME_INPUT');
+            } else {
+                // Return to menu focus
+                Input.setMode('CONTINUE', 3);
+            }
         }
     }
 };

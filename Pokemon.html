@@ -49,11 +49,14 @@
             <div id="continue-screen" class="hidden">
                 <!-- ... (unchanged) ... -->
                 <div class="cont-menu-box">
-                    <div class="cont-opt" id="opt-continue" onclick="ScreenManager.getScreen('CONTINUE').confirm()">
-                        CONTINUE</div>
-                    <div class="cont-opt" id="opt-pokedex" onclick="ScreenManager.push('POKEDEX')">POKEDEX</div>
-                    <div class="cont-opt" id="opt-settings" onclick="ScreenManager.push('SETTINGS')">OPTIONS</div>
-                    <div class="cont-opt" id="opt-newgame" onclick="ScreenManager.push('NAME_INPUT')">NEW GAME</div>
+                    <div class="cont-opt" id="opt-continue" onmouseover="Input.focus=0; Input.updateVisuals()"
+                        onclick="Input.focus=0; ScreenManager.getScreen('CONTINUE').confirm()">CONTINUE</div>
+                    <div class="cont-opt" id="opt-pokedex" onmouseover="Input.focus=1; Input.updateVisuals()"
+                        onclick="Input.focus=1; ScreenManager.getScreen('CONTINUE').confirm()">POKEDEX</div>
+                    <div class="cont-opt" id="opt-settings" onmouseover="Input.focus=2; Input.updateVisuals()"
+                        onclick="Input.focus=2; ScreenManager.getScreen('CONTINUE').confirm()">OPTIONS</div>
+                    <div class="cont-opt" id="opt-newgame" onmouseover="Input.focus=3; Input.updateVisuals()"
+                        onclick="Input.focus=3; ScreenManager.getScreen('CONTINUE').confirm()">NEW GAME</div>
                 </div>
                 <div class="save-info-box">
                     <div class="save-row" style="color:yellow" id="save-name">PLAYER</div>
