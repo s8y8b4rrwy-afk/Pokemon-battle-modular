@@ -66,6 +66,7 @@ Both `show` and `ask` accept an `options` object as the last argument:
 | `fast` | `boolean` | `false` | If true, the text types out significantly faster. Good for system messages. |
 | `delay` | `number` | `null` | If set, the message will auto-advance after this many milliseconds. |
 | `noSkip` | `boolean` | `false` | If used with `delay`, prevents the user from skipping the wait time by pressing a key. |
+| `skipWait` | `boolean` | `false` | If true, the message resolves the moment typing finishes, **without** waiting for a user keypress or showing an advance arrow. The text remains on screen. Useful for secondary overlays that appear automatically (e.g., Level Up stats). |
 | `targetId` | `string` | `'text-content'` | The ID of the HTML element where the text should be typed (e.g., `'evo-text'`). |
 | `arrowId` | `string` | `'advance-arrow'` | The ID of the blink-arrow element to show while waiting for input (e.g., `'evo-advance-arrow'`). |
 | `parentId` | `string` | `'dialog-box'` | The container element that should parent the Yes/No choice box (e.g., `'evo-dialog'`). |

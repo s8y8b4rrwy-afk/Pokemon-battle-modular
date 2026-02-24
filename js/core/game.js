@@ -103,6 +103,11 @@ const Game = {
         this.enemyMon = data.enemyMon || null;
         this.battlesSinceLucky = data.battlesSinceLucky || 0;
 
+        // --- MIGRATION: Growth Rates ---
+        this.party.forEach(p => {
+            if (!p.growthRate) p.growthRate = 'medium-fast';
+        });
+
         // Hold state for Battle to pick up
         this.savedBattleState = {
             weather: data.weather || { type: 'none', turns: 0 },
@@ -112,7 +117,7 @@ const Game = {
         // Cleanup if not resuming a battle
         const isResuming = (this.enemyMon !== null);
         this.party.forEach(p => {
-            p.nextLvlExp = Math.pow(p.level + 1, 3) - Math.pow(p.level, 3);
+            p.nextLvlExp = ExpCalc.getNextLevelExp(p.growthRate, p.level);
             if (!isResuming) {
                 p.volatiles = {}; p.rageLevel = 0;
                 if (p.transformBackup) {
@@ -168,8 +173,6 @@ const Game = {
         Battle.uiLocked = true;
 
         if (this.load()) {
-            this.handleDebug();
-
             // Sync Pokedex with party
             if (typeof PokedexData !== 'undefined') PokedexData.registerTeam(this.party);
 
@@ -399,6 +402,9 @@ const Game = {
         if (!this.inventory[key]) this.inventory[key] = 0;
         this.inventory[key]++;
 
+        const itemData = (typeof ITEMS !== 'undefined') ? ITEMS[key] : null;
+        if (!itemData || itemData.type !== 'rogue') return; // Safety: Non-rogue items don't decay
+
         if (!this.rogueItemState) this.rogueItemState = {};
         if (!this.rogueItemState[key]) this.rogueItemState[key] = [];
 
@@ -417,8 +423,15 @@ const Game = {
 
         let changed = false;
         let expiredNames = [];
+        let expiredKeys = [];
 
         for (const key in this.rogueItemState) {
+            const itemData = (typeof ITEMS !== 'undefined') ? ITEMS[key] : null;
+            if (!itemData || itemData.type !== 'rogue') {
+                delete this.rogueItemState[key]; // Cleanup non-rogue or legacy items
+                continue;
+            }
+
             const list = this.rogueItemState[key];
             if (!list || list.length === 0) continue;
 
@@ -441,6 +454,7 @@ const Game = {
                 if (prevCount > nextList.length) {
                     const name = (typeof ITEMS !== 'undefined' && ITEMS[key]) ? ITEMS[key].name : key;
                     expiredNames.push(name);
+                    expiredKeys.push(key);
                 }
                 this.inventory[key] = nextList.length;
             }
@@ -452,38 +466,82 @@ const Game = {
 
             if (expiredNames.length > 0 && typeof DialogManager !== 'undefined') {
                 // Group notifications to avoid spamming 1 line per item
-                // User requested max 2 lines per text box.
                 for (let i = 0; i < expiredNames.length; i += 2) {
                     const n1 = expiredNames[i];
+                    const k1 = expiredKeys[i];
                     const n2 = expiredNames[i + 1];
+                    const k2 = expiredKeys[i + 1];
+
                     let msg = `${n1}\ndecayed!`;
+                    let keysToPass = [k1];
+
                     if (n2) {
                         msg = `${n1} and\n${n2} decayed!`;
+                        keysToPass.push(k2);
                     }
-                    await DialogManager.show(msg, { lock: true });
+
+                    AudioEngine.playSfx('stat_down');
+                    // Show message and box
+                    await DialogManager.show(msg, { lock: true, skipWait: true });
+                    await UI.showRogueBoostStats(keysToPass, true);
                 }
             }
         }
     },
 
     // --- EXP & WINS ---
-    async distributeExp(amount, targetIndices, isSpecialReward) {
-        if (isSpecialReward) {
+    async distributeExp(participantIndices, shareIndices, wasCaught, amountOverride = null) {
+        const isSpecialReward = amountOverride !== null || (this.enemyMon && (this.enemyMon.isBoss || this.enemyMon.isLucky));
+
+        if (amountOverride !== null) {
             AudioEngine.playSfx('exp');
-            await UI.typeText(`The team gained\na boosted ${amount} EXP!`);
+            await UI.typeText(`The team gained\na boosted ${amountOverride} EXP!`);
         }
-        for (const index of targetIndices) {
+
+        // 1. DISTRIBUTE TO PARTICIPANTS (100% XP)
+        for (const index of participantIndices) {
             const p = this.party[index];
             if (!p || p.currentHp <= 0) continue;
+
+            // Calculate gain for THIS participant specifically (fixes level scaling issues)
+            let amount = amountOverride !== null ? amountOverride : Mechanics.calcExpGain(this.enemyMon, p, wasCaught);
+
+            // No splitting! (Modern style as requested)
+            if (amount < 1) amount = 1;
+
+            // Individual message for participants
+            await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
+
             if (index === this.activeSlot) {
-                if (!isSpecialReward) await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
                 await this.gainExpAnim(amount, p);
             } else {
-                if (!isSpecialReward) await DialogManager.show(`${p.name} gained\n${amount} EXP. Points!`, { lock: true, delay: 1000, noSkip: true });
                 p.exp += amount;
                 if (p.exp >= p.nextLvlExp) await this.processLevelUp(p);
             }
         }
+
+        // 2. DISTRIBUTE TO TEAM (XP SHARE - Usually 50% XP)
+        if (shareIndices && shareIndices.length > 0) {
+            const shareMult = (typeof GAME_BALANCE !== 'undefined') ? GAME_BALANCE.EXP_SHARE_TEAM_PCT : 0.50;
+
+            // Single collective message
+            await DialogManager.show(`The rest of the team\ngained EXP. Points!`, { lock: true });
+
+            for (const index of shareIndices) {
+                const p = this.party[index];
+                if (!p || p.currentHp <= 0) continue;
+
+                let amount = amountOverride !== null ? Math.floor(amountOverride * shareMult) : Math.floor(Mechanics.calcExpGain(this.enemyMon, p, wasCaught) * shareMult);
+                if (amount < 1) amount = 1;
+
+                p.exp += amount;
+                if (p.exp >= p.nextLvlExp) {
+                    // Still show level up because it's important
+                    await this.processLevelUp(p);
+                }
+            }
+        }
+
         await this.finishWin();
     },
 
@@ -503,12 +561,15 @@ const Game = {
             const startLvl = p.level;
             const levelsGained = [];
 
+            // Capture old stats for the UI display
+            const oldStats = { ...p.stats };
+
             // 1. Calculate how many levels were gained
             while (p.exp >= p.nextLvlExp) {
                 p.exp -= p.nextLvlExp;
                 p.level++;
                 levelsGained.push(p.level);
-                p.nextLvlExp = Math.pow(p.level + 1, 3) - Math.pow(p.level, 3);
+                p.nextLvlExp = ExpCalc.getNextLevelExp(p.growthRate, p.level);
             }
 
             StatCalc.recalculate(p);
@@ -520,7 +581,10 @@ const Game = {
                 UI.updateHUD(p, 'player');
             }
 
-            await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to\nLevel ${p.level}!`, { lock: true });
+            await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to\nLevel ${p.level}!`, { lock: true, skipWait: true });
+
+            // Show the little box with stat gains
+            await UI.showLevelUpStats(p, oldStats);
 
             // 2. CHECK MOVES FOR EVERY LEVEL GAINED
             if (typeof MoveLearnScreen !== 'undefined') {
@@ -572,20 +636,9 @@ const Game = {
 
         const p = this.party[this.activeSlot];
 
-        // 1. Conditional HP restoration (Only if NOT fainted)
-        if (p.currentHp > 0) {
-            const range = GAME_BALANCE.HEAL_WIN_MAX_PCT - GAME_BALANCE.HEAL_WIN_MIN_PCT;
-            const healAmt = Math.floor(p.maxHp * (GAME_BALANCE.HEAL_WIN_MIN_PCT + (Math.random() * range)));
-            if (healAmt > 0) {
-                p.currentHp = Math.min(p.maxHp, p.currentHp + healAmt);
-                AudioEngine.playSfx('heal');
-                UI.updateHUD(p, 'player');
-            }
-        }
-
         const finalize = async () => {
             // Check if active mon is fainted (Simultaneous faint case)
-            if (p.currentHp <= 0) {
+            if (p && p.currentHp <= 0) {
                 // Manually trigger faint animation for the player
                 const sprite = document.getElementById('player-sprite');
                 const hud = document.getElementById('player-hud');
@@ -627,6 +680,19 @@ const Game = {
             this.startNewBattle(false);
         };
 
+        if (!p) { await finalize(); return; }
+
+        // 1. Conditional HP restoration (Only if NOT fainted)
+        if (p.currentHp > 0) {
+            const range = GAME_BALANCE.HEAL_WIN_MAX_PCT - GAME_BALANCE.HEAL_WIN_MIN_PCT;
+            const healAmt = Math.floor(p.maxHp * (GAME_BALANCE.HEAL_WIN_MIN_PCT + (Math.random() * range)));
+            if (healAmt > 0) {
+                p.currentHp = Math.min(p.maxHp, p.currentHp + healAmt);
+                AudioEngine.playSfx('heal');
+                UI.updateHUD(p, 'player');
+            }
+        }
+
         const checkTransform = async () => {
             if (p.transformBackup) {
                 const s = document.getElementById('player-sprite');
@@ -649,40 +715,7 @@ const Game = {
         };
 
         const checkLoot = async () => {
-            const levelDiff = this.enemyMon.level - p.level;
-            let rate = this.enemyMon.isBoss ? LOOT_SYSTEM.DROP_RATE_BOSS : LOOT_SYSTEM.DROP_RATE_WILD;
-            if (levelDiff > 0) rate += (levelDiff * 0.05);
-
-            // 1. Normal Loot
-            if (RNG.roll(rate)) {
-                const key = Mechanics.getLoot(this.enemyMon, this.wins, levelDiff); this.inventory[key]++; AudioEngine.playSfx('funfair');
-                if (typeof TutorialManager !== 'undefined') await TutorialManager.checkTutorial(key);
-                await DialogManager.show(`Oh! ${this.enemyMon.name} dropped\na ${ITEMS[key].name}.`, { lock: true });
-            }
-
-            // 2. Rogue Loot (Secondary Drop)
-            let rogueRate = (ROGUE_LOOT && ROGUE_LOOT.DROP_RATE_BASE) ? ROGUE_LOOT.DROP_RATE_BASE : 0.35;
-            if (this.enemyMon.isBoss) rogueRate += (ROGUE_LOOT && ROGUE_LOOT.DROP_RATE_BOSS_BONUS) ? ROGUE_LOOT.DROP_RATE_BOSS_BONUS : 0.50;
-
-            if (RNG.roll(rogueRate)) {
-                const key = Mechanics.getRogueLoot();
-                await this.addRogueItem(key);
-
-                // Recalculate stats immediately to apply passive boosts
-                this.party.forEach(p => StatCalc.recalculate(p));
-
-                AudioEngine.playSfx('funfair');
-                await DialogManager.show(`Lucky! You found a\n${ITEMS[key].name}!`, { lock: true });
-
-                // Multi-drop for Bosses
-                if (this.enemyMon.isBoss && RNG.roll(0.5)) {
-                    const key2 = Mechanics.getRogueLoot();
-                    await this.addRogueItem(key2);
-                    this.party.forEach(p => StatCalc.recalculate(p));
-                    await DialogManager.show(`And another one!\nFound ${ITEMS[key2].name}!`, { lock: true });
-                }
-            }
-
+            if (this.enemyMon) await LootManager.processPostBattleDrops(this.enemyMon, this.wins);
             await checkRage();
         };
 
@@ -724,66 +757,34 @@ const Game = {
         } else await checkFieldRecovery();
     },
 
-    async tryMidBattleDrop(enemy) {
-        let chance = DEBUG.ENABLED && DEBUG.LOOT.MID_BATTLE_RATE !== null ? DEBUG.LOOT.MID_BATTLE_RATE : LOOT_SYSTEM.DROP_RATE_MID_BATTLE;
-
-        // Lucky Pokemon ALWAYS drop items on hit
-        if (enemy.isLucky) chance = 1.0;
-
-        if (RNG.roll(chance)) {
-            let key;
-            if (enemy.isLucky) {
-                // Lucky Pokémon drop priority:
-                // 30% → Evolution Stone (signature Lucky reward)
-                // 35% → Rogue stat-boost item
-                // 35% → Normal loot table roll
-                const roll = Math.random();
-                if (roll < 0.30) {
-                    key = 'evo_stone';
-                    this.inventory[key] = (this.inventory[key] || 0) + 1;
-                    if (typeof TutorialManager !== 'undefined') await TutorialManager.checkTutorial(key);
-                } else if (roll < 0.65) {
-                    key = Mechanics.getRogueLoot();
-                    await this.addRogueItem(key);
-                    this.party.forEach(p => StatCalc.recalculate(p));
-                } else {
-                    key = Mechanics.getLoot(enemy, this.wins, 0);
-                    this.inventory[key]++;
-                    if (typeof TutorialManager !== 'undefined') await TutorialManager.checkTutorial(key);
-                }
-            } else {
-                key = Mechanics.getLoot(enemy, this.wins, 0);
-                this.inventory[key]++;
-                if (typeof TutorialManager !== 'undefined') await TutorialManager.checkTutorial(key);
-            }
-
-            AudioEngine.playSfx('catch_success');
-            await UI.typeText(`Oh! ${enemy.name} dropped\na ${ITEMS[key].name}.`);
-        }
+    async tryMidBattleDrop(enemy, options = {}) {
+        await LootManager.processMidBattleDrop(enemy, options);
     },
 
     async handleWin(wasCaught) {
         await this.processRogueTurn();
-        Battle.cleanup(); this.wins++; if (this.enemyMon.isBoss) this.bossesDefeated++;
-        document.getElementById('streak-box').innerText = `WINS: ${this.wins}`; this.state = 'BATTLE';
-        if (!wasCaught) this.enemyMon.currentHp = 0;
+        Battle.cleanup();
 
-        // EXP Calc
-        const activeMon = this.party[this.activeSlot];
-        let gain = Mechanics.calcExpGain(this.enemyMon, activeMon, wasCaught);
-
-        let targets, amt;
-        if (this.enemyMon.isBoss) {
-            targets = this.party.map((p, i) => ({ p, i })).filter(x => x.p.currentHp > 0).map(x => x.i);
-            amt = gain;
-        } else {
-            // Filter participants to only those still alive (Gen 2 style)
-            targets = Array.from(Battle.participants).filter(idx => this.party[idx] && this.party[idx].currentHp > 0);
-            amt = Math.floor(gain / Math.max(1, targets.length));
+        // Safety: If no enemy (e.g. overflow cleanup on load), just finish
+        if (!this.enemyMon) {
+            this.state = 'START';
+            await this.finishWin();
+            return;
         }
 
-        if (targets.length > 0) {
-            await this.distributeExp(amt, targets, this.enemyMon.isBoss || this.enemyMon.isLucky);
+        this.wins++;
+        if (this.enemyMon.isBoss) this.bossesDefeated++;
+        document.getElementById('streak-box').innerText = `WINS: ${this.wins}`;
+        this.state = 'BATTLE';
+
+        if (!wasCaught) this.enemyMon.currentHp = 0;
+
+        // EXP Calc (Only if we have an enemy to gain rewards from)
+        const participants = Array.from(Battle.participants).filter(idx => this.party[idx] && this.party[idx].currentHp > 0);
+        const nonParticipants = this.party.map((p, i) => i).filter(i => !participants.includes(i) && this.party[i].currentHp > 0);
+
+        if (participants.length > 0 || nonParticipants.length > 0) {
+            await this.distributeExp(participants, nonParticipants, wasCaught);
         } else {
             await this.finishWin();
         }

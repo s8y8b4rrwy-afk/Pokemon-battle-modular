@@ -167,5 +167,181 @@ const UI = {
         el.style.transform = "scale(1)"; el.style.filter = "none";
         this.forceReflow(el);
         el.style.opacity = 1;
+    },
+
+    async showLevelUpStats(p, oldStats) {
+        const box = document.getElementById('level-up-box');
+        const list = document.getElementById('lu-stats-list');
+        const sprite = document.getElementById('lu-poke-sprite');
+
+        if (!box || !list || !sprite) return;
+
+        // Use icon or front sprite (Icon is already the Gen 7+ mini-sprite from PokeAPI)
+        const iconSrc = p.icon || p.frontSprite;
+        sprite.setAttribute('src', iconSrc);
+
+        const statNames = {
+            hp: 'HP',
+            atk: 'ATK',
+            def: 'DEF',
+            spa: 'SP. ATK',
+            spd: 'SP. DEF',
+            spe: 'SPD'
+        };
+
+        const renderStats = (showGain) => {
+            list.innerHTML = '';
+            for (const [key, label] of Object.entries(statNames)) {
+                const row = document.createElement('div');
+                row.className = 'lu-stat-row';
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'lu-stat-label';
+                labelSpan.innerText = label;
+
+                const valuesDiv = document.createElement('div');
+                valuesDiv.className = 'lu-stat-values';
+
+                const valSpan = document.createElement('span');
+                valSpan.className = 'lu-stat-value';
+                valSpan.innerText = showGain ? oldStats[key] : p.stats[key];
+
+                valuesDiv.appendChild(valSpan);
+
+                if (showGain) {
+                    const gain = p.stats[key] - oldStats[key];
+                    const gainSpan = document.createElement('span');
+                    gainSpan.className = 'lu-stat-gain';
+                    gainSpan.innerText = `+${gain}`;
+                    valuesDiv.appendChild(gainSpan);
+                }
+
+                row.appendChild(labelSpan);
+                row.appendChild(valuesDiv);
+                list.appendChild(row);
+            }
+        };
+
+        box.classList.remove('hidden');
+        renderStats(true);
+
+        // First wait: show old stats + gain
+        await DialogManager.waitForInput(null);
+
+        // Second phase: update to new totals
+        renderStats(false);
+
+        // Second wait: show new totals
+        await DialogManager.waitForInput(null);
+
+        box.classList.add('hidden');
+    },
+
+    async showRogueBoostStats(changedKeys = null, isRemoval = false) {
+        const box = document.getElementById('rogue-boost-box');
+        const list = document.getElementById('rb-stats-list');
+
+        if (!box || !list) return;
+
+        // Normalize changedKeys to an array
+        const keysArr = Array.isArray(changedKeys) ? changedKeys : (changedKeys ? [changedKeys] : []);
+
+        const rogueItems = [
+            { key: 'rogue_attack', label: 'ATK', type: 'stat' },
+            { key: 'rogue_defense', label: 'DEF', type: 'stat' },
+            { key: 'rogue_sp_attack', label: 'S.ATK', type: 'stat' },
+            { key: 'rogue_sp_defense', label: 'S.DEF', type: 'stat' },
+            { key: 'rogue_speed', label: 'SPD', type: 'stat' },
+            { key: 'rogue_hp', label: 'HP', type: 'stat' },
+            { key: 'rogue_crit', label: 'CRIT', type: 'crit' },
+            { key: 'rogue_xp', label: 'XP', type: 'xp' },
+            { key: 'rogue_shiny', label: 'SHINY', type: 'shiny' }
+        ];
+
+        const getPctPerStack = (type) => {
+            if (type === 'stat') return ROGUE_CONFIG.STAT_BOOST_PER_STACK * 100;
+            if (type === 'crit') return ROGUE_CONFIG.CRIT_BOOST_PER_STACK * 100;
+            if (type === 'xp') return ROGUE_CONFIG.XP_BOOST_PER_STACK * 100;
+            if (type === 'shiny') return ROGUE_CONFIG.SHINY_BOOST_PER_STACK * 100;
+            return 0;
+        };
+
+        const renderStats = (showDelta) => {
+            list.innerHTML = '';
+            let hasAny = false;
+
+            for (const item of rogueItems) {
+                const count = Game.inventory[item.key] || 0;
+                const isChanged = keysArr.includes(item.key);
+
+                // Delta logic
+                let displayCount = count;
+                let delta = 0;
+
+                if (isChanged) {
+                    delta = isRemoval ? -1 : 1;
+                    if (showDelta) displayCount = count - delta;
+                }
+
+                // Visibility: Show if we have some or are getting/losing some
+                if (displayCount === 0 && delta === 0) continue;
+
+                hasAny = true;
+
+                const pctPerStack = getPctPerStack(item.type);
+                const displayPct = displayCount * pctPerStack;
+
+                const row = document.createElement('div');
+                row.className = 'lu-stat-row';
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'lu-stat-label';
+                labelSpan.innerText = item.label;
+
+                const valuesDiv = document.createElement('div');
+                valuesDiv.className = 'lu-stat-values';
+
+                const countSpan = document.createElement('span');
+                countSpan.className = 'lu-stat-value';
+                countSpan.innerText = `x${displayCount}`;
+
+                valuesDiv.appendChild(countSpan);
+
+                const gainSpan = document.createElement('span');
+                gainSpan.className = 'lu-stat-gain';
+
+                if (showDelta && delta !== 0) {
+                    // Show item delta (+1/-1)
+                    const sign = delta > 0 ? '+' : '';
+                    gainSpan.innerText = `${sign}${delta}`;
+                    gainSpan.classList.add(delta > 0 ? 'rogue-gain' : 'rogue-loss');
+                } else {
+                    // Show total percentage
+                    gainSpan.innerText = `+${displayPct.toFixed(displayPct >= 1 ? 0 : 1)}%`;
+
+                    // Highlight color ONLY if this specific stat changed in this event
+                    if (isChanged) {
+                        gainSpan.classList.add(isRemoval ? 'rogue-loss' : 'rogue-gain');
+                    }
+                }
+
+                valuesDiv.appendChild(gainSpan);
+                row.appendChild(labelSpan);
+                row.appendChild(valuesDiv);
+                list.appendChild(row);
+            }
+            return hasAny;
+        };
+
+        // Stage 1: Show Old + Delta
+        if (!renderStats(true)) return;
+        box.classList.remove('hidden');
+        await DialogManager.waitForInput(null);
+
+        // Stage 2: Show New Totals
+        renderStats(false);
+        await DialogManager.waitForInput(null);
+
+        box.classList.add('hidden');
     }
 };

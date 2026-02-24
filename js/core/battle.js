@@ -3,6 +3,7 @@ const Battle = {
     p: null, e: null, uiLocked: true,
     participants: new Set(),
     userInputPromise: null,
+    knownPlayerMoves: new Set(),
 
     // --- UI & MENU SHIMS (Delegately to UI/BattleMenus modules) ---
     resetSprite(...args) { return UI.resetSprite(...args); },
@@ -217,6 +218,7 @@ const Battle = {
     setup(player, enemy, playIntro, skipPlayerAnim) {
         this.p = player; this.e = enemy;
         this.participants.clear(); this.participants.add(Game.activeSlot);
+        this.knownPlayerMoves.clear();
 
         // Only reset delayed moves if we are NOT resuming (playIntro = true usually implies new battle)
         if (playIntro) this.delayedMoves = [];
@@ -230,12 +232,12 @@ const Battle = {
         UI.resetSprite(eSprite);
 
         // RESUME FIX: If not playing intro, keep opacity 1
-        if (!playIntro) eSprite.style.opacity = 1;
-        else eSprite.style.opacity = 0;
+        if (!playIntro) eSprite.style.opacity = '1';
+        else eSprite.style.opacity = '0';
 
         pSprite.src = player.backSprite;
 
-        if (!playIntro || skipPlayerAnim) pSprite.style.opacity = 1; else pSprite.style.opacity = 0;
+        if (!playIntro || skipPlayerAnim) pSprite.style.opacity = '1'; else pSprite.style.opacity = '0';
 
         UI.forceReflow(pSprite);
         UI.forceReflow(eSprite);
@@ -279,10 +281,10 @@ const Battle = {
             await sleep(500); // Hardcoded small buffer for browser render
 
             // 1. Appear as Silhouette
-            eSprite.style.opacity = 1;
+            eSprite.style.opacity = '1';
 
             const introText = enemy.isBoss ? `The ${enemy.name}\nappeared!` :
-                enemy.isLucky ? `LUCKY ${enemy.name}\nappeared!` :
+                enemy.isLucky ? `Oh! A ${enemy.name}\nappeared!` :
                     `Wild ${enemy.name}\nappeared!`;
             const textAnim = UI.typeText(introText);
 
@@ -365,11 +367,12 @@ const Battle = {
         if (ball.parentNode) ball.parentNode.removeChild(ball);
 
         AudioEngine.playSfx('ball');
+        if (typeof AnimFramework !== 'undefined') AnimFramework.play('pokeball-flash', {});
         const sprite = document.getElementById('player-sprite');
 
         sprite.style.transition = 'none';
         UI.resetSprite(sprite);
-        sprite.style.opacity = 0;
+        sprite.style.opacity = '0';
         UI.forceReflow(sprite);
 
         sprite.style.transition = 'opacity 0.2s, transform 0.4s, filter 0.4s';
@@ -384,14 +387,14 @@ const Battle = {
         await wait(1000);
 
         sprite.classList.remove('anim-enter');
-        sprite.style.opacity = 1;
+        sprite.style.opacity = '1'; // Permanently set to visible
     },
 
     endTurnItem() {
         this.uiLocked = true;
         document.getElementById('action-menu').classList.add('hidden');
 
-        const eMove = BattleAI.chooseMove(this.e, this.p);
+        const eMove = BattleAI.chooseMove(this.e, this.p, this.knownPlayerMoves);
 
         const eAction = {
             type: 'ATTACK', user: this.e, target: this.p, move: eMove,
@@ -465,7 +468,7 @@ const Battle = {
             document.getElementById('action-menu').classList.add('hidden');
 
             const itemAction = { type: 'ITEM', user: this.p, item: itemKey, priority: 6, isPlayer: true };
-            const eMove = BattleAI.chooseMove(this.e, this.p);
+            const eMove = BattleAI.chooseMove(this.e, this.p, this.knownPlayerMoves);
             const eAction = {
                 type: 'ATTACK', user: this.e, target: this.p, move: eMove,
                 speed: this.e.stats.spe, priority: 0, isPlayer: false

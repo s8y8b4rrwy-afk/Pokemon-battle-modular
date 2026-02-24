@@ -1,0 +1,110 @@
+/* ==================================
+   LEVEL UP STAT GAIN BOX
+   ================================== */
+
+#level-up-box,
+#rogue-boost-box {
+    position: absolute;
+    bottom: 92px;
+    /* Sits 4px above the 88px tall dialog box */
+    right: 5px;
+    width: 120px;
+    background: white;
+    border: 3px solid #333;
+    padding: 8px;
+    z-index: 1000;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    image-rendering: pixelated;
+}
+
+#level-up-box.hidden,
+#rogue-boost-box.hidden {
+    display: none;
+}
+
+.rb-header {
+    font-size: 8px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 3px;
+    margin-bottom: 2px;
+    color: #444;
+}
+
+.lu-header {
+    display: flex;
+    justify-content: flex-start;
+    padding-bottom: 2px;
+    margin-bottom: 0;
+}
+
+.lu-mini-sprite {
+    width: 38px;
+    /* Slightly wider to accommodate aspect ratio without clipping */
+    height: 32px;
+    image-rendering: pixelated;
+    display: block;
+    object-fit: contain;
+}
+
+.lu-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.lu-stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.lu-stat-label {
+    color: #444;
+    flex: 0 0 42px;
+    /* Fixed width for labels (ATK, S.ATK, etc.) */
+}
+
+.lu-stat-values {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+    gap: 0;
+}
+
+.lu-stat-value {
+    flex: 0 0 28px;
+    /* Fixed width for "x10" part */
+    text-align: right;
+    margin-right: 4px;
+}
+
+.lu-stat-gain {
+    flex: 0 0 35px;
+    /* Fixed width for "+50%" or "+1" part */
+    text-align: right;
+    color: #3b82c4;
+    /* Blue color for the level up gain value */
+}
+
+.lu-stat-gain.rogue-gain {
+    color: #2e7d32;
+    /* Green color for the rogue boost gain */
+}
+
+.lu-stat-gain.rogue-loss {
+    color: #c62828;
+    /* Red color for the rogue boost decay */
+}
+
+/* Secondary variant for when stats are finalized */
+.lu-stat-gain.hidden {
+    display: none;
+}

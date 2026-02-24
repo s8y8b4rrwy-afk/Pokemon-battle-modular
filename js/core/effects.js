@@ -89,8 +89,13 @@ const EffectsManager = {
             if (Math.random() < 0.33) {
                 await UI.typeText("It hurt itself in\nits confusion!");
 
-                // Standard Gen 2 Confusion Damage Formula (Power 40)
-                const dmg = Math.floor((((2 * mon.level / 5 + 2) * 40 * mon.stats.atk / mon.stats.def) / 50) + 2);
+                // Confusion Damage Formula (Power 40) - Respects Stages
+                let atk = mon.stats.atk;
+                let def = mon.stats.def;
+                if (mon.stages.atk) atk = Math.floor(atk * STAGE_MULT[mon.stages.atk]);
+                if (mon.stages.def) def = Math.floor(def * STAGE_MULT[mon.stages.def]);
+
+                const dmg = Math.floor((((2 * mon.level / 5 + 2) * 40 * atk / def) / 50) + 2);
 
                 // USE HELPER: This handles sound, shake, HP update, and HUD flash
                 await battle.applyDamage(mon, dmg, 'normal');
@@ -109,13 +114,23 @@ const EffectsManager = {
         // Substitute blocks NEGATIVE stat changes from sources other than self.
         const hasSub = target.volatiles.substituteHP > 0;
 
+        // Group changes by direction/magnitude to consolidate messages
+        const validChanges = {};
+
         for (let c of changes) {
             if (hasSub && c.change < 0) {
                 await UI.typeText(`${target.name} is protected\nby the SUBSTITUTE!`);
                 continue;
             }
 
-            const stat = c.stat.name.replace('special-attack', 'spa').replace('special-defense', 'spd').replace('attack', 'atk').replace('defense', 'def').replace('speed', 'spe');
+            const stat = c.stat.name
+                .replace('special-attack', 'spa')
+                .replace('special-defense', 'spd')
+                .replace('attack', 'atk')
+                .replace('defense', 'def')
+                .replace('speed', 'spe')
+                .replace('accuracy', 'acc')
+                .replace('evasion', 'eva');
             const change = c.change;
 
             if (target.stages[stat] === 6 && change > 0) {
@@ -134,6 +149,13 @@ const EffectsManager = {
                 BattleLogger.logStatChange(target, stat, change, isPlayer);
             }
 
+            if (!validChanges[change]) validChanges[change] = [];
+            validChanges[change].push(stat.toUpperCase());
+        }
+
+        // Apply visual effects and group messages
+        for (const [changeStr, stats] of Object.entries(validChanges)) {
+            const change = parseInt(changeStr);
             const dir = change > 0 ? "rose!" : "fell!";
             const deg = Math.abs(change) > 1 ? "sharply " : "";
             const animClass = change > 0 ? 'anim-stat-up' : 'anim-stat-down';
@@ -145,7 +167,16 @@ const EffectsManager = {
             await wait(800);
             sprite.classList.remove(animClass);
 
-            await UI.typeText(`${target.name}'s ${stat.toUpperCase()}\n${deg}${dir}`);
+            // Group text
+            if (stats.length === 1) {
+                await UI.typeText(`${target.name}'s ${stats[0]}\n${deg}${dir}`);
+            } else if (stats.length === 2) {
+                await UI.typeText(`${target.name}'s ${stats[0]} and\n${stats[1]} ${deg}${dir}`);
+            } else if (stats.length === 3) {
+                await UI.typeText(`${target.name}'s ${stats[0]}, ${stats[1]}\nand ${stats[2]} ${deg}${dir}`);
+            } else {
+                await UI.typeText(`${target.name}'s stats\n${deg}${dir}`);
+            }
         }
     },
 

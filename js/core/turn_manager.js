@@ -21,13 +21,13 @@ const TurnManager = {
         try {
             const pAction = {
                 type: 'ATTACK', user: battle.p, target: battle.e, move: playerMove,
-                speed: battle.p.stats.spe, priority: playerMove.priority || 0, isPlayer: true
+                speed: Mechanics.getEffectiveSpeed(battle.p), priority: playerMove.priority || 0, isPlayer: true
             };
 
             const enemyMove = BattleAI.chooseMove(battle.e, battle.p);
             const eAction = {
                 type: 'ATTACK', user: battle.e, target: battle.p, move: enemyMove,
-                speed: battle.e.stats.spe, priority: enemyMove.priority || 0, isPlayer: false
+                speed: Mechanics.getEffectiveSpeed(battle.e), priority: enemyMove.priority || 0, isPlayer: false
             };
 
             const queue = [pAction, eAction].sort((a, b) => {
@@ -67,7 +67,7 @@ const TurnManager = {
             const eMove = BattleAI.chooseMove(battle.e, battle.p);
             const eAction = {
                 type: 'ATTACK', user: battle.e, target: battle.p, move: eMove,
-                speed: battle.e.stats.spe, priority: 0, isPlayer: false
+                speed: Mechanics.getEffectiveSpeed(battle.e), priority: 0, isPlayer: false
             };
 
             const result = await this.runQueue(battle, [swapAction, eAction]);
@@ -175,7 +175,7 @@ const TurnManager = {
                 attacker.volatiles.charging = false;
                 attacker.volatiles.queuedMove = null;
                 attacker.volatiles.invulnerable = null;
-                sprite.style.opacity = 1;
+                sprite.style.opacity = '1';
                 if (logic.invuln) await UI.typeText(`${attacker.name} crashed\ndown!`);
             }
             return;
@@ -274,7 +274,7 @@ const TurnManager = {
                 if (logic.hide) {
                     const sfx = logic.sound || 'swoosh';
                     AudioEngine.playSfx(sfx);
-                    sprite.style.opacity = 0;
+                    sprite.style.opacity = '0';
                     await wait(250);
                 }
 
@@ -306,12 +306,20 @@ const TurnManager = {
                 await BattleAnims.triggerExplosionAnim();
             }
             await restoreSub();
-            return;
         }
-
+        // --- ACCURARY CHECK ---
         let acc = move.accuracy;
         if (attacker.stages.acc) acc *= STAGE_MULT[attacker.stages.acc];
         if (defender.stages.eva) acc /= STAGE_MULT[defender.stages.eva];
+
+        // Weather accuracy adjustments
+        if (battle.weather.type === 'rain') {
+            if (move.name === 'THUNDER' || move.name === 'HURRICANE') acc = 1000; // Always hits
+        } else if (battle.weather.type === 'sun') {
+            if (move.name === 'THUNDER' || move.name === 'HURRICANE') acc = 50;
+        } else if (battle.weather.type === 'hail') {
+            if (move.name === 'BLIZZARD') acc = 1000; // Always hits
+        }
 
         if (move.target !== 'user' && acc !== null && move.accuracy !== 0 && Math.random() * 100 > acc) {
             AudioEngine.playSfx('miss');
@@ -356,7 +364,7 @@ const TurnManager = {
     async processSwitch(battle, newMon, isFaintSwap = false) {
         document.getElementById('action-menu').classList.add('hidden');
         const eSprite = document.getElementById('enemy-sprite');
-        if (battle.e.currentHp > 0) eSprite.style.opacity = 1;
+        if (battle.e.currentHp > 0) eSprite.style.opacity = '1';
 
         await wait(ANIM.SWITCH_STABILIZE);
         const sprite = document.getElementById('player-sprite');
@@ -378,19 +386,20 @@ const TurnManager = {
             document.getElementById('player-hud').classList.remove('hud-active');
 
             AudioEngine.playSfx('ball');
+            if (typeof AnimFramework !== 'undefined') AnimFramework.play('pokeball-flash', {});
             sprite.classList.add('anim-return');
             UI.spawnSmoke(60, 150);
             await wait(ANIM.SWITCH_RETURN_ANIM);
         } else {
             sprite.style.transition = 'none';
-            sprite.style.opacity = 0;
+            sprite.style.opacity = '0';
             sprite.classList.remove('anim-faint');
             UI.forceReflow(sprite);
         }
 
         // 1. Prepare Hidden State for New Mon
         sprite.style.transition = 'none';
-        sprite.style.opacity = 0;
+        sprite.style.opacity = '0';
         sprite.classList.remove('transformed-sprite');
         sprite.classList.remove('sub-back');
         sprite.src = newMon.backSprite;
@@ -433,9 +442,10 @@ const TurnManager = {
         if (ball.parentNode) ball.parentNode.removeChild(ball);
 
         AudioEngine.playSfx('ball');
+        if (typeof AnimFramework !== 'undefined') AnimFramework.play('pokeball-flash', {});
 
         UI.resetSprite(sprite);
-        sprite.style.opacity = 0;
+        sprite.style.opacity = '0';
         UI.forceReflow(sprite);
 
         sprite.classList.add('anim-enter');
@@ -446,7 +456,7 @@ const TurnManager = {
 
         // Animation duration is 0.6s. Wait 300ms so it's partially grown/visible before cry.
         await wait(300);
-        sprite.style.opacity = 1; // Permanently set to visible
+        sprite.style.opacity = '1'; // Permanently set to visible
 
         if (newMon.cry) AudioEngine.playCry(newMon.cry);
 
@@ -457,7 +467,15 @@ const TurnManager = {
         // 4. HP Bar Slide In
         AudioEngine.playSfx('swoosh');
         document.getElementById('player-hud').classList.add('hud-active');
-        await wait(400);
+        await wait(300); // Wait for HUD to start sliding
+
+        // 5. Shiny Animation (Modular Fix)
+        if (newMon.isShiny) {
+            UI.playSparkle('player');
+            await wait(1200);
+        } else {
+            await wait(100); // Standard buffer
+        }
 
         await EnvironmentManager.processEntryHazards(battle, newMon, 'player');
 

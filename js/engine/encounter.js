@@ -209,6 +209,15 @@ const EncounterManager = {
             }
         }
 
+        // Calculate AI Level (IQ). Scales indefinitely for Bosses.
+        let enemyIQ;
+        if (specs.isBoss) {
+            enemyIQ = 60 + (wins * 4); // Bosses start smart and get smarter endlessly
+        } else {
+            enemyIQ = Math.min(80, 20 + (wins * 2)); // Regular mob IQ caps at 80
+        }
+        enemy.aiLevel = enemyIQ;
+
         // Apply Debug Rage/Volatiles post-creation
         if (typeof DEBUG !== 'undefined' && DEBUG.ENABLED) {
             if (DEBUG.ENEMY.RAGE !== null) enemy.rageLevel = DEBUG.ENEMY.RAGE;

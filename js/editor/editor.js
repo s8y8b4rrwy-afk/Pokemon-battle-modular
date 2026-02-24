@@ -108,14 +108,17 @@ const Editor = {
             travelTime: { type: 'number', default: 250 }
         },
         overlay: {
-            target: { type: 'select', options: ['attacker', 'defender'], default: 'defender' },
+            target: { type: 'select', options: ['attacker', 'defender', 'scene'], default: 'defender' },
             shape: { type: 'select', options: [], dynamic: 'shapes' },
-            animation: { type: 'select', options: ['strike', 'slam', 'grow', 'fade'], default: 'grow' },
+            animation: { type: 'select', options: ['strike', 'slam', 'grow', 'fade', 'crunch', 'slash'], default: 'grow' },
             color: { type: 'color', default: '#ffd700' },
             duration: { type: 'number', default: 400 },
             outline: { type: 'color', default: null },
             width: { type: 'number', default: 24 },
-            height: { type: 'number', default: 24 }
+            height: { type: 'number', default: 24 },
+            count: { type: 'number', default: 1 },
+            spread: { type: 'number', default: 0 },
+            stagger: { type: 'number', default: 0 }
         },
         formation: {
             target: { type: 'select', options: ['attacker', 'defender'], default: 'defender' },

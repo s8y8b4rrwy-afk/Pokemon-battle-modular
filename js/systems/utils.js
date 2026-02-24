@@ -38,6 +38,29 @@ const StatCalc = {
     }
 };
 
+const ExpCalc = {
+    'erratic': (n) => {
+        if (n <= 50) return Math.floor(Math.pow(n, 3) * (100 - n) / 50);
+        if (n <= 68) return Math.floor(Math.pow(n, 3) * (150 - n) / 100);
+        if (n <= 98) return Math.floor(Math.pow(n, 3) * Math.floor((1911 - 10 * n) / 3) / 500);
+        return Math.floor(Math.pow(n, 3) * (160 - n) / 100);
+    },
+    'fast': (n) => Math.floor(4 * Math.pow(n, 3) / 5),
+    'medium-fast': (n) => Math.floor(Math.pow(n, 3)),
+    'medium-slow': (n) => Math.floor(1.2 * Math.pow(n, 3) - 15 * Math.pow(n, 2) + 100 * n - 140),
+    'slow': (n) => Math.floor(5 * Math.pow(n, 3) / 4),
+    'fluctuating': (n) => {
+        if (n <= 15) return Math.floor(Math.pow(n, 3) * (Math.floor((n + 1) / 3) + 24) / 50);
+        if (n <= 36) return Math.floor(Math.pow(n, 3) * (n + 14) / 50);
+        return Math.floor(Math.pow(n, 3) * (Math.floor(n / 2) + 32) / 50);
+    },
+
+    getNextLevelExp: (rate, level) => {
+        const formula = ExpCalc[rate] || ExpCalc['medium-fast'];
+        return Math.max(1, formula(level + 1) - formula(level));
+    }
+};
+
 const RNG = {
     // Returns true if roll is successful (chance 0.0 to 1.0)
     roll: (chance) => Math.random() < chance,

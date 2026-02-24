@@ -127,7 +127,7 @@ AnimFramework.register('crunch', [
     { type: 'sfx', sound: 'dark' },
     {
         type: 'parallel', steps: [
-            { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', outline: '#000000', width: 40, height: 40, duration: 300, animation: 'slam' },
+            { type: 'overlay', target: 'defender', color: '#000000', outline: '#ffffff', width: 60, height: 60, duration: 300, animation: 'crunch', count: 2, spread: 0, stagger: 0 },
             { type: 'sfx', sound: 'damage' },
             { type: 'spriteShake', target: 'defender', duration: 300 }
         ]
@@ -226,9 +226,9 @@ AnimFramework.register('bite', [
     { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
     { type: 'sfx', sound: 'normal' },
     {
-        type: 'overlay', target: 'defender', shape: 'claw', // Using claw elements to simulate teeth
-        color: '#000', outline: '#fff', width: 35, height: 35,
-        duration: 250, animation: 'slam'
+        type: 'overlay', target: 'defender',
+        color: '#000', outline: '#fff', width: 45, height: 45,
+        duration: 250, animation: 'crunch', count: 2, stagger: 0
     },
     { type: 'sfx', sound: 'damage' },
     { type: 'spriteShake', target: 'defender', duration: 250 }
@@ -260,7 +260,7 @@ AnimFramework.register('dragon-claw', [
     {
         type: 'overlay', target: 'defender', shape: 'claw',
         color: '#32cd32', outline: '#006400', width: 50, height: 50,
-        duration: 300, animation: 'strike'
+        duration: 300, animation: 'slash', count: 3, spread: 20, stagger: 150
     },
     { type: 'spriteShake', target: 'defender', duration: 300 }
 ]);
@@ -279,7 +279,7 @@ AnimFramework.register('outrage', [
     {
         type: 'overlay', target: 'defender', shape: 'claw',
         color: '#ff4500', outline: '#000', width: 60, height: 60,
-        duration: 400, animation: 'slam'
+        duration: 400, animation: 'slam', count: 4, spread: 30, stagger: 100
     },
     { type: 'spriteShake', target: 'defender', duration: 500 }
 ]);
@@ -291,7 +291,7 @@ AnimFramework.register('shadow-claw', [
     {
         type: 'overlay', target: 'defender', shape: 'claw',
         color: '#483d8b', outline: '#000', width: 40, height: 40,
-        duration: 300, animation: 'strike'
+        duration: 300, animation: 'slash', count: 3, spread: 15, stagger: 120
     },
     { type: 'spriteShake', target: 'defender', duration: 300 }
 ]);
@@ -337,7 +337,7 @@ AnimFramework.register('phantom-force', [
             {
                 type: 'overlay', target: 'defender', shape: 'claw',
                 color: '#4b0082', outline: '#000', width: 50, height: 50,
-                duration: 300, animation: 'strike'
+                duration: 300, animation: 'strike', count: 2, spread: 20, stagger: 150
             }
         ]
     },
@@ -589,7 +589,7 @@ AnimFramework.register('psycho-cut', [
     {
         type: 'overlay', target: 'defender', shape: 'claw', // Using claw akin to cut
         color: '#ff00ff', outline: '#800080', width: 50, height: 50,
-        duration: 300, animation: 'strike'
+        duration: 300, animation: 'slash'
     },
     { type: 'spriteShake', target: 'defender', duration: 300 }
 ]);

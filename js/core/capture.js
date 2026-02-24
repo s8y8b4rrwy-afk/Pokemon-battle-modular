@@ -70,6 +70,7 @@ const CaptureManager = {
 
         UI.spawnSmoke(230, 70);
         AudioEngine.playSfx('catch_success');
+        if (typeof AnimFramework !== 'undefined') AnimFramework.play('pokeball-flash', {});
         ball.style.animation = "captureShake 1.0s ease-in-out infinite";
 
         const catchRate = ballData.rate * GAME_BALANCE.CATCH_RATE_MODIFIER;
@@ -136,11 +137,11 @@ const CaptureManager = {
                 });
                 Battle.userInputPromise = null;
 
-                Game.handleWin(true);
+                await Game.handleWin(true);
             }
             else {
                 await UI.typeText(`${enemy.name} was added\nto the party!`);
-                Game.handleWin(true);
+                await Game.handleWin(true);
             }
             return 'STOP_BATTLE';
         } else {
@@ -150,6 +151,7 @@ const CaptureManager = {
 
             UI.spawnSmoke(230, 70);
             AudioEngine.playSfx('ball');
+            if (typeof AnimFramework !== 'undefined') AnimFramework.play('pokeball-flash', {});
 
             if (enemy.cry) AudioEngine.playCry(enemy.cry);
 

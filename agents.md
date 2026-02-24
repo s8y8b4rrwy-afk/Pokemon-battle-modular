@@ -37,6 +37,7 @@ pokemon-battle-modular/
     │   ├── capture.js    # Pokéball catch logic & animations
     │   ├── environment.js # Weather & field effects
     │   ├── faint_manager.js # Fainting, replacement, & simultaneous faint logic
+    │   ├── loot_manager.js # Per-pocket item drop system & logic
     │   └── rage_manager.js  # Rage mechanic processing
     ├── data/             # Static Data (The Database)
     │   ├── constants.js  # Global Config (ANIM, TYPE_CHART, STATUS_DATA)
@@ -45,8 +46,8 @@ pokemon-battle-modular/
     │   ├── moves.js      # Move Definitions (MOVE_DEX)
     │   └── settings.js   # User Preferences (Keybinds, etc)
     ├── engine/           # Procedural Generators
-    │   ├── ai.js         # Enemy AI Logic
-    │   └── encounter.js  # Wild Pokemon Generator (Validation & Scaling)
+    │   ├── ai.js         # Smart Heuristic AI Logic (Type awareness, weather, memory)
+    │   └── encounter.js  # Wild Pokemon Generator (Scaling IQ & Difficulty)
     ├── systems/          # Low-Level Utilities (The Plumbing)
     │   ├── api.js        # PokeAPI Interface (Smart Selection & Caching)
     │   ├── audio.js      # Web Audio API Wrapper
@@ -147,6 +148,10 @@ These skills provide detailed, step-by-step guidance for common workflows. **Alw
 ### Adding a New Item
 1.  **Define it**: Add entry to `ITEMS` in `js/data/items.js`.
 2.  **Effect**: Add handling logic in `js/core/game.js` (for field use) or `js/core/battle.js` (for battle use).
+
+### Modifying Loot & Pockets
+1.  **Rates**: Update `LOOT_SYSTEM.POCKET_RATES` in `js/data/items.js`.
+2.  **Pockets**: To add a new pocket (e.g. 'tm'), add it to `POCKET_RATES`. Ensure items in `ITEMS` are assigned to this pocket.
 
 ### Creating a New Screen
 1.  **Create File**: `js/screens/newScreen.js`.

@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="css/move_learn.css">
     <link rel="stylesheet" href="css/settings.css">
     <link rel="stylesheet" href="css/dialog.css">
+    <link rel="stylesheet" href="css/level_up.css">
 </head>
 
 <body>
@@ -325,6 +326,22 @@
                 </div>
                 <div id="move-menu" class="hidden"></div>
             </div>
+            <div id="level-up-box" class="hidden">
+                <div class="lu-header">
+                    <img id="lu-poke-sprite" src="" class="lu-mini-sprite" alt="poke">
+                </div>
+                <div id="lu-stats-list" class="lu-stats-list">
+                    <!-- Stats injected via JS -->
+                </div>
+            </div>
+            <div id="rogue-boost-box" class="hidden">
+                <div class="rb-header">
+                    ROGUE BOOSTS
+                </div>
+                <div id="rb-stats-list" class="lu-stats-list">
+                    <!-- Stats injected via JS -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -359,6 +376,7 @@
     <script src="js/core/moves_engine.js"></script>
     <script src="js/core/faint_manager.js"></script>
     <script src="js/core/rage_manager.js"></script>
+    <script src="js/core/loot_manager.js"></script>
     <script src="js/core/turn_manager.js"></script>
     <script src="js/ui/menus.js"></script>
     <script src="js/anim/anim_framework.js"></script>

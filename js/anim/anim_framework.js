@@ -270,11 +270,12 @@ const AnimFramework = {
         return document.querySelector(ref);
     },
 
-    // Resolve a position that can be 'attacker', 'defender', or {x, y}
+    // Resolve a position that can be 'attacker', 'defender', 'scene' or {x, y}
     _resolvePosition(pos, ctx) {
         if (!pos) return { x: 0, y: 0 };
         if (pos === 'attacker') return ctx.attackerPos;
         if (pos === 'defender') return ctx.defenderPos;
+        if (pos === 'scene') return { x: 145, y: 110 }; // Center of the battlefield
         return { x: pos.x || 0, y: pos.y || 0 };
     },
 
@@ -451,7 +452,7 @@ const AnimFramework = {
             background: color,
             opacity: String(opacity),
             pointerEvents: 'none',
-            zIndex: '500',
+            zIndex: step.zIndex || '500',
             transition: `opacity ${duration * 0.6}ms ease-out`
         });
 
@@ -608,28 +609,37 @@ const AnimFramework = {
     // === SVG SHAPE LIBRARY ===
     // 8-bit pixel-art shapes. Each has a viewBox and SVG path data.
     _shapes: {
-        lightning: { vb: '0 0 16 32', d: 'M10 0 L6 12 L10 12 L4 32 L10 20 L6 20 Z' },
-        fire: { vb: '0 0 16 16', d: 'M8 0 L4 6 L2 10 L4 14 L8 16 L12 14 L14 10 L12 6 Z' },
-        water: { vb: '0 0 16 16', d: 'M8 0 L4 8 L4 12 L8 16 L12 12 L12 8 Z' },
-        leaf: { vb: '0 0 16 16', d: 'M8 0 L2 6 L2 12 L8 16 L14 12 L14 6 Z' },
-        star: { vb: '0 0 16 16', d: 'M8 0 L10 6 L16 8 L10 10 L8 16 L6 10 L0 8 L6 6 Z' },
-        claw: { vb: '0 0 16 16', d: 'M2 0 L4 0 L6 16 L4 16Z M7 0 L9 0 L9 16 L7 16Z M12 0 L14 0 L12 16 L10 16Z' },
-        fist: { vb: '0 0 16 16', d: 'M4 2 L12 2 L12 10 L14 10 L14 14 L2 14 L2 10 L4 10 Z' },
-        skull: { vb: '0 0 16 16', d: 'M4 0 L12 0 L16 4 L16 10 L12 14 L4 14 L0 10 L0 4 Z' },
-        spiral: { vb: '0 0 16 16', d: 'M8 6 Q12 6 12 10 Q12 14 8 14 Q4 14 4 10 Q4 2 12 2' },
-        bird: { vb: '0 0 16 10', d: 'M0 5 Q4 0 8 5 Q12 0 16 5 L16 7 Q12 2 8 7 Q4 2 0 7 Z' },
-        duck: { vb: '0 0 16 16', d: 'M4 8 Q4 4 8 4 Q12 4 12 8 L12 12 Q12 14 8 14 Q4 14 4 12 Z M8 4 Q8 0 12 0 L14 2' },
-        rock: { vb: '0 0 16 16', d: 'M4 2 L12 2 L16 6 L16 12 L12 16 L4 16 L0 12 L0 6 Z' },
-        sparkle: { vb: '0 0 16 16', d: 'M8 0 L9 7 L16 8 L9 9 L8 16 L7 9 L0 8 L7 7 Z' },
-        music: { vb: '0 0 16 16', d: 'M4 12 A2 2 0 1 1 8 12 V4 L12 4 L12 12 A2 2 0 1 1 16 12' },
-        heart: { vb: '0 0 16 16', d: 'M8 4 Q12 -2 16 4 Q16 10 8 16 Q0 10 0 4 Q4 -2 8 4Z' },
-        eye: { vb: '0 0 16 16', d: 'M0 8 Q8 0 16 8 Q8 16 0 8Z M8 4 A4 4 0 1 1 8 12 A4 4 0 1 1 8 4' },
-        bubble: { vb: '0 0 16 16', d: 'M8 0 A8 8 0 1 1 8 16 A8 8 0 1 1 8 0 M10 4 A2 2 0 1 1 12 6' },
-        zzz: { vb: '0 0 16 12', d: 'M0 0 L10 0 L2 10 L12 10 L12 12 L0 12 L0 10 L8 0' },
-        drop: { vb: '0 0 8 12', d: 'M4 0 Q8 6 8 8 Q8 12 4 12 Q0 12 0 8 Q0 6 4 0' }, // Sweat drop
-        shield: { vb: '0 0 16 16', d: 'M8 0 L16 4 L16 10 Q16 16 8 16 Q0 16 0 10 L0 4 Z' },
-        wall: { vb: '0 0 16 16', d: 'M0 2 L16 2 L16 14 L0 14 Z M2 4 L6 4 L6 8 L2 8 Z M8 4 L14 4 L14 8 L8 8 Z M2 10 L8 10 L8 12 L2 12 Z' },
-        anger: { vb: '0 0 16 16', d: 'M2 2 L6 6 L2 10 M14 2 L10 6 L14 10 M6 6 L10 6 M8 6 L8 14' } // Rough vein mark
+        lightning: { vb: '0 0 16 32', d: 'M9.5 1 L4 18 L10.5 18 L6.5 31 L14 13 L8 13 Z' }, // Sharper, offset zag
+        fire: { vb: '0 0 16 16', d: 'M8 1 C5 1 2 6 2 10.5 C2 13.5 4.5 16 8 16 C11.5 16 14 13.5 14 10.5 C14 6 11 1 8 1 Z M8 5 C9.5 7 11 9 11 11.5 C11 13 9.7 14 8 14 C6.3 14 5 13 5 11.5 C5 9 6.5 7 8 5 Z' }, // Smooth tear drop with inner flame
+        water: { vb: '0 0 16 16', d: 'M8 1 C4 6 2 9 2 11.5 C2 14.5 4.7 16 8 16 C11.3 16 14 14.5 14 11.5 C14 9 12 6 8 1 Z' }, // Classic smooth teardrop
+        leaf: { vb: '0 0 16 16', d: 'M14 2 C14 2 8 0 3 5 C-1.5 9.5 0 16 0 16 C0 16 6.5 17.5 11 13 C16 8 14 2 14 2 Z M1.5 14.5 L12 4' }, // Organic curve with a stem line
+        star: { vb: '0 0 16 16', d: 'M8 0.5 L10.3 5.5 L15.5 6.2 L11.7 10 L12.7 15.5 L8 12.8 L3.3 15.5 L4.3 10 L0.5 6.2 L5.7 5.5 Z' }, // Perfect 5-point star
+        claw: { vb: '0 0 16 16', d: 'M-1 4 C2 6 6 10 9 13 L6 16 C3 12 -1 7 -4 4 Z M3 -1 C6 2 10 6 13 9 L10 12 C7 8 2 4 -1 1 Z M8 -4 C11 -1 15 3 18 6 L15 9 C11 5 7 1 4 -2 Z' }, // 45-degree angled, sharp slashes
+        fist: { vb: '0 0 16 16', d: 'M4 3 C4 2 5 1 6 1 L11 1 C12 1 13 2 13 3 L13 6 C14 6 15 7 15 8 L15 12 C15 14 13 16 10 16 L5 16 C3 16 1 14 1 12 L1 8 C1 6 2 6 3 6 L3 3 Z M4 6 L12 6 M4 9 L12 9 M4 12 L12 12' }, // Rounded knuckle fist
+        skull: { vb: '0 0 16 16', d: 'M8 0 C3 0 1 3 1 7 C1 10 3 11 4 11 L4 14 C4 15 5 16 6 16 L10 16 C11 16 12 15 12 14 L12 11 C13 11 15 10 15 7 C15 3 13 0 8 0 Z M4.5 5.5 A2 2 0 1 0 4.5 9.5 A2 2 0 1 0 4.5 5.5 Z M11.5 5.5 A2 2 0 1 0 11.5 9.5 A2 2 0 1 0 11.5 5.5 Z M8 10.5 L8 12' }, // Smooth cranium with eye holes and nose slit
+        spiral: { vb: '0 0 16 16', d: 'M8 8 m-7 0 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 m1 0 a6 6 0 1 1 12 0 a6 6 0 1 1 -12 0 m1 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 m1 0 a4 4 0 1 1 8 0 a4 4 0 1 1 -8 0 m1 0 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 m1 0 a2 2 0 1 1 4 0 a2 2 0 1 1 -4 0 m1 0 a1 1 0 1 0 2 0 a1 1 0 1 0 -2 0' }, // Dense, perfect concentric rings for hypnosis
+        bird: { vb: '0 0 16 10', d: 'M8 8 C5 6 1 0 0 1 C3 4 5 7 8 10 C11 7 13 4 16 1 C15 0 11 6 8 8 Z' }, // Smooth sweeping gull wings
+        duck: { vb: '0 0 16 16', d: 'M8 6 C3 6 3 14 8 14 C13 14 13 6 8 6 Z M8 6 C8 1 13 1 13 6 Z M13 3 L16 4' }, // Rounded duck shape
+        rock: { vb: '0 0 16 16', d: 'M5 1 L11 1 L15 5 L14 11 L10 15 L3 14 L1 9 Z M5 1 C7 5 12 4 15 5 M1 9 C4 11 8 10 14 11 M3 14 C5 10 9 12 10 15' }, // Jagged but polygon-smooth rock with inner facet lines
+        sparkle: { vb: '0 0 16 16', d: 'M8 0 C8 5 11 8 16 8 C11 8 8 11 8 16 C8 11 5 8 0 8 C5 8 8 5 8 0 Z' }, // Beautiful curved 4-point lens flare sparkle
+        music: { vb: '0 0 16 16', d: 'M4 11 A3 3 0 1 1 5 10 L5 3 L13 1 L13 9 A3 3 0 1 1 14 8 L14 0 L4 2 Z' }, // Proper double eighth note with smooth tails
+        heart: { vb: '0 0 16 16', d: 'M8 4.5 C8 4.5 6 -1 2 2 C-2 5 2 10 8 15 C14 10 18 5 14 2 C10 -1 8 4.5 8 4.5 Z' }, // Perfect bezier heart
+        eye: { vb: '0 0 16 16', d: 'M8 2 C3 2 0 8 0 8 C0 8 3 14 8 14 C13 14 16 8 16 8 C16 8 13 2 8 2 Z M8 5 A3 3 0 1 0 8 11 A3 3 0 1 0 8 5 Z M8 6.5 A1.5 1.5 0 1 1 8 9.5 A1.5 1.5 0 1 1 8 6.5 Z' }, // Smooth almond eye with iris and pupil
+        bubble: { vb: '0 0 16 16', d: 'M8 0 A8 8 0 1 1 7.9 0 Z M12 4 A3 3 0 0 0 9 2' }, // Perfect circle with a curved highlight
+        zzz: { vb: '0 0 16 12', d: 'M0 1 L9 1 L2 9 L11 9' }, // Sleep Z (using stroke for rendering width)
+        drop: { vb: '0 0 8 12', d: 'M4 0 C4 0 0 5 0 8 A4 4 0 0 0 8 8 C8 5 4 0 4 0 Z' }, // Tensioned teardrop (sweat)
+        shield: { vb: '0 0 16 16', d: 'M8 0 L15 3 C15 9 12 14 8 16 C4 14 1 9 1 3 Z M8 2 L13 4 C13 8 11 12 8 14 C5 12 3 8 3 4 Z' }, // Heraldic curved shield with inner rim
+        wall: { vb: '0 0 16 16', d: 'M0 2 L16 2 L16 14 L0 14 Z M4 2 L4 14 M12 2 L12 14 M0 6 L16 6 M0 10 L16 10' }, // Brick wall grid lines
+        anger: { vb: '0 0 16 16', d: 'M2 2 L6 6 L2 10 M14 2 L10 6 L14 10 M5 1 L9 5 L13 1 M5 15 L9 11 L13 15' }, // Expanding 4-point vein pop
+        // New Shapes
+        bite: { vb: '0 0 16 12', d: 'M0 8 C0 3 4 0 8 0 C12 0 16 3 16 8 C16 13 12 16 8 16 C4 16 0 13 0 8 Z M1 8 L4 11 L6 8 L8 12 L10 8 L12 11 L15 8 L12 5 L10 8 L8 4 L6 8 L4 5 Z' }, // Deprecated combined bite
+        'jaw-top': { vb: '0 0 16 8', d: 'M0 8 C0 2 4 0 8 0 C12 0 16 2 16 8 L14 4 L12 8 L10 4 L8 8 L6 4 L4 8 L2 4 Z' }, // Upper jaw with teeth
+        'jaw-bottom': { vb: '0 0 16 8', d: 'M0 0 L2 4 L4 0 L6 4 L8 0 L10 4 L12 0 L14 4 L16 0 C16 6 12 8 8 8 C4 8 0 6 0 0 Z' }, // Lower jaw with teeth
+        kick: { vb: '0 0 16 16', d: 'M5 14 L15 14 C16 14 16 13 15 12 L11 8 L11 2 C11 1 9 1 9 2 L9 8 L5 11 L3 7 L1 8 L4 13 Z' }, // Shoe/foot profile
+        poison: { vb: '0 0 16 16', d: 'M8 1 C4 4 1 8 1 11 C1 14 4 16 8 16 C12 16 15 14 15 11 C15 8 12 4 8 1 Z M4 11 A1.5 1.5 0 1 1 7 11 A1.5 1.5 0 1 1 4 11 Z M9 12 A1 1 0 1 1 11 12 A1 1 0 1 1 9 12 Z' }, // Sludge drop with bubbles
+        snow: { vb: '0 0 16 16', d: 'M8 0 L8 16 M0 8 L16 8 M2.3 2.3 L13.7 13.7 M2.3 13.7 L13.7 2.3 M8 4 L6 2 M8 4 L10 2 M8 12 L6 14 M8 12 L10 14 M4 8 L2 6 M4 8 L2 10 M12 8 L14 6 M12 8 L14 10' }, // 6-point snowflake with branches
+        gust: { vb: '0 0 16 24', d: 'M2 22 C6 24 14 24 14 21 C14 18 6 18 4 16 C2 14 12 14 12 11 C12 8 4 8 2 6 C0 4 10 4 10 1' }, // Tall spinning tornado shape
+        spike: { vb: '0 0 16 16', d: 'M8 0 L10 6 L16 8 L10 10 L8 16 L6 10 L0 8 L6 6 Z' } // Uses a sharp 4-point caltrop star
     },
 
     // Create an SVG element from a shape definition
@@ -713,12 +723,18 @@ const AnimFramework = {
         const outline = step.outline || null;
         const count = step.count || 1;
         const spread = step.spread || 0;
+        const stagger = step.stagger || 0;
 
         for (let i = 0; i < count; i++) {
             const ox = count > 1 ? (Math.random() - 0.5) * spread * 2 : 0;
             const oy = count > 1 ? (Math.random() - 0.5) * spread * 2 : 0;
-            let el = (step.shape && this._shapes[step.shape])
-                ? this._createShapeEl(step.shape, w, h, color, outline)
+            let shape = step.shape;
+            if (anim === 'crunch') {
+                shape = (i % 2 === 0) ? 'jaw-top' : 'jaw-bottom';
+            }
+
+            let el = (shape && this._shapes[shape])
+                ? this._createShapeEl(shape, w, h, color, outline)
                 : null;
             if (!el) {
                 el = document.createElement('div');
@@ -730,10 +746,23 @@ const AnimFramework = {
                     left: (pos.x - w / 2 + ox) + 'px', top: (pos.y - h - 30 + oy) + 'px', opacity: '1',
                     transition: `top ${duration * 0.3}ms ease-in, opacity ${duration * 0.4}ms ease-out ${duration * 0.5}ms`
                 });
+            } else if (anim === 'slash') {
+                Object.assign(base, {
+                    left: (pos.x - w + ox) + 'px', top: (pos.y - h + oy) + 'px', opacity: '1',
+                    transition: `left ${duration * 0.25}ms cubic-bezier(.17,.67,.29,.99), top ${duration * 0.25}ms cubic-bezier(.17,.67,.29,.99), opacity ${duration * 0.4}ms ease-out ${duration * 0.4}ms`
+                });
             } else if (anim === 'slam') {
                 Object.assign(base, {
                     left: (pos.x - w / 2 + ox) + 'px', top: (pos.y - h * 2 + oy) + 'px', opacity: '1', transform: 'scale(0.5)',
                     transition: `top ${duration * 0.25}ms ease-in, transform ${duration * 0.25}ms ease-in, opacity ${duration * 0.4}ms ease-out ${duration * 0.5}ms`
+                });
+            } else if (anim === 'crunch') {
+                const isBottom = i % 2 === 1;
+                Object.assign(base, {
+                    left: (pos.x - w / 2 + ox) + 'px',
+                    top: (isBottom ? pos.y + h / 2 + 10 : pos.y - h * 1.5 - 10) + 'px',
+                    opacity: '1',
+                    transition: `top ${duration * 0.3}ms cubic-bezier(.17,.67,.29,.99), opacity ${duration * 0.4}ms ease-out ${duration * 0.5}ms`
                 });
             } else { // grow / fade
                 Object.assign(base, {
@@ -744,16 +773,21 @@ const AnimFramework = {
             }
             Object.assign(el.style, base);
             parent.appendChild(el);
-            requestAnimationFrame(() => {
-                if (anim === 'strike') { el.style.top = (pos.y - h / 2 + oy) + 'px'; }
-                else if (anim === 'slam') { el.style.top = (pos.y - h / 2 + oy) + 'px'; el.style.transform = 'scale(1)'; }
-                else if (anim === 'grow') { el.style.transform = 'scale(1)'; }
-                else if (anim === 'fade') { el.style.opacity = '1'; }
-                setTimeout(() => { el.style.opacity = '0'; }, duration * 0.6);
-            });
-            setTimeout(() => el.remove(), duration);
+
+            setTimeout(() => {
+                requestAnimationFrame(() => {
+                    if (anim === 'strike') { el.style.top = (pos.y - h / 2 + oy) + 'px'; }
+                    else if (anim === 'slash') { el.style.left = (pos.x - w / 2 + ox) + 'px'; el.style.top = (pos.y - h / 2 + oy) + 'px'; }
+                    else if (anim === 'slam') { el.style.top = (pos.y - h / 2 + oy) + 'px'; el.style.transform = 'scale(1)'; }
+                    else if (anim === 'crunch') { el.style.top = (i % 2 === 1 ? pos.y + oy : pos.y - h + oy) + 'px'; }
+                    else if (anim === 'grow') { el.style.transform = 'scale(1)'; }
+                    else if (anim === 'fade') { el.style.opacity = '1'; }
+                    setTimeout(() => { el.style.opacity = '0'; }, duration * 0.6);
+                });
+                setTimeout(() => el.remove(), duration);
+            }, i * stagger);
         }
-        await wait(duration);
+        await wait(duration + (count * stagger));
     },
 
     // === FORMATION (particles in a pattern) ===

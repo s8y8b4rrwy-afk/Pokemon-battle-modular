@@ -351,6 +351,18 @@ const DEBUG = {
 
 ## 📝 Recent Updates
 
+### v2.2.0 - Smart Heuristic AI & Progressive IQ (Feb 2026)
+**Battle Intelligence Overhaul:**
+- 🧠 **Modular Heuristic Engine**: Implemented a completely new AI scoring system in `ai.js`. Moves are no longer random; they are graded based on over 10 different logical heuristics (Type Matchups, Status Utility, Buff Efficiency, etc.).
+- 🧠 **Progressive IQ Scaling**: Enemy "IQ" (aiLevel) now scales with your run. Regular Pokémon cap at 80 IQ, while **Bosses scale indefinitely** (`60 + (wins * 4)`), becoming ruthlessly calculating in late-game rounds.
+- 🧠 **Move Memory**: The AI now "watches" you. It records move names the player uses and utilizes threat assessment to predict and counter your strategies (e.g., avoiding `Dig` if you've shown `Earthquake`).
+- 🧠 **Advanced Battle Tactics**:
+    - **Kill Securing**: AI accurately calculates damage and prioritizes high-priority moves or high-damage nukes to finish off low-HP players.
+    - **Smarter Sustain**: AI uses healing moves only when critically needed and avoids wasting them at high HP.
+    - **Environment Mastery**: AI adapts to Weather (Sun/Rain/Hail) and utilizes Hazards (Spikes/Stealth Rock) intelligently.
+    - **Predictive Defensive play**: AI understands that Protect/Detect cannot be spammed and handles two-turn charging/recharge moves with mathematical precision.
+- 🎲 **Controlled Randomness**: Even the smartest Bosses retain a base "fuzziness" floor, ensuring they remain beatable and human-like rather than perfectly robotic.
+
 ### v2.1.0 - Rogue Feedback & Persistence (Feb 2026)
 **Better Power Scaling Information:**
 - ✨ **Rogue Boost Box**: Integrated a new stat-box (identical to the level-up box) that triggers whenever a **Rogue Item** (Mighty Candy, Guard Candy, etc.) is found or decayed.

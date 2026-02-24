@@ -56,8 +56,11 @@ const MovesEngine = {
         }
 
         // 3. SIDE EFFECTS (The actual Status Application)
-        const sideEffectsHappened = await this.handleMoveSideEffects(battle, attacker, defender, move, isPlayer, allowSideEffects);
-        if (sideEffectsHappened) didSomething = true;
+        // Note: For standard Damaging moves, this is now handled after each hit in handleDamageSequence
+        if (move.category === 'status' || (special && special.isUnique)) {
+            const sideEffectsHappened = await this.handleMoveSideEffects(battle, attacker, defender, move, isPlayer, allowSideEffects);
+            if (sideEffectsHappened) didSomething = true;
+        }
 
         // 4. FAILURE MESSAGE
         if (!didSomething && !moveImmune && !explicitlyFailed) {
@@ -108,13 +111,19 @@ const MovesEngine = {
 
                 await this.resolveSingleHit(battle, attacker, defender, move, result.damage, isPlayer, i === 0, result);
                 hitsLanded++;
+
+                // Trigger Side Effects & Mid-Battle Drops after EACH damage calculation/hit
+                // This ensures multi-hit moves (like Double Kick) check per hit as requested.
+                await this.handleMoveSideEffects(battle, attacker, defender, move, isPlayer, true);
+                if (isPlayer && defender.currentHp > 0) {
+                    await Game.tryMidBattleDrop(defender, { isCrit: result.isCrit, eff: result.eff });
+                }
             }
         }
 
+
         if (hitsLanded > 1) { await UI.typeText(`Hit ${hitsLanded} time(s)!`); await wait(500); }
         if (storedText) await UI.typeText(storedText);
-
-        if (hitsLanded > 0 && isPlayer && defender.currentHp > 0) await Game.tryMidBattleDrop(defender);
 
         // Check Attacker Rage (Multi-hit fury)
         if (didSomething) await this.handleAttackerRage(battle, attacker, defender, move, lastHitDamage, isPlayer, lastResult);
@@ -171,6 +180,12 @@ const MovesEngine = {
 
                 const effData = { eff: result.eff, isCrit: result.isCrit };
                 await battle.applyDamage(defender, extraDmg, move.type, move.name, effData);
+
+                // Trigger Side Effects & Mid-Battle Drops for extra rage hits ("Raids")
+                await this.handleMoveSideEffects(battle, attacker, defender, move, isPlayer, true);
+                if (isPlayer && defender.currentHp > 0) {
+                    await Game.tryMidBattleDrop(defender, { isCrit: result.isCrit, eff: result.eff });
+                }
 
                 if (Math.random() < GAME_BALANCE.RAGE_RECOIL_CHANCE) {
                     await wait(500);
@@ -315,6 +330,16 @@ const MovesEngine = {
                     }
                 }
             }
+
+            // --- AUTO-FOCUS ENERGY ---
+            // If it's a status move targeting self that boosts crit (like Focus Energy)
+            if (move.category === 'status' && (move.target === 'user' || move.target === 'users-field') && move.meta.crit_rate > 0) {
+                if (!attacker.volatiles.focusEnergy) {
+                    attacker.volatiles.focusEnergy = true;
+                    await UI.typeText(`${attacker.name} is\ngetting pumped!`);
+                    didSomething = true;
+                }
+            }
         }
 
         return didSomething;
@@ -336,7 +361,7 @@ const MovesEngine = {
 
             const eSprite = document.getElementById('enemy-sprite');
             eSprite.style.transition = "opacity 0.5s";
-            eSprite.style.opacity = 0;
+            eSprite.style.opacity = '0';
             await wait(500);
 
             Game.skipBattle();

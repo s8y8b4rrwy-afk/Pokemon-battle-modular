@@ -71,7 +71,7 @@ AnimFramework.register('rock-slide', [
     {
         type: 'stream', from: { x: 230, y: -20 }, to: 'defender',
         count: 10, interval: 100, spread: 30, travelTime: 400,
-        size: 15, color: '#b8a038', outline: '#000000', scaleStart: 1.5, scaleEnd: 1.0
+        size: 15, color: '#b8a038', outline: '#000000', scaleStart: 1.5, scaleEnd: 1.0, svgShape: 'rock'
     },
     {
         type: 'parallel', steps: [
@@ -91,7 +91,7 @@ AnimFramework.register('ancient-power', [
     {
         type: 'stream', from: 'attacker', to: 'defender',
         count: 5, interval: 150, travelTime: 500,
-        size: 12, color: '#b8a038', outline: '#000000'
+        size: 12, color: '#b8a038', outline: '#000000', svgShape: 'rock'
     },
     { type: 'spriteShake', target: 'defender', duration: 400 }
 ]);
@@ -180,7 +180,7 @@ AnimFramework.register('spikes', [
     { type: 'sfx', sound: 'ground' },
     {
         type: 'formation', target: 'defender', pattern: 'xShape', // Place around opponent's field
-        shape: 'rock', particleSize: 10, color: '#d2b48c', outline: '#8b4513',
+        shape: 'spike', particleSize: 12, color: '#8b4513', outline: '#000000',
         duration: 800, stagger: 20
     }
 ]);
@@ -257,7 +257,7 @@ AnimFramework.register('tailwind', [
     {
         type: 'stream', from: { x: -50, y: 100 }, to: { x: 350, y: 100 },
         count: 15, interval: 40, spread: 50, travelTime: 600,
-        size: 4, color: '#e0ffff', outline: '#87ceeb', opacity: 0.5
+        size: 20, color: '#e0ffff', outline: '#87ceeb', opacity: 0.5, svgShape: 'gust'
     }
 ]);
 
@@ -268,8 +268,8 @@ AnimFramework.register('whirlwind', [
             { type: 'wave', intensity: 4, duration: 800, speed: 300 },
             {
                 type: 'stream', from: { x: 350, y: 100 }, to: { x: -50, y: 100 }, // From opponent side
-                count: 30, interval: 20, spread: 200, travelTime: 500,
-                size: 6, color: '#f0ffff', outline: '#b0e0e6'
+                count: 10, interval: 60, spread: 200, travelTime: 500,
+                size: 30, color: '#f0ffff', outline: '#b0e0e6', svgShape: 'gust'
             }
         ]
     },
@@ -463,7 +463,7 @@ AnimFramework.register('horn-leech', [
             {
                 type: 'overlay', target: 'defender', shape: 'claw',
                 color: '#32cd32', outline: '#006400', width: 30, height: 30,
-                duration: 300, animation: 'strike'
+                duration: 300, animation: 'slash'
             },
             { type: 'spriteShake', target: 'defender', duration: 300 }
         ]

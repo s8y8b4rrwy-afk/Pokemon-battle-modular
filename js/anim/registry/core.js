@@ -1,5 +1,9 @@
 /** @type {AnimationEngine} */
 
+AnimFramework.register('pokeball-flash', [
+    { type: 'flash', color: '#ffffff', duration: 300, opacity: 1, zIndex: '5' }
+]);
+
 AnimFramework.register('fx-heal', [
     { type: 'sfx', sound: 'heal' },
     {
@@ -273,7 +277,7 @@ AnimFramework.register('fx-bug', [
             {
                 type: 'overlay', target: 'defender', shape: 'claw',
                 color: '#a8b820', outline: '#556b2f',
-                width: 24, height: 24, duration: 300, animation: 'grow'
+                width: 24, height: 24, duration: 300, animation: 'slash'
             }
         ]
     }
@@ -358,7 +362,7 @@ AnimFramework.register('fx-normal', [
             {
                 type: 'overlay', target: 'defender', shape: 'claw',
                 color: '#fff', outline: '#000',
-                width: 24, height: 24, duration: 250, animation: 'grow'
+                width: 24, height: 24, duration: 250, animation: 'slash'
             },
             {
                 type: 'particles', position: 'defender', count: 6, spread: 25, duration: 400,

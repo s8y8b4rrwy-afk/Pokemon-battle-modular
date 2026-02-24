@@ -9,7 +9,7 @@ AnimFramework.register('metal-claw', [
             {
                 type: 'overlay', target: 'defender', shape: 'claw',
                 color: '#c0c0c0', outline: '#707070', width: 35, height: 35,
-                duration: 300, animation: 'strike'
+                duration: 300, animation: 'slash', count: 3, spread: 20, stagger: 100
             },
             { type: 'spriteShake', target: 'defender', duration: 300 }
         ]
@@ -23,9 +23,9 @@ AnimFramework.register('steel-wing', [
     {
         type: 'parallel', steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'bird', // Wing shape
-                color: '#d3d3d3', outline: '#a9a9a9', width: 50, height: 30,
-                duration: 300, animation: 'slam', count: 2, spread: 20
+                type: 'overlay', target: 'defender', shape: 'gust',
+                color: '#d3d3d3', outline: '#a9a9a9', width: 50, height: 70,
+                duration: 300, animation: 'slash', count: 2, spread: 20
             },
             { type: 'spriteShake', target: 'defender', duration: 400 }
         ]

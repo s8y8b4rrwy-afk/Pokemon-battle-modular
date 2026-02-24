@@ -203,6 +203,7 @@
  * @property {number} failedCatches
  * @property {number} rageLevel
  * @property {boolean} isHighTier
+ * @property {number} aiLevel
  * @property {Move} [lastMoveUsed]
  * @property {Object} [transformBackup]
  */
@@ -213,6 +214,7 @@
  * @property {Pokemon} e Enemy Pokemon
  * @property {boolean} uiLocked
  * @property {Set} participants
+ * @property {Set<string>} knownPlayerMoves
  * @property {any} userInputPromise
  * @property {Object} weather
  * @property {string} weather.type 'none' | 'sun' | 'rain' | 'sand' | 'hail'
@@ -302,7 +304,8 @@
  * @typedef {Object} ItemEntry
  * @property {string} name
  * @property {number} [heal]
- * @property {string} type 'heal' | 'ball' | 'revive' | 'status_heal' | 'buff'
+ * @property {string} type 'heal' | 'ball' | 'revive' | 'status_heal' | 'buff' | 'evo_stone' | 'rogue' | 'debug'
+ * @property {string} pocket 'items' | 'balls' | 'key' | 'debug' | 'tm' | 'hm'
  * @property {string} desc
  * @property {string} img
  * @property {number} [rate]
@@ -310,6 +313,17 @@
  * @property {string} [condition]
  * @property {string} [stat]
  * @property {number} [val]
+ */
+
+/**
+ * @typedef {Object} LootManager
+ * @property {Function} processPostBattleDrops
+ * @property {Function} processMidBattleDrop
+ * @property {Function} shouldDropForPocket
+ * @property {Function} rollForItemInPocket
+ * @property {Function} processRogueDrops
+ * @property {Function} rollForRogueItem
+ * @property {Function} awardItem
  */
 
 /**

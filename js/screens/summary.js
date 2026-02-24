@@ -24,6 +24,7 @@ const SummaryScreen = {
             // Find index in party
             const idx = Game.party.findIndex(mon => mon.id === p.id && mon.exp === p.exp);
             Game.currentSummaryIndex = (idx !== -1) ? idx : 0;
+            if (idx !== -1) Game.selectedPartyIndex = idx; // Sync global ref
         }
 
         this.render(p); // Render content
@@ -35,10 +36,7 @@ const SummaryScreen = {
     onExit() {
         UI.hide('summary-panel');
         // Restore previous state logic
-        if (Game.state !== 'SUMMARY') {
-            // If we were in a special mode, we might need to revert Game.state
-            Game.state = Game.previousState;
-        }
+        Game.state = Game.previousState;
     },
 
     handleInput(key) {
@@ -106,14 +104,14 @@ const SummaryScreen = {
         } else if (Game.state === 'OVERFLOW') {
             btn.innerText = "RELEASE";
             btn.className = "confirm-btn danger";
-            btn.onclick = () => PartyScreen.release(Game.selectedPartyIndex);
+            btn.onclick = () => PartyScreen.release(Game.currentSummaryIndex);
             prevBtn.disabled = true;
             nextBtn.disabled = true;
         } else if (Game.state === 'READ_ONLY') {
             btn.style.display = 'none';
         } else if (Game.state === 'HEAL') {
             btn.innerText = "USE";
-            btn.onclick = () => PartyScreen.applyItem(Game.selectedPartyIndex);
+            btn.onclick = () => PartyScreen.applyItem(Game.currentSummaryIndex);
             prevBtn.disabled = true;
             nextBtn.disabled = true;
         } else {
@@ -175,6 +173,7 @@ const SummaryScreen = {
                 <div>ATK ${p.stats.atk}</div><div>DEF ${p.stats.def}</div>
                 <div>SPA ${p.stats.spa}</div><div>SPD ${p.stats.spd}</div>
                 <div>SPE ${p.stats.spe}</div>
+                <div style="grid-column: span 2; font-size: 0.75em; opacity: 0.7; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 2px;">GROWTH: ${p.growthRate.replace(/-/g, ' ').toUpperCase()}</div>
             </div>`;
 
         document.getElementById('summary-moves').innerHTML = p.moves.map(m => `

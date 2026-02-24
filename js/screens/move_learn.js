@@ -107,6 +107,9 @@ const MoveLearnScreen = {
         this.newMoveData = await API.getMove(this.newMoveName);
         this.setupUI();
         UI.show('move-learn-screen');
+        if (this.pokemon && this.pokemon.cry) {
+            AudioEngine.playCry(this.pokemon.cry);
+        }
         this.render();
     },
 

@@ -20,6 +20,10 @@ const PartyScreen = {
 
     onResume() {
         this.render();
+        // Restore state
+        if (Game.party.length > 6) Game.state = 'OVERFLOW';
+        else if (Game.state !== 'HEAL' && Game.state !== 'PARTY') Game.state = 'PARTY';
+
         Input.setMode('PARTY', Game.selectedPartyIndex !== -1 ? Game.selectedPartyIndex : 0);
     },
 
@@ -418,7 +422,7 @@ const PartyScreen = {
 
         // Delay effect to happen IN SCENE
         setTimeout(() => {
-            UI.typeText(`Used ${data.name} on ${p.name}!`, () => Battle.endTurnItem());
+            UI.typeText(`Used ${data.name} on\n${p.name}!`, () => Battle.endTurnItem());
         }, 300);
     },
 
@@ -492,6 +496,7 @@ const PartyScreen = {
     },
 
     stats() {
-        ScreenManager.push('SUMMARY', Game.party[Game.selectedPartyIndex]);
+        const mon = Game.party[Game.selectedPartyIndex];
+        ScreenManager.push('SUMMARY', { mon, mode: Game.state });
     }
 };

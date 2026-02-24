@@ -26,7 +26,7 @@ This document outlines potential enhancements, technical debt, and new features 
 ## 📡 Systems
 - [ ] **Online Multi-player**: A dedicated server to allow two players to battle using their saved parties.
 - [ ] **Trading System**: Enable "Local Trade" (between tabs) or "Global Trade" with other players.
-- [ ] **Trainer AI Archetypes**: Aggressive, Defensive, and Balanced AI personalities for better replayability.
+- [x] **Trainer AI Archetypes**: Implemented a scalable, modular heuristic AI system with threat assessment, memory, and strategy tiers (Aggressive, Predictive, and Balanced).
 
 ---
 

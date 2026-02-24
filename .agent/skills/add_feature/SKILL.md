@@ -191,7 +191,16 @@ Use `'attacker'` and `'defender'` as position/element references — the framewo
 
 To play: `await AnimFramework.play('move-name', { attacker, defender, isPlayerAttacker });`
 
-### 7. Update Documentation
+### 7. Update AI Heuristics (for AI-Aware Moves)
+Location: `js/engine/ai.js` → `AIHeuristics`
+
+If you add a move with a unique mechanic (e.g., healing, charging, sleep-dependent, or hazards), you must update the AI heuristics so the enemy understands how and when to use it optimally.
+
+- **Status/Utility**: Add rules to `evaluateStatusUtility`
+- **Buffs/Debuffs**: Add rules to `evaluateBuffUtility`
+- **Advanced Strategies**: Add unique logic to `evaluateAdvancedStrategies` (e.g., checking if the player is asleep before using a move).
+
+### 8. Update Documentation
 - Add to `README.md` under appropriate section
 - If new volatile status, add to volatile status list
 

@@ -144,7 +144,7 @@ const EvolutionScreen = {
 
         // 6. Final success message
         if (this.pokemon.cry) AudioEngine.playCry(this.pokemon.cry);
-        await DialogManager.show(`Congratulations! Your ${oldName}\nevolved into ${this.newData.name}!`, evoOptions);
+        await DialogManager.show(`Congratulations! ${oldName}\nevolved into ${this.newData.name}!`, evoOptions);
 
         // 7. Check for new moves
         await this.checkLearnMoves();

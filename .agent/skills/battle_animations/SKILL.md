@@ -140,6 +140,15 @@ When calling `AnimFramework.register(name, steps)`, the `steps` array is automat
 | `drop` | Sweat drop / Splash |
 | `shield` | Protect / Defense effects |
 | `wall` | Reflect / Light Screen |
+| `anger` | Anger point / frustration vein pop |
+| `jaw-top` | Upper set of fangs |
+| `jaw-bottom` | Lower set of fangs |
+| `bite` | (Deprecated) Combined biting teeth |
+| `kick` | High Jump Kick / kicking attacks |
+| `poison` | Toxic sludge drop, poison attacks |
+| `snow` | Hail / Blizzard snowflakes |
+| `gust` | Whirlwind / hurricane tornadoes |
+| `spike` | Spikes / caltrop hazards |
 
 ---
 
@@ -246,6 +255,35 @@ AnimFramework.register('fire-blast', [
     ]}
 ]);
 ```
+
+---
+
+### **Overlay Shapes (Direct hit FX)**
+Displays a shape directly on the target's position. Useful for physical strikes, shields, flashes, or elemental bursts.
+
+```javascript
+{
+    type: 'overlay',
+    target: 'defender', // 'attacker', 'defender', 'scene'
+    shape: 'claw',      // SVG name
+    color: '#ffffff',
+    outline: '#000000',
+    width: 60, height: 60,
+    duration: 300,
+    animation: 'strike', // 'strike', 'slam', 'grow', 'fade', 'crunch'
+    count: 3,           // number of instances (e.g. 3 scratches)
+    spread: 20,         // pixel variance 
+    stagger: 100        // ms delay between each shape spawning
+}
+```
+
+#### **Animation Types:**
+- **`strike`**: Slides down into position (good for slashes).
+- **`slam`**: Drops from above and scales up (impact moves).
+- **`grow`**: Scales from 0 to 1 (shields, bursts).
+- **`fade`**: Opacity 0 to 1 (ghostly effects).
+- **`crunch`**: Special mode that alternates `jaw-top` and `jaw-bottom` shapes to meet in the middle (bite moves). Best used with `count: 2` and `stagger: 0`.
+- **`slash`**: Fast diagonal movement (top-left to bottom-right). Perfect for claw and sword-like attacks.
 
 ---
 

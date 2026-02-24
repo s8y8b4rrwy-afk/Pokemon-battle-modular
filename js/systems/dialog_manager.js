@@ -59,6 +59,25 @@ const DialogManager = {
             }
 
             await UI.typeText(task.text, async () => {
+                if (task.options.skipWait) {
+                    if (task.options.lock && typeof Battle !== 'undefined' && !prevLockState) {
+                        Battle.uiLocked = false;
+                    }
+
+                    const innerParentId = task.options.parentId || 'dialog-box';
+                    if (innerParentId === 'dialog-box') {
+                        const box = document.getElementById('dialog-box');
+                        if (box) box.style.zIndex = '20'; // LOWER Z-INDEX
+                    }
+
+                    // Resolve immediately after typing completes, but don't clear text or hide box
+                    this.isTyping = false;
+                    this.queue.shift();
+                    if (task.resolve) task.resolve();
+                    this.processQueue();
+                    return;
+                }
+
                 // Wait behavior: auto-advance OR wait-for-input
                 if (task.options.delay) {
                     if (task.options.noSkip) {

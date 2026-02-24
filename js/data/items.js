@@ -14,9 +14,25 @@ const RARITY = {
 
 // B. Assign Items to Rarities
 const LOOT_SYSTEM = {
-    DROP_RATE_WILD: 0.40,       // 40% chance
-    DROP_RATE_BOSS: 1.00,       // 100% chance
-    DROP_RATE_MID_BATTLE: 0.20, // chance on hit
+    // --- NEW: Per-Pocket Roll System ---
+    // Instead of one overall roll, we roll for each pocket independently.
+    POCKET_RATES: {
+        items: 0.25,      // 25% chance for healing/revives
+        balls: 0.20,      // 20% chance for pokeballs
+        key: 0.10,        // 10% chance for evolution stones
+        tm: 0.00,         // Placeholder for future TMs
+        hm: 0.00          // Placeholder for future HMs
+    },
+
+    // Multipliers for special encounters
+    BOSS_MULTIPLIER: 1.8,   // Reduced from 2.5 to be more balanced
+    LUCKY_MULTIPLIER: 1.5,  // Lucky mon get a slight boost to all pocket rolls
+
+    // Caps to prevent "unlimited items" from one battle
+    MAX_DROPS_WILD: 1,      // Wild mons drop at most 1 item from standard pockets
+    MAX_DROPS_BOSS: 2,      // Bosses drop at most 2 items from standard pockets
+
+    DROP_RATE_MID_BATTLE: 0.15, // Chance to drop on hit
 
     TABLE: [
         { key: 'potion', ...RARITY.COMMON },
@@ -60,8 +76,6 @@ const ITEMS = {
     bicycle: { name: "BICYCLE", type: 'key', pocket: 'key', desc: "A folding bicycle for traveling faster.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/bicycle.png" },
     pokedex: { name: "POKEDEX", type: 'key', pocket: 'key', desc: "A high-tech encyclopedia that records Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/pokedex.png" },
     evo_stone: { name: "EVOLUTION STONE", type: 'evo_stone', pocket: 'key', desc: "A mysterious stone pulsing with ancient energy. It can magically trigger the evolution of any Pokemon, bypassing the need to level up.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/moon-stone.png" },
-
-
 
     // --- STATUS HEALERS ---
     antidote: { name: "ANTIDOTE", type: 'status_heal', condition: 'poison', pocket: 'items', desc: "Cures a poisoned Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/antidote.png" },

@@ -12,7 +12,7 @@ AnimFramework.register('scratch', [
     {
         type: 'overlay', target: 'defender', shape: 'claw',
         color: '#fff', outline: '#000', width: 24, height: 24,
-        duration: 200, animation: 'strike'
+        duration: 250, animation: 'slash', count: 3, spread: 15, stagger: 100
     },
     { type: 'spriteShake', target: 'defender', duration: 200 }
 ]);
@@ -34,9 +34,9 @@ AnimFramework.register('leech-life', [
     {
         type: 'parallel', steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'claw', // Fang-like
-                color: '#a8b820', outline: '#556b2f', width: 24, height: 24,
-                duration: 300, animation: 'strike'
+                type: 'overlay', target: 'defender',
+                color: '#a8b820', outline: '#556b2f', width: 30, height: 30,
+                duration: 300, animation: 'crunch', count: 2, stagger: 0
             },
             { type: 'spriteShake', target: 'defender', duration: 300 }
         ]
@@ -64,7 +64,7 @@ AnimFramework.register('fury-cutter', [
     {
         type: 'overlay', target: 'defender', shape: 'claw',
         color: '#c03028', outline: '#800000', width: 30, height: 30,
-        duration: 200, animation: 'strike'
+        duration: 250, animation: 'slash', count: 4, spread: 25, stagger: 100
     },
     { type: 'spriteShake', target: 'defender', duration: 200 }
 ]);
@@ -150,7 +150,7 @@ AnimFramework.register('quick-attack', [
     },
     {
         type: 'parallel', steps: [
-            { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', width: 24, height: 24, duration: 200, animation: 'grow' },
+            { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', width: 24, height: 24, duration: 200, animation: 'slash' },
             { type: 'spriteShake', target: 'defender', duration: 200 }
         ]
     }
@@ -167,7 +167,7 @@ AnimFramework.register('extreme-speed', [
     },
     {
         type: 'parallel', steps: [
-            { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', width: 40, height: 40, duration: 200, animation: 'strike' },
+            { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', width: 40, height: 40, duration: 200, animation: 'slash' },
             { type: 'spriteShake', target: 'defender', duration: 300 }
         ]
     }
@@ -398,7 +398,7 @@ AnimFramework.register('air-slash', [
     {
         type: 'parallel', steps: [
             { type: 'screenFx', class: 'fx-flying', duration: 400 },
-            { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', width: 40, height: 40, duration: 300, animation: 'grow' },
+            { type: 'overlay', target: 'defender', shape: 'gust', color: '#ffffff', width: 50, height: 70, duration: 300, animation: 'slash' },
             { type: 'spriteShake', target: 'defender', duration: 300 }
         ]
     }
@@ -410,7 +410,7 @@ AnimFramework.register('hurricane', [
     {
         type: 'parallel', steps: [
             { type: 'wave', intensity: 6, duration: 1200, speed: 200 },
-            { type: 'formation', target: 'defender', pattern: 'ring', shape: 'spiral', particleSize: 15, color: '#add8e6', duration: 1000, stagger: 30 }
+            { type: 'formation', target: 'defender', pattern: 'ring', shape: 'gust', particleSize: 20, color: '#add8e6', duration: 1000, stagger: 30 }
         ]
     },
     { type: 'spriteShake', target: 'defender', duration: 500 }
@@ -422,7 +422,7 @@ AnimFramework.register('aerial-ace', [
     {
         type: 'parallel', steps: [
             { type: 'spriteMove', target: 'attacker', preset: 'lunge', x: 100, y: 0, duration: 100 },
-            { type: 'overlay', target: 'defender', shape: 'claw', color: '#ffffff', outline: '#000000', width: 32, height: 32, duration: 200, animation: 'grow', count: 2, spread: 10 }
+            { type: 'overlay', target: 'defender', shape: 'gust', color: '#ffffff', outline: '#000000', width: 40, height: 50, duration: 200, animation: 'slash', count: 2, spread: 15 }
         ]
     }
 ]);
@@ -734,7 +734,7 @@ AnimFramework.register('high-jump-kick', [
     {
         type: 'parallel', steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'fist',
+                type: 'overlay', target: 'defender', shape: 'kick',
                 color: '#b22222', outline: '#000', width: 50, height: 50,
                 duration: 300, animation: 'slam'
             },
@@ -926,8 +926,9 @@ AnimFramework.register('air-cutter', [
         type: 'volley', from: 'attacker', to: 'defender',
         count: 4, interval: 100, travelTime: 300,
         projectile: {
-            width: 30, height: 10, // Blade shape
-            styles: { background: '#e0ffff', border: '1px solid #87ceeb', borderRadius: '50%' }
+            width: 30, height: 40, // Taller blade/gust
+            svgShape: 'gust',
+            styles: { background: '#e0ffff', opacity: 0.8 }
         }
     },
     { type: 'spriteShake', target: 'defender', duration: 300 }
@@ -948,9 +949,9 @@ AnimFramework.register('wing-attack', [
     { type: 'sfx', sound: 'flying' },
     { type: 'spriteMove', target: 'attacker', preset: 'lunge', x: 50 }, // Swoop
     {
-        type: 'overlay', target: 'defender', shape: 'bird', // Wing
-        color: '#dcdcdc', outline: '#a9a9a9', width: 60, height: 60,
-        duration: 300, animation: 'slam'
+        type: 'overlay', target: 'defender', shape: 'gust', // Wing gust
+        color: '#dcdcdc', outline: '#a9a9a9', width: 60, height: 80,
+        duration: 300, animation: 'slash'
     },
     { type: 'spriteShake', target: 'defender', duration: 300 }
 ]);

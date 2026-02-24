@@ -537,7 +537,7 @@ AnimFramework.register('leaf-blade', [
             {
                 type: 'overlay', target: 'defender', shape: 'claw',
                 color: '#ffffff', outline: '#006400', width: 32, height: 32,
-                duration: 300, animation: 'fade'
+                duration: 300, animation: 'slash'
             }
         ]
     },
@@ -792,6 +792,17 @@ AnimFramework.register('hail', [
 
 // --- NEW ELEMENTAL ANIMATIONS ---
 
+AnimFramework.register('sludge-wave', [
+    { type: 'sfx', sound: 'poison' },
+    { type: 'wave', intensity: 4, duration: 1000, speed: 100 },
+    {
+        type: 'stream', from: { x: -20, y: 100 }, to: { x: 340, y: 100 },
+        count: 20, interval: 30, spread: 200, travelTime: 800,
+        size: 15, color: '#a040a0', outline: '#4b0082', svgShape: 'poison'
+    },
+    { type: 'spriteShake', target: 'defender', duration: 800 }
+]);
+
 AnimFramework.register('aqua-jet', [
     { type: 'sfx', sound: 'water' },
     { type: 'spriteMove', target: 'attacker', preset: 'lunge', duration: 100 }, // Ultra fast
@@ -810,12 +821,23 @@ AnimFramework.register('liquidation', [
             {
                 type: 'overlay', target: 'defender', shape: 'claw', // Sword-like slash
                 color: '#00008b', outline: '#1e90ff', width: 60, height: 10, // Long thin slash
-                duration: 300, animation: 'strike'
+                duration: 300, animation: 'slash'
             },
             { type: 'screenFx', class: 'fx-water', duration: 400 }
         ]
     },
     { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('poison-jab', [
+    { type: 'spriteMove', target: 'attacker', preset: 'lunge' },
+    { type: 'sfx', sound: 'poison' },
+    {
+        type: 'parallel', steps: [
+            { type: 'overlay', target: 'defender', shape: 'poison', color: '#800080', outline: '#000', width: 40, height: 40, duration: 300, animation: 'strike' },
+            { type: 'spriteShake', target: 'defender', duration: 300 }
+        ]
+    }
 ]);
 
 AnimFramework.register('freeze-dry', [
@@ -909,14 +931,38 @@ AnimFramework.register('fire-fang', [
     {
         type: 'parallel', steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'claw', // Teeth
-                color: '#ff4500', outline: '#8b0000', width: 30, height: 30,
-                duration: 300, animation: 'strike'
+                type: 'overlay', target: 'defender',
+                color: '#ff4500', outline: '#8b0000', width: 45, height: 45,
+                duration: 300, animation: 'crunch', count: 2, stagger: 0
             },
             { type: 'particles', position: 'defender', count: 5, spread: 20, duration: 300, particleStyles: { background: '#ff4500' } }
         ]
     },
     { type: 'spriteShake', target: 'defender', duration: 300 }
+]);
+
+AnimFramework.register('sludge-bomb', [
+    { type: 'sfx', sound: 'poison' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender', count: 6, interval: 100, travelTime: 300,
+        projectile: { width: 14, height: 14, styles: { background: '#a040a0', border: '1px solid #4b0082', borderRadius: '50% 50% 40% 60%' } }
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-poison', duration: 400 },
+            { type: 'particles', position: 'defender', count: 10, spread: 25, duration: 400, particleStyles: { background: '#a040a0' } }
+        ]
+    }
+]);
+
+AnimFramework.register('toxic', [
+    { type: 'sfx', sound: 'poison' },
+    {
+        type: 'parallel', steps: [
+            { type: 'overlay', target: 'defender', shape: 'poison', color: '#9400d3', outline: '#4b0082', width: 40, height: 40, duration: 600, animation: 'slam' },
+            { type: 'particles', position: 'defender', count: 12, spread: 30, duration: 800, particleStyles: { background: '#9400d3', border: '1px solid #000000' } }
+        ]
+    }
 ]);
 
 AnimFramework.register('blast-burn', [
@@ -951,6 +997,26 @@ AnimFramework.register('water-pulse', [
         duration: 600, stagger: 20
     },
     { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('gunk-shot', [
+    { type: 'sfx', sound: 'poison' },
+    {
+        type: 'volley', from: 'attacker', to: 'defender',
+        count: 1, interval: 0, travelTime: 400,
+        projectile: {
+            width: 30, height: 30, // Big trash can/blob
+            styles: { background: '#4b0082', borderRadius: '10px', border: '2px solid #000' }
+        }
+    },
+    {
+        type: 'parallel', steps: [
+            { type: 'screenFx', class: 'fx-poison', duration: 600 },
+            { type: 'overlay', target: 'defender', shape: 'poison', color: '#800080', outline: '#000', width: 60, height: 60, duration: 500, animation: 'slam', count: 3, spread: 30 },
+            { type: 'particles', position: 'defender', count: 12, spread: 40, duration: 600, particleStyles: { background: '#800080' } }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 500 }
 ]);
 
 AnimFramework.register('brine', [
@@ -998,9 +1064,9 @@ AnimFramework.register('thunder-fang', [
     {
         type: 'parallel', steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'claw',
-                color: '#ffd700', outline: '#daa520', width: 30, height: 30,
-                duration: 300, animation: 'strike'
+                type: 'overlay', target: 'defender',
+                color: '#ffd700', outline: '#daa520', width: 45, height: 45,
+                duration: 300, animation: 'crunch', count: 2, stagger: 0
             },
             { type: 'flash', color: '#ffd700', duration: 100, opacity: 0.5 }
         ]
@@ -1054,9 +1120,9 @@ AnimFramework.register('ice-fang', [
     {
         type: 'parallel', steps: [
             {
-                type: 'overlay', target: 'defender', shape: 'claw',
-                color: '#e0ffff', outline: '#87ceeb', width: 30, height: 30,
-                duration: 300, animation: 'strike'
+                type: 'overlay', target: 'defender',
+                color: '#e0ffff', outline: '#87ceeb', width: 45, height: 45,
+                duration: 300, animation: 'crunch', count: 2, stagger: 0
             },
             { type: 'screenFx', class: 'fx-ice', duration: 200 }
         ]
