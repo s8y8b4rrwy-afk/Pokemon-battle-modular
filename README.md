@@ -125,11 +125,13 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 - **First-Stage Starters** — Starter selection screen is filtered to only show basic forms (no middle or final evolutions).
 - **Performance Optimized** — Full caching system for species and evolution data to minimize API latency.
 
-### 🎰 Loot System
-- Items drop from defeated/caught Pokémon
-- Weighted loot table that scales with enemy strength and win streak
-- Mid-battle drops possible during combat
-- Boss encounters have higher drop rates
+### 🎰 Loot System (Per-Pocket)
+- **Dynamic Pockets** — Items are categorized into "pockets" (Items, Balls, Key/Stones, TM/HM).
+- **Independent Rolls** — Each pocket rolls for success independently using `LOOT_SYSTEM.POCKET_RATES`.
+- **Drop Caps** — Battles are limited to a maximum number of standard drops (Wild: 1, Bosses: 2) to maintain balance.
+- **Weighted Table** — Loot selection within a pocket is weighted by the enemy's strength, level, and the player's win streak.
+- **Support for Future Pockets** — Designed for easy expansion with TM/HM pockets and custom drop rates.
+- **Mid-Battle Drops** — Chance to drop a random item from a pocket mid-combat when hit.
 
 ### 🐣 Catch System
 - Accurate Gen II catch formula
@@ -349,6 +351,23 @@ const DEBUG = {
 
 ## 📝 Recent Updates
 
+### v2.1.0 - Rogue Feedback & Persistence (Feb 2026)
+**Better Power Scaling Information:**
+- ✨ **Rogue Boost Box**: Integrated a new stat-box (identical to the level-up box) that triggers whenever a **Rogue Item** (Mighty Candy, Guard Candy, etc.) is found or decayed.
+    - Shows the real-time impact of passive boosts on your active Pokémon's stats.
+    - Uses **Green** indicators for gains and **Red** for losses/decay.
+    - Automatically pairs with rogue loot messages for better "roguelike" feedback.
+- 🛠️ **Recalculation Flow**: Refined the order of operations in the loot system to ensure stat increases are reflected in the UI the moment an item is awarded.
+
+### v2.0.0 - Level Up Experience & UI Polish (Feb 2026)
+**Visual & Interaction Overhaul:**
+- ✨ **Level Up Stat Box**: Implemented a premium, nostalgic stat-gain box that appears when a Pokémon levels up. 
+    - Shows mini-sprites (icons) for visual identity.
+    - Displays stat gains (e.g., `+3`) in a vibrant blue, followed by new totals after advancing.
+    - Clean, borderless design that sits perfectly above the text box.
+- ✨ **Dialogue Manager Enhancement**: Added `skipWait: true` support to the `DialogManager`. This allows messages like "Grew to Level X!" to resolve immediately after typing, triggering secondary overlays (like the stat box) without redundant player clicks.
+- ✨ **Abbreviated Combat Stats**: Refined level-up UI to use standard handheld abbreviations (`ATK`, `DEF`, `SPD`, `SP. ATK`, `SP. DEF`) for a more authentic feel.
+
 ### v1.9.0 - Evolution Stone & Gen 2 Enforcement (Feb 2026)
 **Item & Evolution Polish:**
 - 🪨 **Evolution Stone Fix**: Fixed a bug where using the Evolution Stone on a Pokémon with multiple evolutions (e.g., Eevee) would close the party screen instead of showing the evolution picker. Root cause: `SummaryScreen.close()` was popping the Party screen off the ScreenManager stack when Summary wasn't open.
@@ -393,12 +412,16 @@ const DEBUG = {
 - 🍀 **Pity System**: Bad luck protection ensures you see them eventually.
 - 🍀 **Visuals**: Unique gold styling and intro animations.
 
+### v1.3.1 - Enhanced 80/20 Move Selection (Feb 2026)
+**Smarter Movesets:**
+- 🐣 **Level-Appropriate Moves**: Implemented a per-slot 80% chance for a move to be "recently learned" (one of the last 6 moves in the learnset) and a 20% chance for it to be any move from the Pokémon's entire history.
+- 🐣 **Level Window Consistency**: Level 50 Pokémon are now guaranteed to feel like Level 50 threats while still retaining occasional "classic" moves for flavor.
+
 ### v1.3.0 - Smart Generation System (Feb 2026)
 **Natural Pokemon Generation:**
-- 🐣 **Level-Appropriate Moves**: Movesets weighted to prefer recently learned moves.
+- 🐣 **Evolution Integrity**: Wild evolved Pokemon now only spawn at or above their official evolution levels.
 - 🐣 **Elite Moves**: Implemented 10% chance for egg/high-level moves in the wild.
 - 🐣 **Natural Movesets**: No longer forcing 4 moves; Pokemon show up with their natural move count for their level.
-- 🐣 **Evolution Integrity**: Wild evolved Pokemon now only spawn at or above their official evolution levels.
 
 **Refined Selection:**
 - 🛡️ **Starter Filtering**: Selection screen now strictly offers first-stage Pokemon only.

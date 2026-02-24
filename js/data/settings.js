@@ -29,10 +29,18 @@ const GAME_BALANCE = {
 
     // Move Generation (New)
     MOVE_GEN_SMART: true,       // Enable level-appropriate move selection
+    MOVE_GEN_LEVEL_APPROPRIATE_CHANCE: 0.80, // 80% chance to pick moves close to current level
+    MOVE_GEN_LEVEL_WINDOW: 6,   // Number of "most recent" moves to consider as "level-appropriate"
     MOVE_GEN_SPECIAL_CHANCE: 0.20, // 20% chance to have an egg move or higher level move
     MOVE_GEN_SPECIAL_COUNT_2_CHANCE: 0.35, // Of that 20%, 35% chance to have 2 special moves instead of 1
     MOVE_GEN_HIGHER_LEVEL_REACH: 15, // How many levels above current level to look for "special" moves
-    MOVE_LEARN_SPECIAL_CHANCE: 0.15 // 15% chance to learn a special (TM/Tutor) move after level up
+    MOVE_LEARN_SPECIAL_CHANCE: 0.15, // 15% chance to learn a special (TM/Tutor) move after level up
+
+    // EXP System
+    EXP_SHARE_TEAM_PCT: 0.50,   // Non-participants get 50% XP
+    EXP_BOSS_MULT: 1.5,         // Bosses give 1.5x XP
+    EXP_LUCKY_MULT: 2.0,        // Lucky Pokemon give 2x XP
+    EXP_CATCH_MULT: 0.8,        // 80% XP if caught
 };
 
 // --- ENCOUNTER CONFIGURATION ---
@@ -111,7 +119,6 @@ const ROGUE_LOOT = {
         { key: 'rogue_hp', weight: 80 },
         { key: 'rogue_crit', weight: 40 },
         { key: 'rogue_xp', weight: 30 },
-        { key: 'evo_stone', weight: 15 },
         { key: 'rogue_shiny', weight: 10 }
     ]
 };

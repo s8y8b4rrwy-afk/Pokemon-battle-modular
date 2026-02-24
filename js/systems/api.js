@@ -24,6 +24,20 @@ const API = {
         return ailmentMap[ailment] || ailment;
     },
 
+    // Helper: Get Struggle move data
+    getStruggle() {
+        return {
+            name: 'STRUGGLE',
+            type: 'normal',
+            id: 'struggle',
+            power: 50,
+            accuracy: 100,
+            category: 'physical',
+            desc: "The user struggles.",
+            meta: { ailment: { name: 'none' }, drain: -50 }
+        };
+    },
+
     async checkFirstStage(id) {
         try {
             const data = await this.getSpeciesData(id);
@@ -115,6 +129,9 @@ const API = {
             const data = await this.getPokemonData(id);
             if (!data) return null;
 
+            const speciesData = await this.getSpeciesData(id);
+            const growthRate = speciesData ? speciesData.growth_rate.name : 'medium-fast';
+
             const getStat = (n) => data.stats.find(s => s.stat.name === n).base_stat;
 
             // 2. Calculate Stats (Using StatCalc)
@@ -179,9 +196,20 @@ const API = {
 
                 // 4. Fill remaining slots with level-up moves, favoring higher level ones
                 while (chosen.length < 4 && levelUpPool.length > 0) {
-                    // Use a weighted random to prefer moves at the start of the sorted list (higher level)
-                    const weightedIdx = Math.floor(Math.pow(Math.random(), 1.5) * levelUpPool.length);
-                    const move = levelUpPool.splice(weightedIdx, 1)[0];
+                    let idx;
+                    const chance = GAME_BALANCE.MOVE_GEN_LEVEL_APPROPRIATE_CHANCE || 0.8;
+                    const window = GAME_BALANCE.MOVE_GEN_LEVEL_WINDOW || 6;
+
+                    if (Math.random() < chance) {
+                        // "Closer to their actual level": Pick from the N most recently learned moves
+                        const windowSize = Math.min(levelUpPool.length, window);
+                        idx = Math.floor(Math.random() * windowSize);
+                    } else {
+                        // "Any move from the prior levels": Flat random chance
+                        idx = Math.floor(Math.random() * levelUpPool.length);
+                    }
+
+                    const move = levelUpPool.splice(idx, 1)[0];
                     if (!chosen.includes(move.name)) {
                         chosen.push(move.name);
                     }
@@ -213,7 +241,9 @@ const API = {
             let selectedMoveNames = chosen;
 
             // Fire all requests at once
-            const movePromises = selectedMoveNames.map(name => this.getMove(name));
+            const movePromises = selectedMoveNames.map(async (name) => {
+                return this.getMove(name);
+            });
             const fetchedMoves = await Promise.all(movePromises);
             // Filter out any failed fetches (nulls)
             const validMoves = fetchedMoves.filter(m => m !== null);
@@ -242,7 +272,7 @@ const API = {
             if (!front) front = isShiny ? spriteRef.front_shiny : spriteRef.front_default;
             if (!back) back = isShiny ? spriteRef.back_shiny : spriteRef.back_default;
 
-            const nextLvlExp = Math.pow(level + 1, 3) - Math.pow(level, 3);
+            const nextLvlExp = ExpCalc.getNextLevelExp(growthRate, level);
             const bst = getStat('hp') + getStat('attack') + getStat('defense') + getStat('special-attack') + getStat('special-defense') + getStat('speed');
 
             // 6. Normalize Status Override
@@ -271,6 +301,7 @@ const API = {
                 exp: 0,
                 nextLvlExp: nextLvlExp,
                 baseExp: data.base_experience || 64,
+                growthRate: growthRate,
                 status: normalizedStatus,
                 volatiles: initialVolatiles,
                 stages: Object.assign({ atk: 0, def: 0, spa: 0, spd: 0, spe: 0, acc: 0, eva: 0 }, overrides.stages || {}),
