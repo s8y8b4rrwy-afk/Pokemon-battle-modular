@@ -22,7 +22,6 @@ const PackScreen = {
         AudioEngine.playSfx('select');
     },
     onEnter() {
-        this.currentPocketIdx = 0;
         UI.show('pack-screen');
         document.querySelector('.bag-icon').style.backgroundImage = "url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/backpack.png')";
         BattleMenus.renderPackList();
