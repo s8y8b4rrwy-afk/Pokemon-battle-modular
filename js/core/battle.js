@@ -72,9 +72,19 @@ const Battle = {
         // Step 3: Effectiveness SFX + sprite flash + HP decrease (simultaneous)
         this._playEffectivenessSfx(effectivenessData, moveName);
         const flashPromise = this._flashSprite(target);
-        target.currentHp -= amount;
-        UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
-        await flashPromise;
+
+        // Handle Endure (only for direct move damage, not status/recoil)
+        const isIndirect = ['recoil', 'poison', 'burn', 'sandstorm', 'hail'].includes(type);
+        if (target.volatiles.endured && amount >= target.currentHp && !isIndirect) {
+            target.currentHp = 1;
+            UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
+            await flashPromise;
+            await UI.typeText(`${target.name} endured\nthe hit!`);
+        } else {
+            target.currentHp -= amount;
+            UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
+            await flashPromise;
+        }
     },
 
     // Play the correct SFX based on effectiveness

@@ -93,6 +93,9 @@ const TurnManager = {
         [battle.p, battle.e].forEach(m => {
             m.volatiles.turnDamage = 0;
             m.volatiles.turnDamageCategory = null;
+            // Protection status should reset each turn
+            m.volatiles.protected = false;
+            m.volatiles.endured = false;
         });
 
         // 1. PROCESS ACTIONS
@@ -181,8 +184,6 @@ const TurnManager = {
             return;
         }
 
-        if (logic.type !== 'protect') attacker.volatiles.protected = false;
-
         const hasSub = attacker.volatiles.substituteHP > 0;
         if (hasSub && move.target !== 'user') {
             const realSrc = isPlayer ? attacker.backSprite : attacker.frontSprite;
@@ -244,19 +245,20 @@ const TurnManager = {
             return;
         }
 
-        if (logic.type === 'protect') {
-            if (attacker.volatiles.protected) {
-                await UI.typeText("But it failed!");
-                attacker.volatiles.protected = false;
-            } else {
-                attacker.volatiles.protected = true;
-                // Trigger Animation
-                const ctx = { attacker, defender, isPlayerAttacker: isPlayer };
-                const registryKey = move.name.toLowerCase().replace(/\s+/g, '-');
-                await BattleAnims.playRegistered(registryKey, ctx);
+        if (logic.type === 'protect' || logic.type === 'endure') {
+            const isEndure = logic.type === 'endure';
+            const flag = isEndure ? 'endured' : 'protected';
 
-                await UI.typeText(`${attacker.name} protected\nitself!`);
-            }
+            attacker.volatiles[flag] = true;
+
+            // Trigger Animation
+            const ctx = { attacker, defender, isPlayerAttacker: isPlayer };
+            const registryKey = move.name.toLowerCase().replace(/\s+/g, '-');
+            await BattleAnims.playRegistered(registryKey, ctx);
+
+            const msg = isEndure ? `${attacker.name} braced\nitself!` : `${attacker.name} protected\nitself!`;
+            await UI.typeText(msg);
+
             await restoreSub();
             return;
         }

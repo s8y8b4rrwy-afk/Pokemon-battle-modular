@@ -720,7 +720,7 @@ const MOVE_LOGIC = {
     'petal-dance': { type: 'lock-in' },
     'protect': { type: 'protect' },
     'detect': { type: 'protect' },
-    'endure': { type: 'protect' }
+    'endure': { type: 'endure' }
 };
 
 // --- HELPERS for DEX ---
