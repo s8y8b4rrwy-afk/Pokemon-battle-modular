@@ -18,10 +18,21 @@ const Evolution = {
     // Helper: Traverse the recursive chain structure
     findNode(node, name) {
         if (!node) return null;
-        // API uses kebab-case (charmander), our app uses UPPER CASE (CHARMANDER) or display names
-        if (node.species.name.toUpperCase() === name.toUpperCase()) return node;
-        // Handle case where name might have spaces but API has dashes
-        if (node.species.name.replace(/-/g, ' ').toUpperCase() === name.toUpperCase()) return node;
+
+        const speciesName = node.species.name.toUpperCase();
+        const inputName = name.toUpperCase();
+
+        // Direct match (kebab-case Charmander vs CHARMANDER)
+        if (speciesName === inputName) return node;
+
+        // Space/Dash normalization
+        if (speciesName.replace(/-/g, ' ') === inputName.replace(/-/g, ' ')) return node;
+
+        // Special Mapping for normalized symbols
+        if (speciesName === 'NIDORAN-F' && inputName === 'NIDORAN♀') return node;
+        if (speciesName === 'NIDORAN-M' && inputName === 'NIDORAN♂') return node;
+        if (speciesName === 'MR-MIME' && inputName === 'MR. MIME') return node;
+        if (speciesName === 'FARFETCHD' && inputName === "FARFETCH'D") return node;
 
         for (let next of node.evolves_to) {
             const res = this.findNode(next, name);
@@ -148,4 +159,4 @@ const Evolution = {
 };
 
 // Expose for Debugging
-window.Evolution = Evolution;
+window['Evolution'] = Evolution;

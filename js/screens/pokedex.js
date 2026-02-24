@@ -239,7 +239,7 @@ const PokedexScreen = {
 
         if (!isSeen) {
             nameEl.innerText = '?????';
-            iconEl.src = '';
+            /** @type {HTMLImageElement} */ (iconEl).src = '';
             return;
         }
 
@@ -247,10 +247,10 @@ const PokedexScreen = {
         try {
             const data = await API.getPokemonData(id);
             if (data) {
-                nameEl.innerText = data.name.toUpperCase();
+                nameEl.innerText = API.normalizeName(data.name);
                 // Use icon if available, else front_default
                 const icon = data.sprites.versions['generation-vii'].icons.front_default || data.sprites.front_default;
-                iconEl.src = icon;
+                /** @type {HTMLImageElement} */ (iconEl).src = icon;
 
                 // Add types to list item? Space is tight. Maybe just name is fine for list.
             }
@@ -295,7 +295,7 @@ const PokedexScreen = {
         panel.classList.add('visible');
 
         // Reset contents
-        document.getElementById('detail-sprite').src = '';
+        /** @type {HTMLImageElement} */ (document.getElementById('detail-sprite')).src = '';
         document.getElementById('detail-name').innerText = 'LOADING...';
         document.getElementById('detail-types').innerText = '';
         document.getElementById('detail-desc').innerText = '...';
@@ -315,8 +315,8 @@ const PokedexScreen = {
         const vCrystal = data.sprites.versions['generation-ii']['crystal'];
         const sprite = vCrystal.front_transparent || vCrystal.front_default || data.sprites.front_default;
 
-        document.getElementById('detail-sprite').src = sprite;
-        document.getElementById('detail-name').innerText = `No. ${id.toString().padStart(3, '0')} ${data.name.toUpperCase()}`;
+        /** @type {HTMLImageElement} */ (document.getElementById('detail-sprite')).src = sprite;
+        document.getElementById('detail-name').innerText = `No. ${id.toString().padStart(3, '0')} ${API.normalizeName(data.name)}`;
 
         // Play Cry
         if (data.cries && data.cries.latest) {

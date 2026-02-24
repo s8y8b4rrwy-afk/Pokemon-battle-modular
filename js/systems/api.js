@@ -10,6 +10,24 @@ const API = {
         forms: {}
     },
 
+    // Helper: Convert PokeAPI names to clean display names
+    normalizeName(name) {
+        if (!name) return "";
+        const mapping = {
+            'nidoran-f': 'NIDORAN♀',
+            'nidoran-m': 'NIDORAN♂',
+            'mr-mime': 'MR. MIME',
+            'mime-jr': 'MIME JR.',
+            'farfetchd': "FARFETCH'D",
+            'ho-oh': 'HO-OH',
+            'porygon-z': 'PORYGON-Z'
+        };
+        if (mapping[name.toLowerCase()]) return mapping[name.toLowerCase()];
+
+        // Default: Replace dashes with spaces and uppercase
+        return name.replace(/-/g, ' ').toUpperCase();
+    },
+
     // Helper: Convert PokeAPI ailment names to short codes
     normalizeAilment(ailment) {
         if (!ailment) return null;
@@ -292,7 +310,7 @@ const API = {
             // 7. Assemble Object
             return {
                 id: data.id,
-                name: data.name.toUpperCase() + nameSuffix,
+                name: this.normalizeName(data.name) + nameSuffix,
                 level: level,
                 maxHp: stats.hp,
                 currentHp: stats.hp,
@@ -343,7 +361,7 @@ const API = {
             const mData = await res.json();
 
             const moveData = {
-                name: mData.name.replace(/-/g, ' ').toUpperCase(),
+                name: this.normalizeName(mData.name),
                 id: mData.name,
                 type: mData.type.name,
                 power: mData.power || 0,
