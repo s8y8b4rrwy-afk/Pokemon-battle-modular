@@ -98,6 +98,12 @@ const LootManager = {
             await Game.addRogueItem(key);
             Game.party.forEach(mon => StatCalc.recalculate(mon));
 
+            // Sync HUD immediately for stat changes (like Life Candy)
+            if (typeof Battle !== 'undefined' && Battle.p) {
+                UI.updateHUD(Battle.p, 'player');
+                if (Battle.e) UI.updateHUD(Battle.e, 'enemy');
+            }
+
             AudioEngine.playSfx('funfair');
             await DialogManager.show(`Nice! You snagged a\n${ITEMS[key].name}!`, { lock: true, skipWait: true });
             await UI.showRogueBoostStats(key);
@@ -183,6 +189,12 @@ const LootManager = {
             // Recalculate stats immediately to apply passive boosts
             Game.party.forEach(mon => StatCalc.recalculate(mon));
 
+            // Sync HUD immediately for stat changes (like Life Candy)
+            if (typeof Battle !== 'undefined' && Battle.p) {
+                UI.updateHUD(Battle.p, 'player');
+                if (Battle.e) UI.updateHUD(Battle.e, 'enemy');
+            }
+
             AudioEngine.playSfx('funfair');
             await DialogManager.show(`Lucky! You found a\n${ITEMS[key].name}!`, { lock: true, skipWait: true });
 
@@ -194,6 +206,12 @@ const LootManager = {
                 const key2 = this.rollForRogueItem(enemy, Game.wins);
                 await Game.addRogueItem(key2);
                 Game.party.forEach(mon => StatCalc.recalculate(mon));
+
+                if (typeof Battle !== 'undefined' && Battle.p) {
+                    UI.updateHUD(Battle.p, 'player');
+                    if (Battle.e) UI.updateHUD(Battle.e, 'enemy');
+                }
+
                 await DialogManager.show(`And another one!\nFound ${ITEMS[key2].name}!`, { lock: true, skipWait: true });
                 await UI.showRogueBoostStats(key2);
             }

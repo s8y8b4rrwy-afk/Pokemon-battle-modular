@@ -464,6 +464,12 @@ const Game = {
             // Recalculate stats for all party members as buffs might have expired
             this.party.forEach(p => StatCalc.recalculate(p));
 
+            // Sync HUD if we are currently in a battle and the active mon was affected
+            if (typeof Battle !== 'undefined' && Battle.p) {
+                UI.updateHUD(Battle.p, 'player');
+                if (Battle.e) UI.updateHUD(Battle.e, 'enemy');
+            }
+
             if (expiredNames.length > 0 && typeof DialogManager !== 'undefined') {
                 // Group notifications to avoid spamming 1 line per item
                 for (let i = 0; i < expiredNames.length; i += 2) {
@@ -545,73 +551,88 @@ const Game = {
         await this.finishWin();
     },
 
-    gainExpAnim(amount, p) {
-        p.exp += amount; UI.updateHUD(p, 'player');
-        const steps = 20; let i = 0;
-        return new Promise(resolve => {
-            const loop = setInterval(() => { AudioEngine.playSfx('exp'); i++; if (i >= steps) { clearInterval(loop); check(); } }, 50);
-            const check = async () => {
-                if (p.exp >= p.nextLvlExp) { await this.processLevelUp(p); resolve(); } else resolve();
+    async gainExpAnim(amount, p) {
+        let remaining = amount;
+
+        while (remaining > 0) {
+            const startExp = p.exp;
+            const distanceToNext = p.nextLvlExp - p.exp;
+            const toAdd = Math.min(remaining, distanceToNext);
+            const targetExp = p.exp + toAdd;
+
+            // Animate XP bar growth for this level's segment
+            await UI.animateXP(p, startExp, targetExp);
+
+            p.exp = targetExp;
+            remaining -= toAdd;
+
+            if (p.exp >= p.nextLvlExp) {
+                // Force sync and process level up
+                UI.updateHUD(p, 'player');
+                await this.processLevelUp(p);
             }
-        });
+
+            // Sync after each segment
+            UI.updateHUD(p, 'player');
+            await wait(100);
+        }
     },
 
-    processLevelUp(p) {
-        return new Promise(async (resolve) => {
-            const startLvl = p.level;
-            const levelsGained = [];
 
-            // Capture old stats for the UI display
-            const oldStats = { ...p.stats };
 
-            // 1. Calculate how many levels were gained
-            while (p.exp >= p.nextLvlExp) {
-                p.exp -= p.nextLvlExp;
-                p.level++;
-                levelsGained.push(p.level);
-                p.nextLvlExp = ExpCalc.getNextLevelExp(p.growthRate, p.level);
-            }
+    async processLevelUp(p) {
+        const startLvl = p.level;
+        const levelsGained = [];
 
-            StatCalc.recalculate(p);
-            AudioEngine.playSfx('levelup');
+        // Capture old stats for the UI display
+        const oldStats = { ...p.stats };
 
-            if (this.activeSlot === this.party.indexOf(p)) {
-                const hud = document.getElementById('player-hud');
-                hud.classList.remove('hud-flash-blue'); void hud.offsetWidth; hud.classList.add('hud-flash-blue');
-                UI.updateHUD(p, 'player');
-            }
+        // 1. Calculate how many levels were gained
+        while (p.exp >= p.nextLvlExp) {
+            p.exp -= p.nextLvlExp;
+            p.level++;
+            levelsGained.push(p.level);
+            p.nextLvlExp = ExpCalc.getNextLevelExp(p.growthRate, p.level);
+        }
 
-            await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to\nLevel ${p.level}!`, { lock: true, skipWait: true });
+        StatCalc.recalculate(p);
+        AudioEngine.playSfx('levelup');
 
-            // Show the little box with stat gains
-            await UI.showLevelUpStats(p, oldStats);
+        if (this.activeSlot === this.party.indexOf(p)) {
+            const hud = document.getElementById('player-hud');
+            hud.classList.remove('hud-flash-blue'); void hud.offsetWidth; hud.classList.add('hud-flash-blue');
+            UI.updateHUD(p, 'player');
+        }
 
-            // 2. CHECK MOVES FOR EVERY LEVEL GAINED
-            if (typeof MoveLearnScreen !== 'undefined') {
-                for (const lvl of levelsGained) {
-                    await MoveLearnScreen.checkAndLearn(p, lvl);
+        await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to\nLevel ${p.level}!`, { lock: true, skipWait: true });
 
-                    // --- NEW: SPECIAL MOVE CHANCE (TM/Tutor) ---
-                    const specialChance = GAME_BALANCE.MOVE_LEARN_SPECIAL_CHANCE || 0.15;
-                    if (Math.random() < specialChance) {
-                        const specialMoveName = await API.getRandomSpecialMove(p.id);
-                        if (specialMoveName) {
-                            await DialogManager.show(`Oh! ${p.name}\ngot inspired!`, { lock: true });
-                            await MoveLearnScreen.tryLearn(p, specialMoveName);
-                        }
+        // Show the little box with stat gains
+        await UI.showLevelUpStats(p, oldStats);
+
+        // 2. CHECK MOVES FOR EVERY LEVEL GAINED
+        if (typeof MoveLearnScreen !== 'undefined') {
+            for (const lvl of levelsGained) {
+                await MoveLearnScreen.checkAndLearn(p, lvl);
+
+                // --- NEW: SPECIAL MOVE CHANCE (TM/Tutor) ---
+                const specialChance = GAME_BALANCE.MOVE_LEARN_SPECIAL_CHANCE || 0.15;
+                if (Math.random() < specialChance) {
+                    const specialMoveName = await API.getRandomSpecialMove(p.id);
+                    if (specialMoveName) {
+                        await DialogManager.show(`Oh! ${p.name}\ngot inspired!`, { lock: true });
+                        await MoveLearnScreen.tryLearn(p, specialMoveName);
                     }
                 }
             }
+        }
 
-            // 3. Evolution Check (Only once at the end)
-            if (typeof Evolution !== 'undefined') {
-                const evo = await Evolution.check(p);
-                if (evo) await Evolution.execute(p, evo);
-            }
-
-            resolve();
-        });
+        // 3. Evolution Check (Only once at the end)
+        if (typeof Evolution !== 'undefined') {
+            const evo = await Evolution.check(p);
+            if (evo) await Evolution.execute(p, evo);
+        }
     },
+
 
     async finishWin() {
         // --- PENDING EVOLUTIONS (Stone & Debug) ---
@@ -687,11 +708,13 @@ const Game = {
             const range = GAME_BALANCE.HEAL_WIN_MAX_PCT - GAME_BALANCE.HEAL_WIN_MIN_PCT;
             const healAmt = Math.floor(p.maxHp * (GAME_BALANCE.HEAL_WIN_MIN_PCT + (Math.random() * range)));
             if (healAmt > 0) {
-                p.currentHp = Math.min(p.maxHp, p.currentHp + healAmt);
+                const startHp = p.currentHp;
+                const endHp = Math.min(p.maxHp, p.currentHp + healAmt);
                 AudioEngine.playSfx('heal');
-                UI.updateHUD(p, 'player');
+                await UI.animateHP(p, 'player', startHp, endHp);
             }
         }
+
 
         const checkTransform = async () => {
             if (p.transformBackup) {

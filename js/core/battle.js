@@ -73,18 +73,19 @@ const Battle = {
         this._playEffectivenessSfx(effectivenessData, moveName);
         const flashPromise = this._flashSprite(target);
 
+        const startHp = target.currentHp;
         // Handle Endure (only for direct move damage, not status/recoil)
         const isIndirect = ['recoil', 'poison', 'burn', 'sandstorm', 'hail'].includes(type);
-        if (target.volatiles.endured && amount >= target.currentHp && !isIndirect) {
-            target.currentHp = 1;
-            UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
-            await flashPromise;
-            await UI.typeText(`${target.name} endured\nthe hit!`);
-        } else {
-            target.currentHp -= amount;
-            UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
-            await flashPromise;
+        let endHp = target.currentHp - amount;
+
+        if (target.volatiles.endured && endHp <= 0 && !isIndirect) {
+            endHp = 1;
         }
+
+        // Animate HP change (Numbers + Bar)
+        await UI.animateHP(target, target === this.p ? 'player' : 'enemy', startHp, endHp);
+        await flashPromise;
+
     },
 
     // Play the correct SFX based on effectiveness
@@ -128,13 +129,16 @@ const Battle = {
     async applyHeal(target, amount, messageOverride = null, animName = 'fx-heal') {
         if (target.currentHp >= target.maxHp) return false;
 
-        const oldHp = target.currentHp;
-        target.currentHp = Math.min(target.maxHp, target.currentHp + amount);
-        const healedAmt = target.currentHp - oldHp;
+        const startHp = target.currentHp;
+        const endHp = Math.min(target.maxHp, target.currentHp + amount);
+        const healedAmt = endHp - startHp;
 
         // Visuals
-        await BattleAnims.triggerHealAnim(target, animName);
-        UI.updateHUD(target, target === this.p ? 'player' : 'enemy');
+        const animPromise = BattleAnims.triggerHealAnim(target, animName);
+        const hpPromise = UI.animateHP(target, target === this.p ? 'player' : 'enemy', startHp, endHp);
+
+        await Promise.all([animPromise, hpPromise]);
+
 
         // Text
         // Pass 'false' as messageOverride to skip text (for silent heals)

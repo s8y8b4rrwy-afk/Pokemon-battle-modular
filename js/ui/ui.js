@@ -118,10 +118,16 @@ const UI = {
             rageEl.style.display = "none";
         }
 
-        const pct = (Math.max(0, mon.currentHp) / mon.maxHp) * 100;
         const bar = document.getElementById(`${side}-hp-bar`);
+        const pct = (Math.max(0, mon.currentHp) / mon.maxHp) * 100;
+
+        // Instant update for HUD refreshes (Level up, item gain)
+        const originalTransition = bar.style.transition;
+        bar.style.transition = 'none';
         bar.style.width = Math.max(0, pct) + "%";
         bar.style.backgroundColor = pct > 50 ? "var(--hp-green)" : pct > 20 ? "var(--hp-yellow)" : "var(--hp-red)";
+        void bar.offsetWidth;
+        bar.style.transition = originalTransition;
 
         if (side === 'player') {
             document.getElementById('player-hp-text').innerText = `${Math.floor(Math.max(0, mon.currentHp))}/${mon.maxHp}`;
@@ -129,6 +135,122 @@ const UI = {
             document.getElementById('player-exp-bar').style.width = Math.min(100, expPct) + "%";
         }
     },
+
+    /**
+     * Smoothly animate HP change including numbers and bar color.
+     */
+    async animateHP(mon, side, startHp, endHp) {
+        const bar = document.getElementById(`${side}-hp-bar`);
+        const text = side === 'player' ? document.getElementById('player-hp-text') : null;
+
+        const hpDelta = Math.abs(endHp - startHp);
+        const hpPct = hpDelta / mon.maxHp;
+        const currentZone = endHp / mon.maxHp;
+
+        // 1. BASE SPEED: Normal hits take ~1.2s for a full bar.
+        let baseDuration = ANIM_HUD.HP_BASE_DURATION * hpPct;
+
+        // 2. ZONE MULTIPLIERS
+        let zoneMult = 1.0;
+        if (currentZone < 0.2) zoneMult = ANIM_HUD.HP_ZONE_RED_MULT;
+        else if (currentZone < 0.5) zoneMult = ANIM_HUD.HP_ZONE_ORANGE_MULT;
+
+        // 3. SMALL HIT SLOWDOWN (Requested: < 15% is 4x slower)
+        if (hpPct < ANIM_HUD.HP_SMALL_HIT_THRESHOLD) {
+            zoneMult *= ANIM_HUD.HP_SMALL_HIT_MULT;
+        }
+
+        // 4. THE "CRAWL" PHASE (Requested: Last units take ~1s each)
+        const tailUnits = Math.min(hpDelta, ANIM_HUD.HP_TAIL_UNITS);
+        const tailDuration = tailUnits * ANIM_HUD.HP_TAIL_MS_PER_UNIT;
+
+        let duration = (baseDuration * zoneMult) + tailDuration;
+        duration = Math.max(ANIM_HUD.HP_MIN_DURATION, Math.min(ANIM_HUD.HP_MAX_DURATION, duration));
+
+        const startTime = performance.now();
+        const originalTransition = bar.style.transition;
+        bar.style.transition = 'none';
+
+        // 5. BALANCED EASING
+        // Constant power 4 creates a heavy slowdown without "snapping" to white space.
+        const easePower = ANIM_HUD.HP_EASE_POWER;
+
+        return new Promise(resolve => {
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                let progress = Math.min(elapsed / duration, 1);
+
+                const easedProgress = 1 - Math.pow(1 - progress, easePower);
+                const currentVal = startHp + (endHp - startHp) * easedProgress;
+                const displayHp = Math.max(0, Math.floor(currentVal + 0.01)); // Offset to favor target
+
+                const pct = (Math.max(0, currentVal) / mon.maxHp) * 100;
+                bar.style.width = pct + "%";
+                bar.style.backgroundColor = pct > 50 ? "var(--hp-green)" : pct > 20 ? "var(--hp-yellow)" : "var(--hp-red)";
+
+                if (text) text.innerText = `${displayHp}/${mon.maxHp}`;
+
+                // EARLY RESOLVE: If we are practically at the end or the visual matches, finish.
+                const isPracticallyDone = progress > 0.99 || (Math.abs(currentVal - endHp) < 0.05);
+
+                if (!isPracticallyDone) {
+                    requestAnimationFrame(animate);
+                } else {
+                    mon.currentHp = endHp;
+                    bar.style.transition = originalTransition;
+                    this.updateHUD(mon, side);
+                    resolve();
+                }
+            };
+            requestAnimationFrame(animate);
+        });
+
+    },
+
+    /**
+     * Smoothly animate XP gain for the player.
+     */
+    async animateXP(mon, startExp, endExp) {
+        const bar = document.getElementById('player-exp-bar');
+        const expDelta = endExp - startExp;
+        const expPct = expDelta / mon.nextLvlExp;
+        let duration = ANIM_HUD.XP_BASE_DURATION * expPct;
+        duration = Math.max(ANIM_HUD.XP_MIN_DURATION, Math.min(ANIM_HUD.XP_MAX_DURATION, duration));
+
+        const startTime = performance.now();
+        const originalTransition = bar.style.transition;
+        bar.style.transition = 'none';
+
+        let lastSoundTime = 0;
+
+        return new Promise(resolve => {
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                const easedProgress = 1 - Math.pow(1 - progress, ANIM_HUD.XP_EASE_POWER);
+
+                const currentExp = startExp + (endExp - startExp) * easedProgress;
+                const pct = (currentExp / mon.nextLvlExp) * 100;
+
+                bar.style.width = Math.min(100, pct) + "%";
+
+                if (currentTime - lastSoundTime > ANIM_HUD.XP_TICK_RATE) {
+                    AudioEngine.playSfx('exp');
+                    lastSoundTime = currentTime;
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    bar.style.transition = originalTransition;
+                    resolve();
+                }
+            };
+            requestAnimationFrame(animate);
+        });
+    },
+
 
     // --- VISUAL EFFECTS ---
     spawnSmoke(x, y) {

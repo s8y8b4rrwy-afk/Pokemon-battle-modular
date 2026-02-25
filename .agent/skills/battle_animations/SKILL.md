@@ -195,6 +195,26 @@ The `spriteMove` step provides quick-access movement templates. Direction is aut
 
 ---
 
+## HUD Animations (HP & XP Bars)
+
+HUD animations (HP drain and XP gain) are handled in `js/ui/ui.js` but are **data-driven** via weights and durations in `js/data/settings.js`. Tuning these values allows for fine-grained control over the "feel" and "prestige" of battle progress.
+
+### `ANIM_HUD` Configuration
+Located in `js/data/settings.js`, this object centralizes all behavior for bars:
+
+| Parameter | Default | Effect |
+|-----------|---------|---------|
+| `HP_BASE_DURATION` | `1200` | ms for a 100% HP bar change. |
+| `HP_ZONE_RED_MULT` | `1.8` | Slowdown multiplier when health is below 20%. |
+| `HP_SMALL_HIT_MULT`| `4.0` | Extra slowdown for hits dealing < 15% damage. |
+| `HP_TAIL_UNITS` | `3` | The number of final HP digits that "crawl" slowly. |
+| `HP_TAIL_MS_PER_UNIT` | `800` | ms per digit during the tail crawl. |
+| `HP_EASE_POWER` | `4` | Power for the ease-out curve (Higher = sharper slowdown). |
+| `XP_BASE_DURATION` | `2500` | ms for a full 100% XP fill (higher = more prestige). |
+| `XP_TICK_RATE` | `60` | ms between sound ticks during growth. |
+
+---
+
 ## Dynamic Animations (Function-Based)
 
 You can register a **function** instead of an array. The function receives the resolved context (`attacker`, `defender`, etc.) and must return an array of steps. This allows for logic-based animations (e.g. fewer particles for weak moves).

@@ -122,3 +122,27 @@ const ROGUE_LOOT = {
         { key: 'rogue_shiny', weight: 10 }
     ]
 };
+
+// --- ANIMATION & HUD CONFIG ---
+// Control the "feel" of HP bars and XP growth.
+const ANIM_HUD = {
+    // HP Animation
+    HP_BASE_DURATION: 1200,      // Time for 100% HP change in ms
+    HP_ZONE_ORANGE_MULT: 1.4,    // Slowdown factor when health is < 50%
+    HP_ZONE_RED_MULT: 1.8,       // Slowdown factor when health is < 20%
+    HP_SMALL_HIT_THRESHOLD: 0.15, // Damage < 15% triggers extra slowdown
+    HP_SMALL_HIT_MULT: 3.0,      // 4x slower for minor hits
+    HP_TAIL_UNITS: 3,            // Number of final HP digits to "crawl"
+    HP_TAIL_MS_PER_UNIT: 500,    // Milliseconds per digit during the crawl
+    HP_EASE_POWER: 4,            // Higher = more aggressive slowdown at target
+    HP_MIN_DURATION: 400,        // Minimum time for any hit
+    HP_MAX_DURATION: 6000,       // Maximum time for a single hit
+
+    // XP Animation
+    XP_BASE_DURATION: 2500,      // Time for 100% XP bar fill (Slower = more prestige)
+    XP_MIN_DURATION: 400,
+    XP_MAX_DURATION: 1800,
+    XP_EASE_POWER: 5,
+    XP_TICK_RATE: 60             // Interval between sound ticks during growth
+};
+
