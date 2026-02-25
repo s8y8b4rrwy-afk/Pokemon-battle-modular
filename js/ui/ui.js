@@ -224,6 +224,7 @@ const UI = {
         bar.style.transition = 'none';
 
         let lastSoundTime = 0;
+        let currentPitch = ANIM_HUD.XP_PITCH_START;
 
         return new Promise(resolve => {
             const animate = (currentTime) => {
@@ -238,11 +239,9 @@ const UI = {
                 bar.style.width = Math.min(100, pct) + "%";
 
                 if (currentTime - lastSoundTime > ANIM_HUD.XP_TICK_RATE) {
-                    // Use linear progress for a steadier, "slower" feeling pitch rise
-                    const start = ANIM_HUD.XP_PITCH_START;
-                    const range = ANIM_HUD.XP_PITCH_END - start;
-                    const pitchShift = start + (progress * range);
-                    AudioEngine.playSfx('exp', pitchShift);
+                    AudioEngine.playSfx('exp', currentPitch);
+                    // Increment pitch each tick
+                    currentPitch += ANIM_HUD.XP_PITCH_INC;
                     lastSoundTime = currentTime;
                 }
 

@@ -213,7 +213,7 @@ Located in `js/data/settings.js`, this object centralizes all behavior for bars:
 | `XP_BASE_DURATION` | `2500` | ms for a full 100% XP fill (higher = more prestige). |
 | `XP_TICK_RATE` | `60` | ms between sound ticks during growth. |
 | `XP_PITCH_START` | `400` | Starting frequency (Hz) for the tick sound. |
-| `XP_PITCH_END` | `800` | Final frequency (Hz) for the tick sound. |
+| `XP_PITCH_INC` | `5` | Amount of Hz added to the pitch with every sound tick. |
 
 ---
 
