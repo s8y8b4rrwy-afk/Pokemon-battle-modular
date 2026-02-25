@@ -136,9 +136,12 @@ const AnimFramework = {
 
         // Canonical positions
         const attackerPos = isPlayerAttacker ? { x: 60, y: 150 } : { x: 230, y: 70 };
-        const defenderPos = (ctx.defender && typeof Battle !== 'undefined' && ctx.defender === Battle.p)
-            ? { x: 60, y: 150 }
-            : (isPlayerAttacker ? { x: 230, y: 70 } : { x: 60, y: 150 });
+        let defenderPos;
+        if (ctx.defender && typeof Battle !== 'undefined') {
+            defenderPos = (ctx.defender === Battle.p) ? { x: 60, y: 150 } : { x: 230, y: 70 };
+        } else {
+            defenderPos = isPlayerAttacker ? { x: 230, y: 70 } : { x: 60, y: 150 };
+        }
 
         return {
             ...ctx,
