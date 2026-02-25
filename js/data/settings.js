@@ -144,6 +144,8 @@ const ANIM_HUD = {
     XP_MAX_DURATION: 1800,
     XP_EASE_POWER: 5,
     XP_TICK_RATE: 60,            // Interval between sound ticks during growth
+    XP_PITCH_START: 400,         // Starting pitch of the XP tick
+    XP_PITCH_END: 800,           // Maximum pitch of the XP tick
 
     // Sprite Hit Effects
     HP_HIT_FLICKER_COUNT: 2,     // Number of times the pokemon blinks on hit
