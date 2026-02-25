@@ -183,7 +183,7 @@ const UI = {
                 let progress = Math.min(elapsed / duration, 1);
 
                 const easedProgress = 1 - Math.pow(1 - progress, easePower);
-                const currentVal = startHp + (endHp - startHp) * easedProgress;
+                const currentVal = startHp + (targetHp - startHp) * easedProgress;
                 const displayHp = Math.max(0, Math.floor(currentVal + 0.01)); // Offset to favor target
 
                 const pct = (Math.max(0, currentVal) / mon.maxHp) * 100;
@@ -193,7 +193,7 @@ const UI = {
                 if (text) text.innerText = `${displayHp}/${mon.maxHp}`;
 
                 // EARLY RESOLVE: If we are practically at the end or the visual matches, finish.
-                const isPracticallyDone = progress > 0.99 || (Math.abs(currentVal - endHp) < 0.05);
+                const isPracticallyDone = progress > 0.99 || (Math.abs(currentVal - targetHp) < 0.05);
 
                 if (!isPracticallyDone) {
                     requestAnimationFrame(animate);
