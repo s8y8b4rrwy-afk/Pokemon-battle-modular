@@ -147,8 +147,8 @@ const TurnManager = {
         }
 
         switch (action.type) {
-            case 'ATTACK': await this.processAttack(battle, action.user, action.target, action.move); break;
-            case 'SWITCH': await this.processSwitch(battle, action.newMon); break;
+            case 'ATTACK': return await this.processAttack(battle, action.user, action.target, action.move);
+            case 'SWITCH': return await this.processSwitch(battle, action.newMon);
             case 'ITEM': return await battle.processItem(action.item);
         }
     },
@@ -239,10 +239,10 @@ const TurnManager = {
                 return;
             }
 
-            await MovesEngine.executeDamagePhase(battle, attacker, defender, move, isPlayer);
+            const res = await MovesEngine.executeDamagePhase(battle, attacker, defender, move, isPlayer);
             sprite.style.opacity = '1'; // Restore now if animation didn't
             await restoreSub();
-            return;
+            return res;
         }
 
         if (logic.type === 'protect' || logic.type === 'endure') {
@@ -337,7 +337,7 @@ const TurnManager = {
             return;
         }
 
-        await MovesEngine.executeDamagePhase(battle, attacker, defender, move, isPlayer);
+        const damagePhaseResult = await MovesEngine.executeDamagePhase(battle, attacker, defender, move, isPlayer);
         if (logic.type === 'recharge') attacker.volatiles.recharging = true;
 
         // Handle Lock-in initialization and decrement

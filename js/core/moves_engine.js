@@ -29,6 +29,7 @@ const MovesEngine = {
         // Check for Unique Move Logic FIRST (Covers U-turn, Counter, Rest, etc)
         if (special && special.isUnique) {
             const result = await special.onHit(battle, attacker, defender, weatherMod);
+            if (result === 'STOP_BATTLE') return 'STOP_BATTLE';
             if (result === 'IMMUNE') { moveImmune = true; didSomething = false; }
             else if (result === 'FAIL' || result === false) { explicitlyFailed = true; didSomething = false; }
             else { didSomething = !!result; }
@@ -36,6 +37,7 @@ const MovesEngine = {
         else if (move.category !== 'status') {
             // --- DAMAGING MOVES ---
             const result = await this.handleDamageSequence(battle, attacker, defender, move, isPlayer, weatherMod);
+            if (result === 'STOP_BATTLE') return 'STOP_BATTLE';
             didSomething = result.success;
             moveImmune = result.immune;
             // Only run side effects (e.g. Ancient Power stats) if damage landed
@@ -43,6 +45,7 @@ const MovesEngine = {
         } else {
             // --- STATUS MOVES ---
             const result = await this.handleStatusMove(battle, attacker, defender, move);
+            if (result === 'STOP_BATTLE') return 'STOP_BATTLE';
 
             if (result === 'IMMUNE') {
                 moveImmune = true;
@@ -59,6 +62,7 @@ const MovesEngine = {
         // Note: For standard Damaging moves, this is now handled after each hit in handleDamageSequence
         if (move.category === 'status' || (special && special.isUnique)) {
             const sideEffectsHappened = await this.handleMoveSideEffects(battle, attacker, defender, move, isPlayer, allowSideEffects);
+            if (sideEffectsHappened === 'STOP_BATTLE') return 'STOP_BATTLE';
             if (sideEffectsHappened) didSomething = true;
         }
 
@@ -66,6 +70,8 @@ const MovesEngine = {
         if (!didSomething && !moveImmune && !explicitlyFailed) {
             await UI.typeText("But it failed!");
         }
+
+        return didSomething ? 'SUCCESS' : 'FAIL';
     },
 
     async handleDamageSequence(battle, attacker, defender, move, isPlayer, weatherMod) {
@@ -370,21 +376,22 @@ const MovesEngine = {
             return false;
         }
 
-        // CASE 1: Player used Roar -> End Battle, Find New Enemy
-        if (user === battle.p) {
+        const isPlayerUser = (user === battle.p);
+
+        // CASE 1: Player uses it on Wild Mon -> End Battle
+        if (isPlayerUser) {
             await UI.typeText(`${target.name} fled\nin fear!`);
             AudioEngine.playSfx('run');
-
-            const eSprite = document.getElementById('enemy-sprite');
-            eSprite.style.transition = "opacity 0.5s";
-            eSprite.style.opacity = '0';
+            const targetSprite = document.getElementById('enemy-sprite');
+            targetSprite.style.transition = "opacity 0.5s";
+            targetSprite.style.opacity = '0';
             await wait(500);
 
             Game.skipBattle();
-            return true;
+            return 'STOP_BATTLE';
         }
 
-        // CASE 2: Enemy used Roar -> Force Player Switch
+        // CASE 2: Enemy uses it on Player -> Force Player Switch
         else {
             const validIndices = Game.party
                 .map((p, index) => ({ p, index }))
@@ -392,16 +399,38 @@ const MovesEngine = {
                 .map(item => item.index);
 
             if (validIndices.length === 0) {
-                await UI.typeText("But it failed!");
-                return false;
+                // If the player has no other mons, the move ends the battle (as requested previously for enemy too)
+                // but the user's latest "wait, roar if used by the enemy..." suggests it should attempt a switch first.
+                // In Gen 2, if no teammates, it FAILS in trainer battles, or ENDS BATTLE in wild.
+                // Since this game is mostly wild-encounter loop, we'll keep the "end battle" fallback if no teammates.
+                await UI.typeText(`${user.name} let out\na terrifying roar!`);
+                await UI.typeText(`${target.name} fled\nin fear!`);
+
+                AudioEngine.playSfx('run');
+                const targetSprite = document.getElementById('player-sprite');
+                targetSprite.style.transition = "opacity 0.5s";
+                targetSprite.style.opacity = '0';
+                await wait(500);
+
+                Game.skipBattle();
+                return 'STOP_BATTLE';
             }
 
+            // Normal Switch Logic
             const rndIndex = validIndices[Math.floor(Math.random() * validIndices.length)];
             const newMon = Game.party[rndIndex];
 
+            await UI.typeText(`${user.name} let out\na terrifying roar!`);
             await UI.typeText(`${target.name} was\ndragged out!`);
+
+            // Trigger proper forced withdrawal animation
+            const pSprite = document.getElementById('player-sprite');
+            pSprite.classList.add('anim-return'); // Reuse the return-to-ball animation
+            await wait(500);
+
             Game.activeSlot = rndIndex;
-            await battle.processSwitch(newMon, false);
+            await battle.processSwitch(newMon, false); // No faint swap, just forced switch
+
             return true;
         }
     }

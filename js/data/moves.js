@@ -135,11 +135,42 @@ const MOVE_DEX = {
             return res.success;
         }
     },
+    'FOCUS ENERGY': {
+        isUnique: true,
+        onHit: async (battle, user) => {
+            if (user.volatiles.focusEnergy) {
+                return 'FAIL';
+            }
+            user.volatiles.focusEnergy = true;
+            const ctx = { attacker: user, defender: user, isPlayerAttacker: user === battle.p };
+            await AnimFramework.play('focus-energy', ctx);
+            await UI.typeText(`${user.name} is\ngetting pumped!`);
+            return true;
+        }
+    },
     'DEFENSE CURL': {
+        isUnique: true,
         onHit: async (battle, user) => {
             user.volatiles.defenseCurl = true;
-            // The stat boost (DEF +1) will be applied by standard handleMoveSideEffects if it's in the move database
+            await battle.applyStatChanges(user, [{ stat: { name: 'defense' }, change: 1 }], user === battle.p);
             return true;
+        }
+    },
+    'TELEPORT': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await AnimFramework.play('teleport', ctx);
+
+            await UI.typeText(`${user.name} teleported\naway!`);
+            const sprite = (user === battle.p) ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+            sprite.style.transition = "opacity 0.6s, transform 0.6s";
+            sprite.style.opacity = '0';
+            sprite.style.transform = 'scale(0) rotate(180deg)';
+            await wait(600);
+
+            Game.skipBattle();
+            return 'STOP_BATTLE';
         }
     },
 
@@ -389,16 +420,16 @@ const MOVE_DEX = {
     'ROAR': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            if (target.isBoss) { await UI.typeText("But it failed!"); return 'FAIL'; }
-            await battle.triggerHitAnim(target, 'normal', 'ROAR', user);
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await AnimFramework.play('roar', ctx);
             return await MovesEngine.forceSwitchOrRun(battle, user, target);
         }
     },
     'WHIRLWIND': {
         isUnique: true,
         onHit: async (battle, user, target) => {
-            if (target.isBoss) { await UI.typeText("But it failed!"); return 'FAIL'; }
-            await battle.triggerHitAnim(target, 'normal', 'WHIRLWIND', user);
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await AnimFramework.play('roar', ctx);
             return await MovesEngine.forceSwitchOrRun(battle, user, target);
         }
     },

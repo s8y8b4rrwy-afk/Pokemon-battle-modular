@@ -1016,4 +1016,22 @@ AnimFramework.register('defense-curl', [
         duration: 400, animation: 'grow'
     }
 ]);
+AnimFramework.register('teleport', [
+    { type: 'sfx', sound: 'psychic' },
+    {
+        type: 'parallel', steps: [
+            { type: 'invert', target: 'attacker', duration: 400 },
+            { type: 'spriteMove', target: 'attacker', preset: 'jump', duration: 400 }
+        ]
+    }
+]);
 
+AnimFramework.register('roar', [
+    { type: 'sfx', sound: 'normal' },
+    {
+        type: 'parallel', steps: [
+            { type: 'tilt', angle: 5, duration: 400 },
+            { type: 'spriteShake', target: 'defender', duration: 400 }
+        ]
+    }
+]);

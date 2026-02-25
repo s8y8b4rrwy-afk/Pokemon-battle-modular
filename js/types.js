@@ -67,6 +67,8 @@
  * @property {boolean} [nightmare]
  * @property {boolean} [attract]
  * @property {boolean} [focusEnergy]
+ * @property {number} [rolloutCount]
+ * @property {boolean} [defenseCurl]
  * @property {number} [toxicCounter]
  * @property {number} [drowsy]
  * @property {Object} [encored]
