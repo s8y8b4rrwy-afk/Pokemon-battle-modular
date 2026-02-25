@@ -56,6 +56,7 @@ const LOOT_SYSTEM = {
 
         // Evolution Stone — Rare drop from wild/boss; higher rate from Lucky Pokémon (handled separately in game.js)
         { key: 'evo_stone', ...RARITY.RARE },
+        { key: 'inspiration_stone', ...RARITY.RARE },
 
         { key: 'masterball', ...RARITY.LEGENDARY },
     ]
@@ -76,7 +77,7 @@ const ITEMS = {
     bicycle: { name: "BICYCLE", type: 'key', pocket: 'key', desc: "A folding bicycle for traveling faster.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/bicycle.png" },
     pokedex: { name: "POKEDEX", type: 'key', pocket: 'key', desc: "A high-tech encyclopedia that records Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/pokedex.png" },
     evo_stone: { name: "EVOLUTION STONE", type: 'evo_stone', pocket: 'key', desc: "A mysterious stone pulsing with ancient energy. It can magically trigger the evolution of any Pokemon, bypassing the need to level up.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/moon-stone.png" },
-    inspiration_stone: { name: "INSPIRATION STONE", type: 'inspiration_stone', pocket: 'key', desc: "A sparkling gem that fills a Pokemon with sudden insight. It inspires them to learn a new technique after the next battle.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/fire-stone.png" },
+    inspiration_stone: { name: "INSPIRATION STONE", type: 'inspiration_stone', pocket: 'key', desc: "A sparkling gem that fills a Pokemon with sudden insight. It inspires them to learn a new technique after the next battle.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/tm-normal.png" },
 
     // --- STATUS HEALERS ---
     antidote: { name: "ANTIDOTE", type: 'status_heal', condition: 'poison', pocket: 'items', desc: "Cures a poisoned Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/antidote.png" },

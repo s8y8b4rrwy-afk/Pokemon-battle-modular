@@ -956,3 +956,47 @@ AnimFramework.register('wing-attack', [
     { type: 'spriteShake', target: 'defender', duration: 300 }
 ]);
 
+AnimFramework.register('rollout', [
+    { type: 'spriteMove', target: 'attacker', preset: 'jump' },
+    { type: 'sfx', sound: 'rock' },
+    {
+        type: 'parallel', steps: [
+            { type: 'spriteMove', target: 'attacker', preset: 'charge', duration: 300 },
+            {
+                type: 'overlay', target: 'defender', shape: 'rock',
+                color: '#b8a038', outline: '#000', width: 40, height: 40,
+                duration: 400, animation: 'slam', count: 1
+            }
+        ]
+    },
+    { type: 'spriteShake', target: 'defender', duration: 400 }
+]);
+
+AnimFramework.register('hidden-power', [
+    { type: 'sfx', sound: 'psychic' },
+    {
+        type: 'orbit', target: 'attacker', shape: 'sparkle',
+        radiusX: 40, radiusY: 40, count: 5, speed: 2, duration: 800,
+        color: '#fff', outline: '#000', particleSize: 12
+    },
+    {
+        type: 'beam', from: 'attacker', to: 'defender', duration: 400,
+        width: 15, height: 15, beamStyles: {
+            background: 'white', borderRadius: '50%', boxShadow: '0 0 10px white'
+        }
+    },
+    { type: 'spriteShake', target: 'defender', duration: 200 }
+]);
+
+AnimFramework.register('defense-curl', [
+    { type: 'sfx', sound: 'normal' },
+    {
+        type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 300
+    },
+    {
+        type: 'overlay', target: 'attacker', shape: 'shield',
+        color: '#fff', outline: '#000', width: 30, height: 30,
+        duration: 400, animation: 'grow'
+    }
+]);
+

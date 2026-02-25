@@ -135,5 +135,11 @@ const Mechanics = {
         if (mon.stages && mon.stages.spe) spe = Math.floor(spe * STAGE_MULT[mon.stages.spe]);
         if (mon.status === 'par') spe = Math.floor(spe * 0.25); // Gen 3+ style is 25%, Gen 2-6 was 25%, Gen 7+ is 50%. Let's go with 25% for "impact".
         return spe;
+    },
+
+    getHiddenPowerType(user) {
+        const types = ['fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel'];
+        const val = user.stats.hp + user.stats.atk + user.stats.def + user.stats.spa + user.stats.spd + user.stats.spe + user.level;
+        return types[val % types.length];
     }
 };

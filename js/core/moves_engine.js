@@ -175,8 +175,24 @@ const MovesEngine = {
                 await UI.typeText(`${attacker.name} is\n${msg}`);
                 await UI.typeText(`${attacker.name} used\n${move.name} again!`);
 
-                const dmgMod = (j === 0) ? 0.8 : 0.5;
-                const extraDmg = Math.max(1, Math.floor(baseDmg * dmgMod));
+                let currentDmg;
+
+                // --- CUSTOM: ROLLOUT RAGE SCALING ---
+                // If the move is ROLLOUT, each rage hit increments the rolloutCount and doubles the damage.
+                if (move.name === 'ROLLOUT' && attacker.volatiles.rolloutCount) {
+                    attacker.volatiles.rolloutCount++;
+                    if (attacker.volatiles.rolloutCount > 5) attacker.volatiles.rolloutCount = 1;
+
+                    // Power doubles, so damage roughly doubles.
+                    currentDmg = baseDmg * 2;
+                } else {
+                    const dmgMod = (j === 0) ? 0.8 : 0.5;
+                    currentDmg = Math.floor(baseDmg * dmgMod);
+                }
+
+                const extraDmg = Math.max(1, currentDmg);
+                // Update baseDmg for the next repetition (if any)
+                baseDmg = extraDmg;
 
                 const effData = { eff: result.eff, isCrit: result.isCrit };
                 await battle.applyDamage(defender, extraDmg, move.type, move.name, effData);

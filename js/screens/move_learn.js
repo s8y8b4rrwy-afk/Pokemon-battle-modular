@@ -156,9 +156,14 @@ const MoveLearnScreen = {
             const isNew = i === 4;
             row.className = `ml-move-row ${i === this.hoverIndex ? 'selected' : ''} ${isNew ? 'new-move' : ''}`;
 
+            let displayType = m.type;
+            if (m.name === 'HIDDEN POWER') {
+                displayType = Mechanics.getHiddenPowerType(this.pokemon);
+            }
+
             row.innerHTML = `
                 <div class="ml-move-meta">
-                    <span class="ml-type-pill ${m.type.toLowerCase()}">${m.type.substring(0, 3).toUpperCase()}</span>
+                    <span class="ml-type-pill ${displayType.toLowerCase()}">${displayType.substring(0, 3).toUpperCase()}</span>
                     <span class="ml-move-name">${m.name}${isNew ? ' (NEW)' : ''}</span>
                 </div>
             `;
@@ -185,9 +190,17 @@ const MoveLearnScreen = {
     renderInfo(move, title) {
         document.getElementById('ml-info-title').innerText = title;
         if (!move) return;
-        document.getElementById('ml-info-power').innerText = `PWR: ${move.power || '-'}`;
+
+        let displayType = move.type;
+        let displayPower = move.power;
+        if (move.name === 'HIDDEN POWER') {
+            displayType = Mechanics.getHiddenPowerType(this.pokemon);
+            displayPower = 60;
+        }
+
+        document.getElementById('ml-info-power').innerText = `PWR: ${displayPower || '-'}`;
         document.getElementById('ml-info-acc').innerText = `ACC: ${move.accuracy || '-'}%`;
-        document.getElementById('ml-info-type').innerText = `TYPE/${move.type.toUpperCase()}`;
+        document.getElementById('ml-info-type').innerText = `TYPE/${displayType.toUpperCase()}`;
 
         document.getElementById('ml-info-desc').innerText = move.desc ? move.desc.replace(/\n/g, ' ') : "No description.";
     },

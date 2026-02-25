@@ -99,6 +99,49 @@ const MOVE_DEX = {
             return 'FAIL';
         }
     },
+    'ROLLOUT': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            if (!user.volatiles.rolloutCount) user.volatiles.rolloutCount = 1;
+
+            const getPower = (count) => {
+                let p = 30 * Math.pow(2, count - 1);
+                if (user.volatiles.defenseCurl) p *= 2;
+                return p;
+            };
+
+            const currentPower = getPower(user.volatiles.rolloutCount);
+            const moveData = { name: 'ROLLOUT', type: 'rock', power: currentPower, category: 'physical' };
+
+            // handleDamageSequence will trigger standard rage hits if applicable
+            const res = await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+
+            if (res.success) {
+                user.volatiles.rolloutCount++;
+                if (user.volatiles.rolloutCount > 5) user.volatiles.rolloutCount = 1;
+                return true;
+            } else {
+                user.volatiles.rolloutCount = 1;
+                return 'FAIL';
+            }
+        }
+    },
+    'HIDDEN POWER': {
+        isUnique: true,
+        onHit: async (battle, user, target, weatherMod) => {
+            const type = Mechanics.getHiddenPowerType(user);
+            const moveData = { name: 'HIDDEN POWER', type: type, power: 60, category: 'special' };
+            const res = await battle.handleDamageSequence(user, target, moveData, user === battle.p, weatherMod);
+            return res.success;
+        }
+    },
+    'DEFENSE CURL': {
+        onHit: async (battle, user) => {
+            user.volatiles.defenseCurl = true;
+            // The stat boost (DEF +1) will be applied by standard handleMoveSideEffects if it's in the move database
+            return true;
+        }
+    },
 
     // --- PERISH SONG ---
     'PERISH SONG': {

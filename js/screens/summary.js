@@ -176,14 +176,22 @@ const SummaryScreen = {
                 <div style="grid-column: span 2; font-size: 0.75em; opacity: 0.7; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 2px;">GROWTH: ${p.growthRate.replace(/-/g, ' ').toUpperCase()}</div>
             </div>`;
 
-        document.getElementById('summary-moves').innerHTML = p.moves.map(m => `
+        document.getElementById('summary-moves').innerHTML = p.moves.map(m => {
+            let displayType = m.type;
+            let displayPower = m.power;
+            if (m.name === 'HIDDEN POWER') {
+                displayType = Mechanics.getHiddenPowerType(p);
+                displayPower = 60;
+            }
+            return `
             <div class="move-row">
                 <span class="move-name">${m.name}</span>
                 <div class="move-info-grp">
-                    <span class="move-pwr">PWR ${m.power || '-'}</span>
-                    <span class="move-type">${m.type.toUpperCase()}</span>
+                    <span class="move-pwr">PWR ${displayPower || '-'}</span>
+                    <span class="move-type">${displayType.toUpperCase()}</span>
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     },
 
     nav(dir) {

@@ -301,11 +301,19 @@ const BattleMenus = {
         grid.id = 'move-grid';
 
         Battle.p.moves.forEach((m, i) => {
+            let displayType = m.type;
+            let displayPower = m.power;
+
+            if (m.name === 'HIDDEN POWER') {
+                displayType = Mechanics.getHiddenPowerType(Battle.p);
+                displayPower = 60;
+            }
+
             const btn = document.createElement('div');
             btn.className = 'move-btn';
             btn.innerText = m.name;
-            btn.dataset.type = m.type;
-            btn.dataset.power = m.power > 0 ? m.power : '-';
+            btn.dataset.type = displayType;
+            btn.dataset.power = displayPower > 0 ? displayPower : '-';
             btn.dataset.accuracy = m.accuracy || '-';
 
             btn.onclick = async () => {
@@ -320,7 +328,7 @@ const BattleMenus = {
             };
 
             const updateInfo = () => {
-                infoPanel.innerHTML = `<div>TYPE/<br>${m.type.toUpperCase()}</div><div>PWR/${m.power > 0 ? m.power : '-'}</div><div>ACC/${m.accuracy || '-'}%</div>`;
+                infoPanel.innerHTML = `<div>TYPE/<br>${displayType.toUpperCase()}</div><div>PWR/${displayPower > 0 ? displayPower : '-'}</div><div>ACC/${m.accuracy || '-'}%</div>`;
             };
             btn.onmouseover = updateInfo;
             btn.onmouseenter = () => {
