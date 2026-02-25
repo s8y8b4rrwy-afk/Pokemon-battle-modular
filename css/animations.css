@@ -660,13 +660,7 @@
     animation: shakeFlipped 0.4s ease-out;
 }
 
-.anim-flicker-only {
-    animation: flicker 0.4s steps(4);
-}
-
-.anim-flicker-loop {
-    animation: flicker 0.6s steps(4) infinite;
-}
+/* Sprite hit flicker is now handled dynamically by Battle._flashSprite using ANIM_HUD settings */
 
 /* --- CONFUSION EFFECTS --- */
 @keyframes circle {

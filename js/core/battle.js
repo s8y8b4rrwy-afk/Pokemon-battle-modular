@@ -71,13 +71,7 @@ const Battle = {
 
         // Step 3: Effectiveness SFX + sprite flash + HP decrease (simultaneous)
         this._playEffectivenessSfx(effectivenessData, moveName);
-        // Start continuous flicker during HP drain
-        const sprite = (target === this.p) ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
-        if (sprite && !target.volatiles.invulnerable) {
-            sprite.classList.remove('anim-flicker-only', 'anim-shake-only');
-            UI.forceReflow(sprite);
-            sprite.classList.add('anim-flicker-loop');
-        }
+        const flashPromise = this._flashSprite(target);
 
         const startHp = target.currentHp;
         // Handle Endure (only for direct move damage, not status/recoil)
@@ -90,11 +84,7 @@ const Battle = {
 
         // Animate HP change (Numbers + Bar)
         await UI.animateHP(target, target === this.p ? 'player' : 'enemy', startHp, endHp);
-
-        if (sprite) {
-            sprite.classList.remove('anim-flicker-loop');
-        }
-        await this._flashSprite(target);
+        await flashPromise;
 
     },
 
@@ -119,14 +109,19 @@ const Battle = {
         const isInvisible = !!target.volatiles.invulnerable;
         if (isInvisible) { await wait(200); return; }
 
-        const isFlipped = sprite.classList.contains('sub-back');
-        const hitClass = 'anim-flicker-only';
+        const flickerCount = ANIM_HUD.HP_HIT_FLICKER_COUNT;
+        const period = ANIM_HUD.HP_HIT_FLICKER_PERIOD;
+        const totalDuration = flickerCount * period;
 
         sprite.classList.remove('anim-flicker-only', 'anim-shake-only');
         UI.forceReflow(sprite);
-        sprite.classList.add(hitClass);
-        await wait(400);
-        sprite.classList.remove(hitClass);
+
+        // Inject dynamic flicker timing
+        sprite.style.animation = `flicker ${period / 1000}s steps(2) ${flickerCount}`;
+
+        await wait(totalDuration);
+
+        sprite.style.animation = '';
     },
 
 
