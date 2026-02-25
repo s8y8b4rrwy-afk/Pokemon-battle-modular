@@ -972,21 +972,38 @@ AnimFramework.register('rollout', [
     { type: 'spriteShake', target: 'defender', duration: 400 }
 ]);
 
-AnimFramework.register('hidden-power', [
-    { type: 'sfx', sound: 'psychic' },
-    {
-        type: 'orbit', target: 'attacker', shape: 'sparkle',
-        radiusX: 40, radiusY: 40, count: 5, speed: 2, duration: 800,
-        color: '#fff', outline: '#000', particleSize: 12
-    },
-    {
-        type: 'beam', from: 'attacker', to: 'defender', duration: 400,
-        width: 15, height: 15, beamStyles: {
-            background: 'white', borderRadius: '50%', boxShadow: '0 0 10px white'
-        }
-    },
-    { type: 'spriteShake', target: 'defender', duration: 200 }
-]);
+AnimFramework.register('hidden-power', (ctx) => {
+    // Determine type dynamically based on the attacker's stats/level
+    const type = (typeof Mechanics !== 'undefined' && ctx.attacker)
+        ? Mechanics.getHiddenPowerType(ctx.attacker)
+        : 'normal';
+
+    return [
+        { type: 'sfx', sound: 'psychic' },
+        {
+            type: 'orbit', target: 'attacker', shape: 'sparkle',
+            radiusX: 40, radiusY: 40, count: 5, speed: 2, duration: 800,
+            color: '#fff', outline: '#000', particleSize: 12
+        },
+        {
+            type: 'beam', from: 'attacker', to: 'defender', duration: 400,
+            width: 15, height: 15, beamStyles: {
+                background: 'white', borderRadius: '50%', boxShadow: '0 0 10px white'
+            }
+        },
+        // Trigger the standard type-specific FX when it hits
+        {
+            type: 'callback',
+            fn: async (c) => {
+                const fxName = `fx-${type}`;
+                if (AnimFramework.has(fxName)) {
+                    await AnimFramework.play(fxName, c);
+                }
+            }
+        },
+        { type: 'spriteShake', target: 'defender', duration: 200 }
+    ];
+});
 
 AnimFramework.register('defense-curl', [
     { type: 'sfx', sound: 'normal' },
