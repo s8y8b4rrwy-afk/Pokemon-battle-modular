@@ -319,7 +319,7 @@ const PartyScreen = {
                             UI.hide('dialog-box');
                             Input.setMode('PARTY', Game.selectedPartyIndex);
                         }, 1500);
-                    }, false, 'text-content', 0, true);
+                    }, false, 'text-content', 0);
                     return;
                 }
 
@@ -370,7 +370,7 @@ const PartyScreen = {
                             UI.hide('dialog-box');
                             Input.setMode('PARTY', Game.selectedPartyIndex);
                         }, 1500);
-                    }, false, 'text-content', 0, true);
+                    }, false, 'text-content', 0);
                     return;
                 }
             } else {

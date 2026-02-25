@@ -238,7 +238,8 @@ const UI = {
                 bar.style.width = Math.min(100, pct) + "%";
 
                 if (currentTime - lastSoundTime > ANIM_HUD.XP_TICK_RATE) {
-                    AudioEngine.playSfx('exp');
+                    const pitchShift = 400 + (easedProgress * 800); // Start at 400Hz, rise to 1200Hz
+                    AudioEngine.playSfx('exp', pitchShift);
                     lastSoundTime = currentTime;
                 }
 

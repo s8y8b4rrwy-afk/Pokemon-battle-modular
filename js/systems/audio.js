@@ -4,7 +4,7 @@ const AudioEngine = {
 
     init() {
         if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.ctx = new (window.AudioContext || window['webkitAudioContext'])();
             // Generate Noise Buffer ONCE
             const dur = 1.0;
             const bufSize = this.ctx.sampleRate * dur;
@@ -73,12 +73,13 @@ const AudioEngine = {
         src.start(t); src.stop(t + dur);
     },
 
-    playSfx(key) {
+    playSfx(key, freqOverride = null) {
         this.init(); const now = this.ctx.currentTime;
 
         if (SFX_LIB[key]) {
             const s = SFX_LIB[key];
-            this.playTone(s.freq, s.type, s.dur, s.vol, 0);
+            const f = freqOverride || s.freq;
+            this.playTone(f, s.type, s.dur, s.vol, 0);
             return;
         }
 
