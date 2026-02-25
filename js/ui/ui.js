@@ -212,7 +212,7 @@ const UI = {
     /**
      * Smoothly animate XP gain for the player.
      */
-    async animateXP(mon, startExp, endExp) {
+    async animateXP(mon, startExp, endExp, levelOffset = 0) {
         const bar = document.getElementById('player-exp-bar');
         const expDelta = endExp - startExp;
         const expPct = expDelta / mon.nextLvlExp;
@@ -224,6 +224,7 @@ const UI = {
         bar.style.transition = 'none';
 
         let lastSoundTime = 0;
+        const levelBonus = levelOffset * (ANIM_HUD.XP_LEVEL_PITCH_BONUS || 0);
 
         return new Promise(resolve => {
             const animate = (currentTime) => {
@@ -240,7 +241,8 @@ const UI = {
                 if (currentTime - lastSoundTime > ANIM_HUD.XP_TICK_RATE) {
                     // Total rise for this specific gain is proportional to the bar fill %
                     const totalRiseForGain = expPct * ANIM_HUD.XP_PITCH_SCALE;
-                    const currentPitch = ANIM_HUD.XP_PITCH_START + (progress * totalRiseForGain);
+                    const basePitch = ANIM_HUD.XP_PITCH_START + levelBonus;
+                    const currentPitch = basePitch + (progress * totalRiseForGain);
 
                     AudioEngine.playSfx('exp', currentPitch);
                     lastSoundTime = currentTime;

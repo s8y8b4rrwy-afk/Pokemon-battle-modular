@@ -553,6 +553,7 @@ const Game = {
 
     async gainExpAnim(amount, p) {
         let remaining = amount;
+        let levelsGained = 0;
 
         while (remaining > 0) {
             const startExp = p.exp;
@@ -561,12 +562,13 @@ const Game = {
             const targetExp = p.exp + toAdd;
 
             // Animate XP bar growth for this level's segment
-            await UI.animateXP(p, startExp, targetExp);
+            await UI.animateXP(p, startExp, targetExp, levelsGained);
 
             p.exp = targetExp;
             remaining -= toAdd;
 
             if (p.exp >= p.nextLvlExp) {
+                levelsGained++;
                 // Force sync and process level up
                 UI.updateHUD(p, 'player');
                 await this.processLevelUp(p);
