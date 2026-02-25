@@ -1,7 +1,21 @@
 const AIHeuristics = {
     // 1. Type Matchup Scoring
     evaluateTypeMatchup: (move, enemy, player) => {
-        if (move.type === 'status') return 0; // Handled elsewhere
+        // Only give damage bonuses for physical or special moves
+        if (move.category === 'status' || (move.power || 0) <= 0) {
+            // However, we still want to discourage moves against immune targets!
+            let effectiveness = 1;
+            if (player.types) {
+                player.types.forEach(pType => {
+                    if (TYPE_CHART[move.type] && TYPE_CHART[move.type][pType] !== undefined) {
+                        effectiveness *= TYPE_CHART[move.type][pType];
+                    }
+                });
+            }
+            if (effectiveness === 0) return -100; // Immune 
+            return 0; // Neutral if status/low power
+        }
+
         if (!player.types) return 0;
 
         let effectiveness = 1;
@@ -274,6 +288,9 @@ const BattleAI = {
         if (enemy.volatiles.encored) {
             return enemy.volatiles.encored.move;
         }
+        if (enemy.volatiles.lockIn) {
+            return enemy.volatiles.lockIn.move;
+        }
 
         // 2. Base Move Selection
         if (!enemy.moves || enemy.moves.length === 0) {
@@ -336,6 +353,25 @@ const BattleAI = {
 
         // Sort by highest score
         viableMoves.sort((a, b) => b.score - a.score);
+
+        // 6. Probabilistic Selection (Variety)
+        // Instead of always picking the absolute best, we use a temperature-based softmax.
+        // This ensures the AI "tries" other moves occasionally, even at high IQs.
+        const maxScore = viableMoves[0].score;
+
+        // Temperature scales with IQ. 
+        // 0 IQ -> Temp 50 (Very random choice)
+        // 100 IQ -> Temp 10 (Very likely to pick best)
+        const temperature = Math.max(5, (110 - aiLevel) / 2);
+
+        const weights = viableMoves.map(x => Math.exp((x.score - maxScore) / temperature));
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+        let randomVal = Math.random() * totalWeight;
+        for (let i = 0; i < viableMoves.length; i++) {
+            randomVal -= weights[i];
+            if (randomVal <= 0) return viableMoves[i].move;
+        }
 
         return viableMoves[0].move;
     }

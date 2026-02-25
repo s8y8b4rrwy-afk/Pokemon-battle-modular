@@ -472,11 +472,11 @@ const Game = {
                     const n2 = expiredNames[i + 1];
                     const k2 = expiredKeys[i + 1];
 
-                    let msg = `${n1}\ndecayed!`;
+                    let msg = `The ${n1}\ndecayed!`;
                     let keysToPass = [k1];
 
                     if (n2) {
-                        msg = `${n1} and\n${n2} decayed!`;
+                        msg = `The ${n1} and\n${n2} decayed!`;
                         keysToPass.push(k2);
                     }
 

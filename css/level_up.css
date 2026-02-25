@@ -8,7 +8,7 @@
     bottom: 92px;
     /* Sits 4px above the 88px tall dialog box */
     right: 5px;
-    width: 120px;
+    width: 150px;
     background: white;
     border: 3px solid #333;
     padding: 8px;
@@ -67,7 +67,8 @@
 
 .lu-stat-label {
     color: #444;
-    flex: 0 0 42px;
+    flex: 0 0 70px;
+    white-space: nowrap;
     /* Fixed width for labels (ATK, S.ATK, etc.) */
 }
 

@@ -249,8 +249,8 @@ const UI = {
         const rogueItems = [
             { key: 'rogue_attack', label: 'ATK', type: 'stat' },
             { key: 'rogue_defense', label: 'DEF', type: 'stat' },
-            { key: 'rogue_sp_attack', label: 'S.ATK', type: 'stat' },
-            { key: 'rogue_sp_defense', label: 'S.DEF', type: 'stat' },
+            { key: 'rogue_sp_attack', label: 'SP. ATK', type: 'stat' },
+            { key: 'rogue_sp_defense', label: 'SP. DEF', type: 'stat' },
             { key: 'rogue_speed', label: 'SPD', type: 'stat' },
             { key: 'rogue_hp', label: 'HP', type: 'stat' },
             { key: 'rogue_crit', label: 'CRIT', type: 'crit' },

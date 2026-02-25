@@ -15,6 +15,7 @@ This document outlines potential enhancements, technical debt, and new features 
 - [ ] **Abilities (Optional Gen III+ Feature)**: While Gen II didn't have abilities, adding an optional "Legacy+" mode with simple abilities like Intimidate or Levitate could add depth.
 - [ ] **2v2 Battles**: Extend the `TurnManager` to support double battles.
 - [x] **Move Animations**: Data-driven animation framework (`AnimFramework`) with beam, particle, flash, and screen-shake step types. New animations added declaratively in `anim_registry.js`.
+- [ ] **Hall of Fame (Legacy System)**: Memorialize Pokémon teams and achievements (wins, bosses defeated) at the end of each run, allowing players to view their past champions from the title screen.
 - [x] **Pokédex Integration**: A screen to track which of the 251 Pokémon have been caught or encountered.
 
 ## 🎨 UI/UX Enhancements
