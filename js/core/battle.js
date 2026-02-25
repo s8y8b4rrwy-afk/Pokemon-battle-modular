@@ -186,7 +186,7 @@ const Battle = {
         const scene = document.getElementById('scene');
         const textEl = document.getElementById('text-content');
 
-        const isTransformed = pSprite.classList.contains('transformed-sprite');
+        const isTransformed = (this.p && this.p.transformBackup) ? true : false;
 
         // Cleanup Classes
         pSprite.className = 'sprite';
