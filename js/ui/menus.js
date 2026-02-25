@@ -300,7 +300,28 @@ const BattleMenus = {
         const grid = document.createElement('div');
         grid.id = 'move-grid';
 
-        Battle.p.moves.forEach((m, i) => {
+        let playerMoves = [...Battle.p.moves];
+
+        const hasDamagingMoves = playerMoves.some(m => m.category !== 'status');
+        const hasTransform = playerMoves.some(m => m.name === 'TRANSFORM');
+        const otherHealthy = Game.party.some(p => p !== Battle.p && p.currentHp > 0);
+
+        if (!hasDamagingMoves && !hasTransform && !otherHealthy) {
+            playerMoves.push({
+                id: 165,
+                name: 'STRUGGLE',
+                type: 'normal',
+                category: 'physical',
+                power: "50",
+                accuracy: 100,
+                priority: 0,
+                pp: 1,
+                max_pp: 1,
+                meta: { drain: -25 }
+            });
+        }
+
+        playerMoves.forEach((m, i) => {
             let displayType = m.type;
             let displayPower = m.power;
 
