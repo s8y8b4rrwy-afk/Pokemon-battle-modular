@@ -143,9 +143,11 @@ const UI = {
         const bar = document.getElementById(`${side}-hp-bar`);
         const text = side === 'player' ? document.getElementById('player-hp-text') : null;
 
-        const hpDelta = Math.abs(endHp - startHp);
+        // Use a capped target for calculations so overkill doesn't hang the animation
+        const targetHp = Math.max(0, endHp);
+        const hpDelta = Math.abs(targetHp - startHp);
         const hpPct = hpDelta / mon.maxHp;
-        const currentZone = endHp / mon.maxHp;
+        const currentZone = targetHp / mon.maxHp;
 
         // 1. BASE SPEED: Normal hits take ~1.2s for a full bar.
         let baseDuration = ANIM_HUD.HP_BASE_DURATION * hpPct;
