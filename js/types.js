@@ -205,6 +205,7 @@
  * @property {number} failedCatches
  * @property {number} rageLevel
  * @property {boolean} isHighTier
+ * @property {boolean} [isLucky]
  * @property {number} aiLevel
  * @property {Move} [lastMoveUsed]
  * @property {Object} [transformBackup]

@@ -308,16 +308,18 @@ const BattleMenus = {
 
         if (!hasDamagingMoves && !hasTransform && !otherHealthy) {
             playerMoves.push({
-                id: 165,
+                id: "165",
                 name: 'STRUGGLE',
                 type: 'normal',
                 category: 'physical',
-                power: "50",
+                power: 50,
                 accuracy: 100,
                 priority: 0,
                 pp: 1,
                 max_pp: 1,
-                meta: { drain: -25 }
+                meta: { drain: -25 },
+                stat_changes: [],
+                target: 'selected-pokemon'
             });
         }
 

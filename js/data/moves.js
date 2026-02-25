@@ -442,7 +442,20 @@ const MOVE_DEX = {
                 return false;
             }
 
-            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            const isPlayer = (user === battle.p);
+
+            // Prevent transforming into Lucky Pokemon unless stuck
+            if (target.isLucky && isPlayer) {
+                const hasDamagingMoves = user.moves.some(m => m.name !== 'TRANSFORM' && m.category !== 'status');
+                const otherHealthy = Game.party.some(p => p !== user && p.currentHp > 0);
+
+                if (hasDamagingMoves || otherHealthy) {
+                    await UI.typeText("But it failed!");
+                    return false;
+                }
+            }
+
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: isPlayer };
             await BattleAnims.playRegistered('transform', ctx);
 
             // Create Backup
@@ -460,7 +473,6 @@ const MOVE_DEX = {
             user.frontSprite = target.frontSprite;
             user.backSprite = target.backSprite;
 
-            const isPlayer = (user === battle.p);
             const sprite = isPlayer ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
 
             sprite.src = isPlayer ? user.backSprite : user.frontSprite;
