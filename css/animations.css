@@ -664,6 +664,10 @@
     animation: flicker 0.4s steps(4);
 }
 
+.anim-flicker-loop {
+    animation: flicker 0.2s infinite;
+}
+
 /* --- CONFUSION EFFECTS --- */
 @keyframes circle {
     from {

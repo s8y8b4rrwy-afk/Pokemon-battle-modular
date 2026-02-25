@@ -71,7 +71,13 @@ const Battle = {
 
         // Step 3: Effectiveness SFX + sprite flash + HP decrease (simultaneous)
         this._playEffectivenessSfx(effectivenessData, moveName);
-        const flashPromise = this._flashSprite(target);
+        // Start continuous flicker during HP drain
+        const sprite = (target === this.p) ? document.getElementById('player-sprite') : document.getElementById('enemy-sprite');
+        if (sprite && !target.volatiles.invulnerable) {
+            sprite.classList.remove('anim-flicker-only', 'anim-shake-only');
+            UI.forceReflow(sprite);
+            sprite.classList.add('anim-flicker-loop');
+        }
 
         const startHp = target.currentHp;
         // Handle Endure (only for direct move damage, not status/recoil)
@@ -84,7 +90,11 @@ const Battle = {
 
         // Animate HP change (Numbers + Bar)
         await UI.animateHP(target, target === this.p ? 'player' : 'enemy', startHp, endHp);
-        await flashPromise;
+
+        if (sprite) {
+            sprite.classList.remove('anim-flicker-loop');
+        }
+        await this._flashSprite(target);
 
     },
 
