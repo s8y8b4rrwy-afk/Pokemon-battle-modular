@@ -655,6 +655,17 @@ const Game = {
                     await Evolution.forceEvolveByItem(mon, learnMove);
                 }
             }
+
+            if (mon && mon.pendingInspirationMove) {
+                mon.pendingInspirationMove = false;
+                const specialMoveName = await API.getRandomSpecialMove(mon.id);
+                if (specialMoveName) {
+                    await DialogManager.show(`${mon.name} is inspired\nby the battle!`, { lock: true });
+                    if (typeof MoveLearnScreen !== 'undefined') {
+                        await MoveLearnScreen.tryLearn(mon, specialMoveName);
+                    }
+                }
+            }
         }
 
         const p = this.party[this.activeSlot];

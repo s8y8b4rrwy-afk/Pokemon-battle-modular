@@ -251,7 +251,7 @@ const BattleMenus = {
                     ScreenManager.push('PARTY', { mode: 'HEAL' });
                     return;
                 }
-                if (data.type === 'heal' || data.type === 'revive' || data.type === 'status_heal' || data.type === 'evo_stone') {
+                if (data.type === 'heal' || data.type === 'revive' || data.type === 'status_heal' || data.type === 'evo_stone' || data.type === 'inspiration_stone') {
                     Game.selectedItemKey = key;
                     Game.state = 'HEAL';
                     ScreenManager.push('PARTY', { mode: 'HEAL' });

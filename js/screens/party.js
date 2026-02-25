@@ -378,6 +378,27 @@ const PartyScreen = {
                 return;
             }
         }
+        if (data.type === 'inspiration_stone') {
+            if (p.currentHp <= 0) { AudioEngine.playSfx('error'); return; }
+            p.pendingInspirationMove = true;
+
+            this.closeContext();
+            Game.inventory[Game.selectedItemKey]--;
+            AudioEngine.playSfx('heal');
+
+            if (typeof ScreenManager !== 'undefined') ScreenManager.clear();
+            else UI.hideAll(['party-screen', 'pack-screen', 'action-menu']);
+
+            Game.state = 'BATTLE';
+
+            setTimeout(() => {
+                UI.typeText(`${p.name} feels\ninspired!`, () => {
+                    Battle.uiLocked = false;
+                    BattleMenus.uiToMoves();
+                });
+            }, 300);
+            return;
+        }
 
 
         // Check if we are in battle and targeting the active pokemon
