@@ -198,7 +198,7 @@ const UI = {
                 if (!isPracticallyDone) {
                     requestAnimationFrame(animate);
                 } else {
-                    mon.currentHp = endHp;
+                    mon.currentHp = targetHp;
                     bar.style.transition = originalTransition;
                     this.updateHUD(mon, side);
                     resolve();
