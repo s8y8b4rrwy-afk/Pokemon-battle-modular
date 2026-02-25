@@ -145,7 +145,7 @@ const ANIM_HUD = {
     XP_EASE_POWER: 5,
     XP_TICK_RATE: 60,            // Interval between sound ticks during growth
     XP_PITCH_START: 400,         // Starting pitch of the XP tick
-    XP_PITCH_INC: 5,             // How much frequency (Hz) to add per tick
+    XP_PITCH_SCALE: 500,         // Total Hz added for a 100% bar fill (Relative to BAR, not XP amount)
 
     // Sprite Hit Effects
     HP_HIT_FLICKER_COUNT: 2,     // Number of times the pokemon blinks on hit

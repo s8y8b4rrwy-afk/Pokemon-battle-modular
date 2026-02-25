@@ -224,7 +224,6 @@ const UI = {
         bar.style.transition = 'none';
 
         let lastSoundTime = 0;
-        let currentPitch = ANIM_HUD.XP_PITCH_START;
 
         return new Promise(resolve => {
             const animate = (currentTime) => {
@@ -239,9 +238,11 @@ const UI = {
                 bar.style.width = Math.min(100, pct) + "%";
 
                 if (currentTime - lastSoundTime > ANIM_HUD.XP_TICK_RATE) {
+                    // Total rise for this specific gain is proportional to the bar fill %
+                    const totalRiseForGain = expPct * ANIM_HUD.XP_PITCH_SCALE;
+                    const currentPitch = ANIM_HUD.XP_PITCH_START + (progress * totalRiseForGain);
+
                     AudioEngine.playSfx('exp', currentPitch);
-                    // Increment pitch each tick
-                    currentPitch += ANIM_HUD.XP_PITCH_INC;
                     lastSoundTime = currentTime;
                 }
 
