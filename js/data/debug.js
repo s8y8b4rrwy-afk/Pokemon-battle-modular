@@ -40,7 +40,9 @@ const DEBUG = {
         ultraball: 50,
         masterball: 99,
         bicycle: 1,
-        pokedex: 1
+        pokedex: 1,
+        evo_stone: 10,
+        inspiration_stone: 10
     },
 
     // Force specific Enemy attributes
@@ -103,7 +105,11 @@ const DEBUG = {
         DEBUG.ENABLED = false;
         DEBUG.BATTLE_LOGS = false;
         DEBUG.GIVE_ALL_ITEMS = false;
-        DEBUG.INVENTORY = {};
+        DEBUG.INVENTORY = {
+            potion: 0, superpotion: 0, hyperpotion: 0, maxpotion: 0,
+            revive: 0, maxrevive: 0, pokeball: 0, greatball: 0, ultraball: 0, masterball: 0,
+            bicycle: 0, pokedex: 0, evo_stone: 0, inspiration_stone: 0
+        };
         DEBUG.ENEMY = { ID: null, LEVEL: null, SHINY: null, IS_BOSS: null, IS_LUCKY: null, RAGE: null, STATUS: null, VOLATILES: null, STAGES: null };
         DEBUG.PLAYER = { ID: null, LEVEL: null, SHINY: null, RAGE: 0, STATUS: null, VOLATILES: null, STAGES: null, MOVES: null };
         DEBUG.LOOT = { WIN_RATE: null, MID_BATTLE_RATE: null, FORCE_ITEM: null };

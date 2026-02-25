@@ -145,7 +145,7 @@ const ANIM_HUD = {
     XP_EASE_POWER: 5,
     XP_TICK_RATE: 60,            // Interval between sound ticks during growth
     XP_PITCH_START: 400,         // Starting pitch of the XP tick
-    XP_PITCH_SCALE: 600,         // Total Hz added for a 100% bar fill (Relative to BAR, not XP amount)
+    XP_PITCH_SCALE: 500,         // Total Hz added for a 100% bar fill (Relative to BAR, not XP amount)
     XP_LEVEL_PITCH_BONUS: 100,   // Frequency boost (Hz) per level gained in a session
 
     // Sprite Hit Effects

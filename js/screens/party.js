@@ -392,7 +392,7 @@ const PartyScreen = {
             Game.state = 'BATTLE';
 
             setTimeout(() => {
-                UI.typeText(`${p.name} feels\ninspired!`, () => {
+                UI.typeText(`${p.name} started to\nfeel inspired!`, () => {
                     Battle.uiLocked = false;
                     BattleMenus.uiToMoves();
                 });
