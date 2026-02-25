@@ -146,7 +146,7 @@ const ANIM_HUD = {
     XP_TICK_RATE: 60,            // Interval between sound ticks during growth
 
     // Sprite Hit Effects
-    HP_HIT_FLICKER_COUNT: 4,     // Number of times the pokemon blinks on hit
-    HP_HIT_FLICKER_PERIOD: 100   // Duration of one full blink (on/off) in ms
+    HP_HIT_FLICKER_COUNT: 2,     // Number of times the pokemon blinks on hit
+    HP_HIT_FLICKER_PERIOD: 300   // Duration of one full blink (on/off) in ms
 };
 

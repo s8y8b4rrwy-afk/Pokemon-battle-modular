@@ -380,8 +380,47 @@ const PartyScreen = {
         }
 
 
-        if (Game.selectedItemKey === 'revive') p.currentHp = Math.floor(p.maxHp / 2);
-        if (Game.selectedItemKey === 'maxrevive') p.currentHp = p.maxHp;
+        // Check if we are in battle and targeting the active pokemon
+        const isBattle = (typeof Battle !== 'undefined' && Battle.p);
+        const isActive = isBattle && (index === Game.activeSlot);
+
+        if (isActive) {
+            // EXIT MENUS TO SHOW SCENE
+            if (typeof ScreenManager !== 'undefined') ScreenManager.clear();
+            else {
+                UI.hide('party-screen');
+                UI.hide('pack-screen');
+                UI.hide('action-menu');
+            }
+
+            Game.inventory[Game.selectedItemKey]--;
+            Game.state = 'BATTLE';
+
+            // Run animation in the scene
+            setTimeout(async () => {
+                if (data.type === 'heal') {
+                    await Battle.applyHeal(p, data.heal, `Used ${data.name} on\n${p.name}!`);
+                } else if (data.type === 'status_heal') {
+                    p.status = null;
+                    UI.updateHUD(p, 'player');
+                    AudioEngine.playSfx('heal');
+                    await UI.typeText(`Used ${data.name} on\n${p.name}!`);
+                    await UI.typeText(`${p.name} was\ncured!`);
+                } else if (data.type === 'revive') {
+                    const healAmt = data.name.includes("MAX") ? p.maxHp : Math.floor(p.maxHp / 2);
+                    p.currentHp = 0;
+                    await Battle.applyHeal(p, healAmt, `Used ${data.name} on\n${p.name}!`);
+                }
+                Battle.endTurnItem();
+            }, 300);
+            return;
+        }
+
+        // --- NON-ACTIVE OR NON-BATTLE FLOW (Instant) ---
+        if (Game.selectedItemKey === 'revive' || Game.selectedItemKey === 'maxrevive') {
+            const healAmt = data.name.includes("MAX") ? p.maxHp : Math.floor(p.maxHp / 2);
+            p.currentHp = healAmt;
+        }
 
         if (data.type === 'heal') p.currentHp = Math.min(p.maxHp, p.currentHp + data.heal);
         if (data.type === 'status_heal') p.status = null;
@@ -392,7 +431,6 @@ const PartyScreen = {
             else UI.hideAll(['party-screen', 'pack-screen', 'action-menu']);
 
             Game.state = 'BATTLE';
-            // Store the target index so Battle can use it
             Game.selectedPartyIndex = index;
 
             setTimeout(() => {
@@ -405,8 +443,7 @@ const PartyScreen = {
         AudioEngine.playSfx('heal');
         this.render();
 
-        if (index === Game.activeSlot) UI.updateHUD(p, 'player');
-
+        // If for some reason we missed the isActive check but it is the active slot, sync it
         if (index === Game.activeSlot) UI.updateHUD(p, 'player');
 
         // Clear everything to return to Battle Scene
@@ -420,7 +457,7 @@ const PartyScreen = {
 
         Game.state = 'BATTLE';
 
-        // Delay effect to happen IN SCENE
+        // Show generic scene message (turn skipped internally by Battle.endTurnItem if targeting inactive)
         setTimeout(() => {
             UI.typeText(`Used ${data.name} on\n${p.name}!`, () => Battle.endTurnItem());
         }, 300);

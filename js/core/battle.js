@@ -117,7 +117,7 @@ const Battle = {
         UI.forceReflow(sprite);
 
         // Inject dynamic flicker timing
-        sprite.style.animation = `flicker ${period / 1000}s steps(2) ${flickerCount}`;
+        sprite.style.animation = `flicker ${period / 1000}s steps(4) ${flickerCount}`;
 
         await wait(totalDuration);
 
