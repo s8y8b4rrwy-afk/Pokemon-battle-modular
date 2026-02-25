@@ -75,6 +75,9 @@
  * @property {Object} [lockIn]
  * @property {Move} lockIn.move
  * @property {number} lockIn.turns
+ * @property {string} [invulnerable]
+ * @property {boolean} [protected]
+ * @property {boolean} [endured]
  * @property {any} [index]
  */
 
