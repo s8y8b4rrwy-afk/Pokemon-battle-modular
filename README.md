@@ -276,6 +276,9 @@ Battle animations use a **registry-based, data-driven system**:
 - Play with `AnimFramework.play('name', { attacker, defender, isPlayerAttacker })`
 - Supports `parallel` steps for combining effects simultaneously
 
+### 🎨 Animation Editor (Beta)
+> **Note:** The included `animation_editor.html` tool is a work in progress and currently in beta. It's not 100% complete and there are known bugs, but you are very welcome to try it out, make your own animations, and have fun with it! Things will likely need to be improved over time.
+
 ### Key Design Decisions
 
 | Decision | Rationale |
@@ -496,9 +499,13 @@ For a detailed structural breakdown of every module, function, constant, and lin
 
 ---
 
-## 📜 License
+## 📜 License & Maintenance Notice
 
-This is a fan project. Pokémon is © Nintendo / Creatures Inc. / GAME FREAK Inc. This project is not affiliated with or endorsed by any of these companies. All Pokémon data is sourced from the open [PokéAPI](https://pokeapi.co/) project.
+> **Maintenance Notice:** I built this primarily for fun, and I'm not entirely sure how much or how often I'm going to maintain it moving forward.
+
+This project is open source and licensed under a **Non-Commercial** license. I am very happy for people to fork this repository, learn from it, and do whatever they want with the code—**as long as it is strictly for non-commercial purposes**. Please do not monetize this.
+
+*Disclaimer: This is a fan project. Pokémon is © Nintendo / Creatures Inc. / GAME FREAK Inc. This project is not affiliated with or endorsed by any of these companies. All Pokémon data is sourced from the open [PokéAPI](https://pokeapi.co/) project.*
 
 ---
 
