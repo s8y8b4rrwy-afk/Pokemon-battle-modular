@@ -9,7 +9,7 @@
   <strong>A modularized and enhanced version of the Pokémon Gold/Silver battle system.</strong>
 </p>
 
-> **📦 This is a work-in-progress modularization** of the [original single-file implementation](https://github.com/s8y8b4rrwy-afk/pokemon-gs-battle-system-clone).  
+> **📦 This is a work-in-progress modularization** of the [original single-file implementation](https://github.com/gabathanasiou/pokemon-gs-battle-system-clone).  
 > The goal is to break down the 6,090-line monolith into a maintainable, modular codebase while preserving all features and adding enhancements.
 
 <p align="center">
@@ -33,7 +33,7 @@ This repository contains a **modularized version** of the original single-file P
 - 📚 **Better documentation** and code organization
 
 ### 🔗 Related Repositories
-- **Original (Single-File):** [pokemon-gs-battle-system-clone](https://github.com/s8y8b4rrwy-afk/pokemon-gs-battle-system-clone) — The complete battle system in one HTML file
+- **Original (Single-File):** [pokemon-gs-battle-system-clone](https://github.com/gabathanasiou/pokemon-gs-battle-system-clone) — The complete battle system in one HTML file
 
 ---
 
