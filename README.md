@@ -505,6 +505,8 @@ For a detailed structural breakdown of every module, function, constant, and lin
 
 This project is open source and licensed under a **Non-Commercial** license. I am very happy for people to fork this repository, learn from it, and do whatever they want with the code—**as long as it is strictly for non-commercial purposes**. Please do not monetize this.
 
+☕ **Support the Creator:** If you'd like to support the development of this project, you can [buy me a coffee on Ko-fi](https://ko-fi.com/gabath).
+
 *Disclaimer: This is a fan project. Pokémon is © Nintendo / Creatures Inc. / GAME FREAK Inc. This project is not affiliated with or endorsed by any of these companies. All Pokémon data is sourced from the open [PokéAPI](https://pokeapi.co/) project.*
 
 ---
