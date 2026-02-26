@@ -163,12 +163,11 @@
 
 .party-preview-row {
     display: flex;
-    gap: 4px;
+    justify-content: space-between;
     margin-top: 10px;
     background: rgba(0, 0, 0, 0.3);
-    padding: 4px;
+    padding: 6px 8px;
     border-radius: 4px;
-    overflow-x: auto;
 }
 
 .mini-icon {

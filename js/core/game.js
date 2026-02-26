@@ -8,7 +8,7 @@ const Game = {
     },
     rogueItemState: {},
     state: 'START', selectedPartyIndex: -1, forcedSwitch: false, previousState: 'SELECTION', wins: 0, bossesDefeated: 0,
-    playerName: 'PLAYER', currentSummaryIndex: 0, savedBattleState: null, battlesSinceLucky: 0,
+    playerName: 'GOLD', currentSummaryIndex: 0, savedBattleState: null, battlesSinceLucky: 0,
 
     // --- SCREEN SHIMS ---
     showSelectionScreen(params) { return SelectionScreen.open(params); },
@@ -99,7 +99,7 @@ const Game = {
 
         this.bossesDefeated = data.bossesDefeated || 0;
         this.activeSlot = data.activeSlot || 0;
-        this.playerName = data.playerName || 'PLAYER';
+        this.playerName = data.playerName || 'GOLD';
         this.enemyMon = data.enemyMon || null;
         this.battlesSinceLucky = data.battlesSinceLucky || 0;
 

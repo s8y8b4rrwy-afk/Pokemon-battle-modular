@@ -37,7 +37,7 @@ const ContinueScreen = {
 
         document.getElementById('save-wins').innerText = data.wins || 0;
         document.getElementById('save-bosses').innerText = data.bossesDefeated || 0;
-        document.getElementById('save-name').innerText = data.playerName || 'PLAYER';
+        document.getElementById('save-name').innerText = data.playerName || 'GOLD';
 
         // Update Pokedex stats on continue screen
         const counts = PokedexData.getCounts();

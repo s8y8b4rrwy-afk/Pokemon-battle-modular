@@ -39,17 +39,17 @@ const BattleLogger = {
 
     // --- COMPREHENSIVE HELPERS ---
     logMove(attacker, move, isPlayer) {
-        const side = isPlayer ? 'Player' : 'Enemy';
+        const side = isPlayer ? (typeof Game !== 'undefined' ? Game.playerName : 'Player') : 'Enemy';
         this.action(`${side}'s ${attacker.name} used ${move.name.toUpperCase()}!`, isPlayer);
     },
 
     logDamage(target, amount, isPlayer, details = '') {
-        const side = isPlayer ? 'Player' : 'Enemy';
+        const side = isPlayer ? (typeof Game !== 'undefined' ? Game.playerName : 'Player') : 'Enemy';
         this.damage(`${side}'s ${target.name} took ${Math.floor(amount)} damage! ${details}`);
     },
 
     logStatChange(target, stat, levels, isPlayer) {
-        const side = isPlayer ? 'Player' : 'Enemy';
+        const side = isPlayer ? (typeof Game !== 'undefined' ? Game.playerName : 'Player') : 'Enemy';
         const direction = levels > 0 ? 'rose' : 'fell';
         const absoluteLevels = Math.abs(levels);
         const levelText = absoluteLevels > 1 ? ` sharply` : '';

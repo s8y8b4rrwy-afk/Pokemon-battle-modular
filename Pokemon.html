@@ -410,7 +410,7 @@
         // --- DYNAMIC SCALING ---
         function rescaleGame() {
             const container = document.getElementById('game-container');
-            const scale = Math.min((window.innerWidth * 0.95) / 320, (window.innerHeight * 0.95) / 288);
+            const scale = Math.min((window.innerWidth * 0.75) / 320, (window.innerHeight * 0.75) / 288);
             container.style.transform = `scale(${scale})`;
             container.style.transformOrigin = 'center center';
         }

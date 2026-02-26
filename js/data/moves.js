@@ -244,7 +244,7 @@ const MOVE_DEX = {
             await BattleAnims.playRegistered('spikes', ctx);
             battle.sideConditions[side].spikes = current + 1;
             AudioEngine.playSfx('clank');
-            await UI.typeText(`Spikes were scattered\naround ${side === 'enemy' ? 'the foe' : 'the player'}'s feet!`);
+            await UI.typeText(`Spikes were scattered\naround ${side === 'enemy' ? "your opponent's" : typeof Game !== 'undefined' ? Game.playerName + "'s" : "your"} feet!`);
             return true;
         }
     },
