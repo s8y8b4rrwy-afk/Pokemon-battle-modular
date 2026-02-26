@@ -41,6 +41,8 @@ This repository contains a **modularized version** of the original single-file P
 
 A fully-featured Pokémon battle simulator inspired by **Pokémon Gold & Silver**. It renders inside a pixel-perfect Game Boy Color shell and features:
 
+> **Important Note:** This is intentionally not a perfectly accurate simulator. It blends multiple mechanics from different generations and aims primarily to be fun to play rather than strictly authentic. I've prioritized making sure the game feels nice and enjoyable! Features like IVs and EVs might be added later, but don't expect super authenticity.
+
 - 🏟️ Full turn-based battle engine with Gen II damage formula
 - 📡 Live Pokémon data from [PokéAPI](https://pokeapi.co/) (all 251 Gen I & II Pokémon)
 - 🎵 Synthesized 8-bit sound effects via Web Audio API

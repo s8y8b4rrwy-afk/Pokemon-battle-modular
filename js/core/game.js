@@ -325,13 +325,25 @@ const Game = {
             const potions = DEBUG.ENABLED && DEBUG.INVENTORY && DEBUG.INVENTORY.potion ? DEBUG.INVENTORY.potion : 5;
             const balls = DEBUG.ENABLED && DEBUG.INVENTORY && DEBUG.INVENTORY.pokeball ? DEBUG.INVENTORY.pokeball : 10;
 
-            // Default Inventory
-            this.inventory = {
-                'potion': potions, 'pokeball': balls, 'superpotion': 0, 'hyperpotion': 0, 'maxpotion': 0, 'greatball': 0, 'ultraball': 0, 'masterball': 0, 'revive': 0, 'maxrevive': 0, 'fullheal': 0,
+            // Ensure all keys exist
+            const defaultInv = {
+                'superpotion': 0, 'hyperpotion': 0, 'maxpotion': 0, 'greatball': 0, 'ultraball': 0, 'masterball': 0, 'revive': 0, 'maxrevive': 0, 'fullheal': 0,
                 'antidote': 0, 'paralyzeheal': 0, 'burnheal': 0, 'iceheal': 0, 'awakening': 0, 'elixir': 0, 'bicycle': 1, 'pokedex': 1,
-                rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
+                rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0,
+                'potion': 0, 'pokeball': 0
             };
-            this.rogueItemState = {};
+
+            // Keep existing inventory from persistent white out, but ensure starting minimums
+            if (!this.inventory) this.inventory = { ...defaultInv };
+
+            for (const key in defaultInv) {
+                if (this.inventory[key] === undefined) this.inventory[key] = defaultInv[key];
+            }
+
+            this.inventory['potion'] = Math.max(this.inventory['potion'] || 0, potions);
+            this.inventory['pokeball'] = Math.max(this.inventory['pokeball'] || 0, balls);
+
+            if (!this.rogueItemState) this.rogueItemState = {};
 
             // Full Debug Inventory Override
             this.handleDebug();
@@ -852,8 +864,9 @@ const Game = {
             await wait(2000);
 
             // NEW: Persistence Logic
-            // 1. Capture current inventory
+            // 1. Capture current inventory and state
             const savedInventory = { ...this.inventory };
+            const savedRogueState = this.rogueItemState ? JSON.parse(JSON.stringify(this.rogueItemState)) : {};
 
             // 2. Replenish Essentials (if low)
             if (savedInventory.potion < 5) savedInventory.potion = 5;
@@ -867,8 +880,9 @@ const Game = {
             // 3. Reset Game
             this.newGame();
 
-            // 4. Restore Inventory
+            // 4. Restore Inventory and Rogue State
             this.inventory = savedInventory;
+            this.rogueItemState = savedRogueState;
 
             // 5. Save immediately so the reload has the items
             this.save();

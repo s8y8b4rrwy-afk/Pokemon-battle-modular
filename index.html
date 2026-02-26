@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,19 +71,19 @@
             flex-direction: column;
             align-items: center;
             position: relative;
-            box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.5);
         }
 
         .card:hover {
             transform: translate(-4px, -4px);
-            box-shadow: 12px 12px 0px rgba(0,0,0,0.5);
+            box-shadow: 12px 12px 0px rgba(0, 0, 0, 0.5);
             border-color: var(--color-gold);
             background: #333;
         }
 
         .card:active {
             transform: translate(2px, 2px);
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
         }
 
         .card-icon {
@@ -127,10 +128,23 @@
         }
 
         @keyframes float {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.3; }
-            90% { opacity: 0.3; }
-            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.3;
+            }
+
+            90% {
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
         }
 
         .artwork {
@@ -145,13 +159,16 @@
         }
     </style>
 </head>
+
 <body>
     <div class="particles" id="particles"></div>
 
     <div class="container">
         <div class="artwork">
-            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/250.png" alt="Ho-Oh">
-            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/249.png" alt="Lugia">
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/250.png"
+                alt="Ho-Oh">
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/249.png"
+                alt="Lugia">
         </div>
 
         <h1>POKÉMON G/S<br>BATTLE MODULAR</h1>
@@ -168,6 +185,15 @@
                 <div class="card-icon">🎬</div>
                 <div class="card-title">ANIM EDITOR</div>
                 <div class="card-desc">Create and test battle animations in real-time.</div>
+            </a>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <a href="https://ko-fi.com/gabath" target="_blank"
+                style="display:inline-block; padding: 12px 24px; background-color: var(--color-gold); color: #000; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px; border: 2px solid #fff; box-shadow: 4px 4px 0px rgba(0,0,0,0.5); transition: transform 0.2s, box-shadow 0.2s;"
+                onmouseover="this.style.transform='translate(-2px, -2px)'; this.style.boxShadow='6px 6px 0px rgba(0,0,0,0.5)'"
+                onmouseout="this.style.transform='none'; this.style.boxShadow='4px 4px 0px rgba(0,0,0,0.5)'">
+                ☕ BUY ME A COFFEE
             </a>
         </div>
     </div>
@@ -191,4 +217,5 @@
         }
     </script>
 </body>
+
 </html>

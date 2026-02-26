@@ -1,7 +1,45 @@
 const Input = {
     focus: 0, mode: 'NONE', lcdEnabled: false, lastFocus: -1,
+    gamepadIndex: null, lastGamepadState: {},
 
-    init() { document.addEventListener('keydown', (e) => this.handleKey(e)); },
+    init() {
+        document.addEventListener('keydown', (e) => this.handleKey(e));
+        window.addEventListener('gamepadconnected', (e) => {
+            console.log('Gamepad connected', e.gamepad);
+            this.gamepadIndex = e.gamepad.index;
+            requestAnimationFrame(() => this.pollGamepad());
+        });
+        window.addEventListener('gamepaddisconnected', (e) => {
+            if (this.gamepadIndex === e.gamepad.index) this.gamepadIndex = null;
+        });
+    },
+
+    pollGamepad() {
+        if (this.gamepadIndex === null) return;
+        const gamepads = navigator.getGamepads();
+        const gamepad = gamepads[this.gamepadIndex];
+        if (gamepad) {
+            const getBtn = (idx) => gamepad.buttons[idx]?.pressed;
+            const getAxes = (idx) => gamepad.axes[idx];
+
+            const state = {
+                'z': getBtn(0) || getBtn(2),
+                'x': getBtn(1) || getBtn(3),
+                'ArrowUp': getBtn(12) || (getAxes(1) < -0.5),
+                'ArrowDown': getBtn(13) || (getAxes(1) > 0.5),
+                'ArrowLeft': getBtn(14) || (getAxes(0) < -0.5),
+                'ArrowRight': getBtn(15) || (getAxes(0) > 0.5),
+            };
+
+            for (const key in state) {
+                if (state[key] && !this.lastGamepadState[key]) {
+                    this.handleKey({ key: key });
+                }
+                this.lastGamepadState[key] = state[key];
+            }
+        }
+        requestAnimationFrame(() => this.pollGamepad());
+    },
 
     setMode(m, resetIndex = 0) {
         this.mode = m;

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G/S Battle Simulator: Final Polish v2</title>
+    <title>Pokemon GS Rogue</title>
     <!-- Modular CSS -->
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/utils.css">
@@ -284,8 +284,8 @@
                     </div>
                 </div>
 
-                <img id="enemy-sprite" class="sprite" src="" alt="Enemy">
-                <img id="player-sprite" class="sprite" src="" alt="Player">
+                <img id="enemy-sprite" class="sprite" src="" alt="">
+                <img id="player-sprite" class="sprite" src="" alt="">
 
                 <!-- PLAYER HUD -->
                 <div class="hud" id="player-hud">
@@ -406,6 +406,16 @@
         PokedexData.init();
         Input.init();
         ScreenManager.push('TITLE');
+
+        // --- DYNAMIC SCALING ---
+        function rescaleGame() {
+            const container = document.getElementById('game-container');
+            const scale = Math.min((window.innerWidth * 0.95) / 320, (window.innerHeight * 0.95) / 288);
+            container.style.transform = `scale(${scale})`;
+            container.style.transformOrigin = 'center center';
+        }
+        window.addEventListener('resize', rescaleGame);
+        rescaleGame();
     </script>
 </body>
 
