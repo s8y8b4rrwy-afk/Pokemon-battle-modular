@@ -152,12 +152,23 @@ A Pokémon can have **one major status AND multiple volatile statuses simultaneo
 - **Pity System** — Percentage increases significantly after 5 battles without a Lucky encounter.
 
 ### 💾 Save System & Persistence
-- **Game Over Persistence**: If you black out, you keep your items!
-- **Safety Net**: Restarting after a black out ensures you have at least 5 Potions and 5 Poké Balls.
-- Auto-saves after each battle
-- Saves: party, inventory, win streak, active battle state
-- Resume mid-battle with weather and delayed moves preserved
-- Save preview on continue screen with party icons
+- **Persistent Inventory**: Unlike traditional Roguelikes, your items, Poké Balls, and currency are **preserved even if you white out**.
+- **Battle Recovery**: Restarting after a total loss ensures you are restocked with a survival kit (5 Potions, 5 Poké Balls) to get you back in the fight.
+- **Auto-Save**: The game automatically records progress after every battle.
+- **Session Resume**: Mid-battle state (including weather, turn counts, and delayed moves) is preserved across refreshes.
+- **Visual Previews**: The continue screen shows your current party mini-sprites, win streak, and trainer name.
+
+### 📕 Integrated Pokédex
+- **Global Registry**: A custom Pokédex that tracks every species seen and caught across all runs.
+- **Completionist Stats**: Real-time tracking of "Seen" vs "Owned" counts.
+- **Evolution Maps**: View the full Gen I/II evolution chains for any Pokémon in your party or inventory.
+- **Persistent Data**: Your Dex progress is stored globally, serving as a permanent record of your journey.
+
+### 🧪 Rogue Mechanics (Stat Scaling)
+- **Rogue Candy**: Special items like *Mighty Candy* and *Guard Candy* provide flat stat increases to your entire party.
+- **Dynamic HUD**: A specialized Rogue Boost overlay appears whenever you find or lose an item, showing the exact impact on your Pokémon's current stats.
+- **Decay System**: These powerful buffs are temporary; items decay over a set number of turns (Default: 5 battles), forcing you to adapt your strategy.
+- **Recalculation**: All stats are recalculated in real-time as buffs expire, with visual indicators (Green/Red) in the battle UI.
 
 ---
 
