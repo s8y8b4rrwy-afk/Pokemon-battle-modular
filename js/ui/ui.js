@@ -76,7 +76,7 @@ const UI = {
                         resolve();
                     }, postDelay);
                 }
-            }, (fast || GLOBAL_SETTINGS.TEXT_SPEED >= 1) ? 10 : 30);
+            }, (fast || GLOBAL_SETTINGS.TEXT_SPEED >= 1) ? 12 : 18);
 
             // Instant typing support
             if (GLOBAL_SETTINGS.TEXT_SPEED === 2) {

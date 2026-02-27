@@ -101,6 +101,10 @@ const SettingsScreen = {
                     opt.toggle();
                     AudioEngine.playSfx('select');
                     this.updateOptionVisual(idx);
+                } else if (opt.type === 'cycle') {
+                    opt.toggle();
+                    AudioEngine.playSfx('select');
+                    this.updateOptionVisual(idx);
                 } else if (opt.type === 'action') {
                     AudioEngine.playSfx('select');
                     opt.action();
