@@ -38,6 +38,7 @@ const DialogManager = {
         if (this.isTyping || this.queue.length === 0) return;
 
         const task = this.queue[0];
+        document.body.classList.add('dialog-active');
         const prevLockState = (typeof Battle !== 'undefined') ? Battle.uiLocked : false;
 
         // Custom IDs from options
@@ -105,6 +106,7 @@ const DialogManager = {
                 }
                 this.isTyping = false;
                 this.queue.shift();
+                if (this.queue.length === 0) document.body.classList.remove('dialog-active');
                 if (task.resolve) task.resolve();
                 this.processQueue();
             }, task.options.fast, targetId, 0);
@@ -138,6 +140,7 @@ const DialogManager = {
                         if (box) box.style.zIndex = '20'; // LOWER Z-INDEX AFTER TASK
                     }
                     this.queue.shift();
+                    if (this.queue.length === 0) document.body.classList.remove('dialog-active');
                     if (task.resolve) task.resolve(choice);
                     this.activeResolver = null;
                     this.processQueue();

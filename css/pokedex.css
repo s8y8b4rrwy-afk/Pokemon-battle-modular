@@ -18,13 +18,15 @@
 .dex-header {
     background: #0f380f;
     color: #e0f8cf;
-    padding: 4px;
-    font-size: 10px;
+    padding: 2px 4px;
+    font-size: 8px;
     text-align: center;
     border-bottom: 2px solid #306230;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 16px;
+    box-sizing: border-box;
 }
 
 .dex-stats {
@@ -79,8 +81,8 @@
 }
 
 .dex-icon-box {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -88,11 +90,12 @@
     margin-right: 4px;
     border: 1px solid #306230;
     image-rendering: pixelated;
+    flex-shrink: 0;
 }
 
 .dex-mini-sprite {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 30px;
     image-rendering: pixelated;
     object-fit: contain;
 }
@@ -116,7 +119,7 @@
 }
 
 .dex-name {
-    font-size: 10px;
+    font-size: 8px;
     font-weight: bold;
     flex: 1;
     white-space: nowrap;
@@ -198,8 +201,8 @@
 }
 
 .detail-sprite-box {
-    width: 80px;
-    height: 80px;
+    width: 112px;
+    height: 112px;
     background: #ffffff;
     /* White background as requested */
     border: 2px solid #0f380f;
@@ -212,8 +215,8 @@
 }
 
 .detail-large-sprite {
-    width: 90px;
-    height: 90px;
+    width: 112px;
+    height: 112px;
     image-rendering: pixelated;
     object-fit: contain;
 }
@@ -229,7 +232,7 @@
 }
 
 .detail-name {
-    font-size: 10px;
+    font-size: 8px;
     font-weight: bold;
     color: #0f380f;
     text-transform: uppercase;
@@ -288,7 +291,7 @@
 }
 
 .detail-stat-small {
-    font-size: 7px;
+    font-size: 8px;
     background: #0f380f;
     /* Dark background */
     color: #e0f8cf;
@@ -332,12 +335,12 @@
     padding: 4px;
     font-size: 8px;
     /* Body Text */
-    line-height: 12px;
+    line-height: 1.25;
     height: 48px;
     /* Fixed height for consistency */
     overflow-y: auto;
     color: #0f380f;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     font-family: inherit;
 }
 
@@ -360,7 +363,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 40px;
+    width: 44px;
     position: relative;
     justify-content: center;
     height: auto;
@@ -368,8 +371,8 @@
 
 .evo-step img,
 .evo-step .unknown-icon {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 30px;
     image-rendering: pixelated;
     object-fit: contain;
 }
@@ -451,7 +454,7 @@
 }
 
 .evo-info {
-    font-size: 6px;
+    font-size: 8px;
     /* Small Label */
     color: #0f380f;
     background: #8bac0f;

@@ -75,9 +75,11 @@ const ITEMS = {
     ultraball: { name: "ULTRA BALL", type: 'ball', pocket: 'balls', rate: 2, desc: "A better Ball with a high catch rate.", css: 'ultra', img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png" },
     masterball: { name: "MASTER BALL", type: 'ball', pocket: 'balls', rate: 255, desc: "The best Ball. It catches without fail.", css: 'master', img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png" },
     bicycle: { name: "BICYCLE", type: 'key', pocket: 'key', desc: "A folding bicycle for traveling faster.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/bicycle.png" },
-    pokedex: { name: "POKEDEX", type: 'key', pocket: 'key', desc: "A high-tech encyclopedia that records Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/pokedex.png" },
+    pokedex: { name: "POKEDEX", type: 'key', pocket: 'key', desc: "A high-tech encyclopedia that records Pokemon.", img: "img/pokedex.svg" },
+    settings: { name: "SETTINGS", type: 'key', pocket: 'key', desc: "Open the game configuration menu.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/up-grade.png" },
+    exp_share: { name: "EXP. SHARE", type: 'key', pocket: 'key', desc: "A device for sharing EXP. among the whole team.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/exp-share.png" },
     evo_stone: { name: "EVOLUTION STONE", type: 'evo_stone', pocket: 'key', desc: "A mysterious stone pulsing with ancient energy. It can magically trigger the evolution of any Pokemon, bypassing the need to level up.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/moon-stone.png" },
-    inspiration_stone: { name: "INSPIRATION STONE", type: 'inspiration_stone', pocket: 'key', desc: "A sparkling gem that fills a Pokemon with sudden insight. It inspires them to learn a new technique after the next battle.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/tm-normal.png" },
+    inspiration_stone: { name: "INSPIRATION STONE", type: 'inspiration_stone', pocket: 'key', desc: "A sparkling gem that fills a Pokemon with sudden insight. It inspires them to learn a new move after the battle.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/tm-normal.png" },
 
     // --- STATUS HEALERS ---
     antidote: { name: "ANTIDOTE", type: 'status_heal', condition: 'poison', pocket: 'items', desc: "Cures a poisoned Pokemon.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/antidote.png" },
@@ -88,15 +90,15 @@ const ITEMS = {
     fullheal: { name: "FULL HEAL", type: 'status_heal', condition: 'all', pocket: 'items', desc: "Cures all status problems.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/full-heal.png" },
 
     // --- ROGUELIKE ITEMS ---
-    rogue_attack: { name: "MIGHT CANDY", type: 'rogue', pocket: 'key', desc: "Slightly boosts Attack power. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-attack.png" },
-    rogue_defense: { name: "GUARD CANDY", type: 'rogue', pocket: 'key', desc: "Slightly boosts Defense. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-defense.png" },
-    rogue_sp_attack: { name: "MIND CANDY", type: 'rogue', pocket: 'key', desc: "Slightly boosts Sp. Atk. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-sp-atk.png" },
-    rogue_sp_defense: { name: "SOUL CANDY", type: 'rogue', pocket: 'key', desc: "Slightly boosts Sp. Def. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-sp-def.png" },
-    rogue_speed: { name: "SWIFT CANDY", type: 'rogue', pocket: 'key', desc: "Slightly boosts Speed. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-speed.png" },
-    rogue_hp: { name: "LIFE CANDY", type: 'rogue', pocket: 'key', desc: "Slightly boosts Max HP. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/hp-up.png" },
-    rogue_crit: { name: "FOCUS LENS", type: 'rogue', pocket: 'key', desc: "Boosts Critical Hit ratio. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/scope-lens.png" },
-    rogue_xp: { name: "XP CHARM", type: 'rogue', pocket: 'key', desc: "Boosts EXP gained from battles. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/lucky-egg.png" },
-    rogue_shiny: { name: "SHINY CHARM", type: 'rogue', pocket: 'key', desc: "Increases chance of finding Shiny Pokemon. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/shiny-charm.png" },
+    rogue_attack: { name: "MIGHT CANDY", type: 'rogue', pocket: 'rogue', desc: "Slightly boosts Attack power. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-attack.png" },
+    rogue_defense: { name: "GUARD CANDY", type: 'rogue', pocket: 'rogue', desc: "Slightly boosts Defense. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-defense.png" },
+    rogue_sp_attack: { name: "MIND CANDY", type: 'rogue', pocket: 'rogue', desc: "Slightly boosts Sp. Atk. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-sp-atk.png" },
+    rogue_sp_defense: { name: "SOUL CANDY", type: 'rogue', pocket: 'rogue', desc: "Slightly boosts Sp. Def. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-sp-def.png" },
+    rogue_speed: { name: "SWIFT CANDY", type: 'rogue', pocket: 'rogue', desc: "Slightly boosts Speed. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/x-speed.png" },
+    rogue_hp: { name: "LIFE CANDY", type: 'rogue', pocket: 'rogue', desc: "Slightly boosts Max HP. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/hp-up.png" },
+    rogue_crit: { name: "FOCUS LENS", type: 'rogue', pocket: 'rogue', desc: "Boosts Critical Hit ratio. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/scope-lens.png" },
+    rogue_xp: { name: "XP CHARM", type: 'rogue', pocket: 'rogue', desc: "Boosts EXP gained from battles. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/lucky-egg.png" },
+    rogue_shiny: { name: "SHINY CHARM", type: 'rogue', pocket: 'rogue', desc: "Increases chance of finding Shiny Pokemon. Stacks.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/shiny-charm.png" },
 
     // --- DEBUG ITEMS ---
     debug_force_evo: { name: "EVO-DEBUG", type: 'debug', pocket: 'debug', desc: "Forces Pokemon to evolve after battle.", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/rare-candy.png" },

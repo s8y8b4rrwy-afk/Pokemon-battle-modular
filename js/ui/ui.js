@@ -76,7 +76,17 @@ const UI = {
                         resolve();
                     }, postDelay);
                 }
-            }, fast ? 10 : 20);
+            }, (fast || GLOBAL_SETTINGS.TEXT_SPEED >= 1) ? 10 : 30);
+
+            // Instant typing support
+            if (GLOBAL_SETTINGS.TEXT_SPEED === 2) {
+                clearInterval(this.typeInterval);
+                el.innerHTML = text.replace(/\n/g, '<br>');
+                setTimeout(() => {
+                    if (cb && typeof cb === 'function') cb();
+                    resolve();
+                }, postDelay);
+            }
         });
     },
 

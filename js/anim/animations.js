@@ -16,6 +16,11 @@ const BattleAnims = {
     async triggerHitAnim(target, moveType = 'normal', moveName = null, attacker = null) {
         const isPlayerRecipient = (target === Battle.p);
 
+        if (!GLOBAL_SETTINGS.BATTLE_ANIMATIONS) {
+            if (moveName) await wait(150);
+            return;
+        }
+
         // Determine the logical attacker for the animation.
         // Default to the opponent of the target if not provided.
         const animAttacker = attacker || (isPlayerRecipient ? Battle.e : Battle.p);
@@ -62,6 +67,11 @@ const BattleAnims = {
 
     // --- EXPLOSION ---
     async triggerExplosionAnim() {
+        if (!GLOBAL_SETTINGS.BATTLE_ANIMATIONS) {
+            AudioEngine.playSfx('explosion');
+            await wait(200);
+            return;
+        }
         if (AnimFramework.has('explosion')) {
             await AnimFramework.play('explosion', {});
         } else {
@@ -78,6 +88,11 @@ const BattleAnims = {
     // Used by battle.applyHeal. Plays recovery visual effects.
     async triggerHealAnim(target, animName = 'fx-heal') {
         const isPlayer = (target === Battle.p);
+        if (!GLOBAL_SETTINGS.BATTLE_ANIMATIONS) {
+            AudioEngine.playSfx('heal');
+            await wait(150);
+            return;
+        }
         const ctx = {
             attacker: target, // For healing, the target is usually the producer of the effect
             defender: target,

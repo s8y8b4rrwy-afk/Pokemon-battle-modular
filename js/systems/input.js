@@ -183,6 +183,12 @@ const Input = {
 
         const k = e.key;
 
+        // Prevent browser default behavior for navigation keys
+        const blockedKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'z', 'Z', 'x', 'X'];
+        if (blockedKeys.includes(k) && this.mode !== 'NAME') {
+            if (e.preventDefault) e.preventDefault();
+        }
+
         // 0. Priority: Dialog System
         if (this.mode === 'DIALOG_CHOICE') {
             if (typeof DialogManager !== 'undefined') {

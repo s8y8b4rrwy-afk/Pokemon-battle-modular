@@ -1,4 +1,5 @@
 const AudioEngine = {
+    muted: false,
     ctx: null,
     noiseBuffer: null, // Cache
 
@@ -16,6 +17,11 @@ const AudioEngine = {
         this.resume();
     },
 
+    toggleMute() {
+        this.muted = !this.muted;
+        return this.muted;
+    },
+
     async resume() {
         if (this.ctx && this.ctx.state === 'suspended') {
             await this.ctx.resume();
@@ -23,7 +29,7 @@ const AudioEngine = {
     },
 
     playCry(url, rate = 1.0, isBoss = false) {
-        if (!url) return;
+        if (!url || this.muted) return;
         this.init();
 
         const finalRate = isBoss ? rate * 0.85 : rate; // Pitch down bosses by default
@@ -48,6 +54,7 @@ const AudioEngine = {
     },
 
     playTone(freq, type, dur, vol, delay) {
+        if (this.muted) return;
         const t = this.ctx.currentTime + delay;
         const o = this.ctx.createOscillator();
         const g = this.ctx.createGain();
@@ -59,6 +66,7 @@ const AudioEngine = {
     },
 
     playNoise(dur) {
+        if (this.muted) return;
         const t = this.ctx.currentTime;
         const src = this.ctx.createBufferSource();
         src.buffer = this.noiseBuffer; // Reuse cached buffer
@@ -74,6 +82,7 @@ const AudioEngine = {
     },
 
     playSfx(key, freqOverride = null) {
+        if (this.muted) return;
         this.init(); const now = this.ctx.currentTime;
 
         if (SFX_LIB[key]) {

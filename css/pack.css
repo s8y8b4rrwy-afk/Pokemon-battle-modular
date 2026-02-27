@@ -109,6 +109,19 @@
     flex-shrink: 0;
 }
 
+/* Block hover visuals when dialog is active */
+body.dialog-active .pack-item:hover:not(.focused) {
+    background: transparent !important;
+    border-color: transparent !important;
+    cursor: default;
+}
+
+body.dialog-active .pocket-arrow:hover {
+    transform: none !important;
+    color: #ffd700 !important;
+    cursor: default;
+}
+
 .pack-item.cancel-btn {
     justify-content: center;
     font-weight: bold;

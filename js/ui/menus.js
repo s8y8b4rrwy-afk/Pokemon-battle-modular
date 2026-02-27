@@ -4,6 +4,7 @@ const PackScreen = {
     pockets: [
         { id: 'items', name: 'HEALING ITEMS' },
         { id: 'balls', name: 'POKE BALLS' },
+        { id: 'rogue', name: 'ROGUE ITEMS' },
         { id: 'key', name: 'KEY ITEMS' },
         ...(DEBUG.ENABLED ? [{ id: 'debug', name: 'DEBUG' }] : [])
     ],
@@ -36,6 +37,7 @@ const PackScreen = {
         Input.setMode('BAG', Input.focus);
     },
     handleInput(key) {
+        if (DialogManager.isTyping || DialogManager.queue.length > 0) return true;
         const len = document.querySelectorAll('.pack-item').length;
         if (key === 'ArrowDown') { Input.focus = Math.min(len - 1, Input.focus + 1); Input.updateVisuals(); AudioEngine.playSfx('select'); return true; }
         if (key === 'ArrowUp') { Input.focus = Math.max(0, Input.focus - 1); Input.updateVisuals(); AudioEngine.playSfx('select'); return true; }
@@ -151,18 +153,34 @@ const BattleMenus = {
         header.innerHTML = `<span class="pocket-arrow" id="pocket-prev" style="cursor:pointer; padding: 0 10px;">&lt;</span> ${pocket.name} <span class="pocket-arrow" id="pocket-next" style="cursor:pointer; padding: 0 10px;">&gt;</span>`;
 
         // Mouse Listeners for header arrows
-        document.getElementById('pocket-prev').onclick = (e) => { e.stopPropagation(); PackScreen.prevPocket(); };
-        document.getElementById('pocket-next').onclick = (e) => { e.stopPropagation(); PackScreen.nextPocket(); };
+        document.getElementById('pocket-prev').onclick = (e) => {
+            if (DialogManager.isTyping || DialogManager.queue.length > 0) return;
+            e.stopPropagation(); PackScreen.prevPocket();
+        };
+        document.getElementById('pocket-next').onclick = (e) => {
+            if (DialogManager.isTyping || DialogManager.queue.length > 0) return;
+            e.stopPropagation(); PackScreen.nextPocket();
+        };
 
         const list = document.getElementById('pack-list');
         list.innerHTML = "";
         let idxCounter = 0;
 
         const itemOrder = [
+            // HEALING
             'potion', 'superpotion', 'hyperpotion', 'maxpotion',
             'revive', 'maxrevive',
+            'fullheal', 'antidote', 'paralyzeheal', 'burnheal', 'iceheal', 'awakening',
+
+            // POKE BALLS
             'pokeball', 'greatball', 'ultraball', 'masterball',
-            'pokedex', 'bicycle'
+
+            // ROGUE ITEMS (Stat Boosts -> Utility)
+            'rogue_hp', 'rogue_attack', 'rogue_defense', 'rogue_sp_attack', 'rogue_sp_defense', 'rogue_speed',
+            'rogue_crit', 'rogue_xp', 'rogue_shiny',
+
+            // KEY ITEMS
+            'pokedex', 'settings', 'exp_share', 'bicycle', 'evo_stone', 'inspiration_stone'
         ];
 
         let keysToShow = Object.keys(Game.inventory).filter(k => Game.inventory[k] > 0);
@@ -196,6 +214,10 @@ const BattleMenus = {
 
             const showDesc = () => {
                 let desc = data.desc;
+                if (key === 'exp_share') {
+                    const state = GLOBAL_SETTINGS.EXP_SHARE ? "ON" : "OFF";
+                    desc += `\nCurrent State: [${state}]`;
+                }
                 if (data.type === 'rogue') {
                     const stack = Game.rogueItemState && Game.rogueItemState[key] ? Game.rogueItemState[key] : [];
                     const count = Game.inventory[key] || 0;
@@ -223,22 +245,41 @@ const BattleMenus = {
             };
             const currentIdx = idxCounter;
 
-            div.onmouseover = () => showDesc();
+            div.onmouseover = () => {
+                if (DialogManager.isTyping || DialogManager.queue.length > 0) return;
+                showDesc();
+            };
             div.onmouseenter = () => {
+                if (DialogManager.isTyping || DialogManager.queue.length > 0) return;
                 Input.focus = currentIdx;
                 Input.updateVisuals();
                 showDesc();
                 AudioEngine.playSfx('select');
             };
             div.onclick = async () => {
+                if (DialogManager.isTyping || DialogManager.queue.length > 0) return;
+
                 if (key === 'pokedex') {
                     AudioEngine.playSfx('select');
                     ScreenManager.push('POKEDEX');
                     return;
                 }
+                if (key === 'settings') {
+                    AudioEngine.playSfx('select');
+                    ScreenManager.push('SETTINGS');
+                    return;
+                }
+                if (key === 'exp_share') {
+                    AudioEngine.playSfx('select');
+                    Game.toggleExpShare();
+                    const state = GLOBAL_SETTINGS.EXP_SHARE ? "ON" : "OFF";
+                    await DialogManager.show(`The EXP. SHARE was\nturned ${state}!`);
+                    this.renderPackList(); // Refresh visuals to maintain focus
+                    return;
+                }
                 if (key === 'bicycle') {
                     AudioEngine.playSfx('error');
-                    await DialogManager.show("OAK: There's a time\nand place for that!");
+                    await DialogManager.show("Erm... What do you think\nyou will do with that?");
                     return;
                 }
                 if (data.type === 'rogue') {

@@ -407,10 +407,13 @@
         Input.init();
         ScreenManager.push('TITLE');
 
-        // --- DYNAMIC SCALING ---
         function rescaleGame() {
             const container = document.getElementById('game-container');
-            const scale = Math.min((window.innerWidth * 0.75) / 320, (window.innerHeight * 0.75) / 288);
+            // Calculate float scale for 75% coverage
+            const floatScale = Math.min((window.innerWidth * 0.75) / 320, (window.innerHeight * 0.75) / 288);
+            // Snap to nearest integer scale (minimum 1x) for pixel perfection
+            const scale = Math.max(1, Math.floor(floatScale));
+
             container.style.transform = `scale(${scale})`;
             container.style.transformOrigin = 'center center';
         }

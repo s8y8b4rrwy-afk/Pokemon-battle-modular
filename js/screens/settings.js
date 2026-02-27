@@ -4,6 +4,16 @@ const SettingsScreen = {
     options: [
         { id: 'lcd', name: 'RETRO FILTER', type: 'toggle', getValue: () => Input.lcdEnabled, toggle: () => Game.toggleLcd() },
         { id: 'motion', name: 'RETRO MOTION', type: 'toggle', getValue: () => document.body.classList.contains('retro-motion'), toggle: () => Game.toggleRetroMotion() },
+        { id: 'mute', name: 'MUTE AUDIO', type: 'toggle', getValue: () => AudioEngine.muted, toggle: () => Game.toggleMute() },
+        {
+            id: 'textspeed', name: 'TEXT SPEED', type: 'cycle',
+            values: ['NORMAL', 'FAST', 'INSTANT'],
+            getValue: () => GLOBAL_SETTINGS.TEXT_SPEED,
+            toggle: (dir = 1) => {
+                GLOBAL_SETTINGS.TEXT_SPEED = (GLOBAL_SETTINGS.TEXT_SPEED + dir + 3) % 3;
+            }
+        },
+        { id: 'anims', name: 'BATTLE ANIMS', type: 'toggle', getValue: () => GLOBAL_SETTINGS.BATTLE_ANIMATIONS, toggle: () => GLOBAL_SETTINGS.BATTLE_ANIMATIONS = !GLOBAL_SETTINGS.BATTLE_ANIMATIONS },
         {
             id: 'clearcache', name: 'CLEAR API CACHE', type: 'action', action: async () => {
                 if (confirm('Clear all cached Pokemon data?')) {
@@ -45,8 +55,14 @@ const SettingsScreen = {
 
         if (['z', 'Z', 'Enter', 'ArrowRight', 'ArrowLeft'].includes(key)) {
             const opt = this.options[Input.focus];
+            const dir = (key === 'ArrowLeft') ? -1 : 1;
+
             if (opt.type === 'toggle') {
                 opt.toggle();
+                AudioEngine.playSfx('select');
+                this.updateOptionVisual(Input.focus);
+            } else if (opt.type === 'cycle') {
+                opt.toggle(dir);
                 AudioEngine.playSfx('select');
                 this.updateOptionVisual(Input.focus);
             } else if (opt.type === 'action' && ['z', 'Z', 'Enter'].includes(key)) {
@@ -95,7 +111,7 @@ const SettingsScreen = {
             nameSpan.innerText = opt.name;
             el.appendChild(nameSpan);
 
-            if (opt.type === 'toggle') {
+            if (opt.type === 'toggle' || opt.type === 'cycle') {
                 const valSpan = document.createElement('span');
                 valSpan.className = 'settings-val';
                 el.appendChild(valSpan);
@@ -111,11 +127,18 @@ const SettingsScreen = {
         if (!el) return;
 
         const opt = this.options[index];
+        const valSpan = el.querySelector('.settings-val');
+        if (!valSpan) return;
+
         if (opt.type === 'toggle') {
-            const valSpan = el.querySelector('.settings-val');
             const val = opt.getValue();
             valSpan.innerText = val ? ' [ON]' : '[OFF]';
             valSpan.style.color = val ? '#d8b030' : '#888';
+        } else if (opt.type === 'cycle') {
+            const valIdx = Number(opt.getValue());
+            const valText = opt.values[valIdx];
+            valSpan.innerText = `< ${valText} >`;
+            valSpan.style.color = '#d8b030'; // Match classic GS gold
         }
     }
 };

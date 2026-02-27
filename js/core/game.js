@@ -1,9 +1,9 @@
 const Game = {
     tempSelection: null, tempSelectionList: [], party: [], activeSlot: 0, enemyMon: null, selectedItemKey: null,
     inventory: {
-        potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, fullheal: 0,
+        potion: 5, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, fullheal: 0,
         antidote: 0, paralyzeheal: 0, burnheal: 0, iceheal: 0, awakening: 0,
-        pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
+        pokeball: 10, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1, settings: 1, exp_share: 1,
         rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
     },
     rogueItemState: {},
@@ -36,14 +36,31 @@ const Game = {
         Input.lcdEnabled = !Input.lcdEnabled;
         const el = document.getElementById('lcd-check');
         const overlay = document.getElementById('lcd-overlay');
-        if (Input.lcdEnabled) { el.classList.add('checked'); overlay.classList.add('active'); } else { el.classList.remove('checked'); overlay.classList.remove('active'); }
+        if (el) {
+            if (Input.lcdEnabled) el.classList.add('checked');
+            else el.classList.remove('checked');
+        }
+        if (overlay) {
+            if (Input.lcdEnabled) overlay.classList.add('active');
+            else overlay.classList.remove('active');
+        }
     },
 
     toggleRetroMotion() {
         document.body.classList.toggle('retro-motion');
         const el = document.getElementById('motion-check');
-        if (document.body.classList.contains('retro-motion')) el.classList.add('checked');
-        else el.classList.remove('checked');
+        if (el) {
+            if (document.body.classList.contains('retro-motion')) el.classList.add('checked');
+            else el.classList.remove('checked');
+        }
+    },
+
+    toggleMute() {
+        AudioEngine.toggleMute();
+    },
+
+    toggleExpShare() {
+        GLOBAL_SETTINGS.EXP_SHARE = !GLOBAL_SETTINGS.EXP_SHARE;
     },
 
     // --- SAVES (Delegated to StorageSystem) ---
@@ -80,6 +97,8 @@ const Game = {
         // --- MIGRATION: Ensure new items (Pokedex, Bicycle) exist in old saves ---
         if (this.inventory.pokedex === undefined) this.inventory.pokedex = 1;
         if (this.inventory.bicycle === undefined) this.inventory.bicycle = 1;
+        if (this.inventory.settings === undefined) this.inventory.settings = 1;
+        if (this.inventory.exp_share === undefined) this.inventory.exp_share = 1;
 
         // --- ROGUE MIGRATION ---
         // --- ROGUE MIGRATION ---
@@ -241,9 +260,9 @@ const Game = {
         StorageSystem.wipe();
         this.party = []; this.wins = 0; this.bossesDefeated = 0;
         this.inventory = {
-            potion: 1, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, fullheal: 0,
+            potion: 5, superpotion: 0, hyperpotion: 0, maxpotion: 0, revive: 0, maxrevive: 0, fullheal: 0,
             antidote: 0, paralyzeheal: 0, burnheal: 0, iceheal: 0, awakening: 0,
-            pokeball: 1, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1,
+            pokeball: 10, greatball: 0, ultraball: 0, masterball: 0, elixir: 0, bicycle: 1, pokedex: 1, settings: 1, exp_share: 1,
             rogue_attack: 0, rogue_defense: 0, rogue_sp_attack: 0, rogue_sp_defense: 0, rogue_speed: 0, rogue_hp: 0, rogue_crit: 0, rogue_xp: 0, rogue_shiny: 0
         };
         this.rogueItemState = {}; // Tracks individual item lifetimes
@@ -829,7 +848,10 @@ const Game = {
 
         // EXP Calc (Only if we have an enemy to gain rewards from)
         const participants = Array.from(Battle.participants).filter(idx => this.party[idx] && this.party[idx].currentHp > 0);
-        const nonParticipants = this.party.map((p, i) => i).filter(i => !participants.includes(i) && this.party[i].currentHp > 0);
+        let nonParticipants = [];
+        if (GLOBAL_SETTINGS.EXP_SHARE) {
+            nonParticipants = this.party.map((p, i) => i).filter(i => !participants.includes(i) && this.party[i].currentHp > 0);
+        }
 
         if (participants.length > 0 || nonParticipants.length > 0) {
             await this.distributeExp(participants, nonParticipants, wasCaught);
@@ -870,7 +892,7 @@ const Game = {
 
             // 2. Replenish Essentials (if low)
             if (savedInventory.potion < 5) savedInventory.potion = 5;
-            if (savedInventory.pokeball < 5) savedInventory.pokeball = 5;
+            if (savedInventory.pokeball < 10) savedInventory.pokeball = 10;
 
             await UI.typeText(`...but managed to\nkeep hold of items!`);
             await wait(2000);
