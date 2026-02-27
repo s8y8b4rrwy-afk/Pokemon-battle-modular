@@ -113,7 +113,12 @@ const DEBUG = {
         DEBUG.ENEMY = { ID: null, LEVEL: null, SHINY: null, IS_BOSS: null, IS_LUCKY: null, RAGE: null, STATUS: null, VOLATILES: null, STAGES: null };
         DEBUG.PLAYER = { ID: null, LEVEL: null, SHINY: null, RAGE: 0, STATUS: null, VOLATILES: null, STAGES: null, MOVES: null };
         DEBUG.LOOT = { WIN_RATE: null, MID_BATTLE_RATE: null, FORCE_ITEM: null };
-        console.log('[GAME] Production mode: Debug disabled.');
+
+        // SILENCE ALL CONSOLE LOGS IN PRODUCTION
+        console.log = function () { };
+        console.warn = function () { };
+        console.info = function () { };
+        // console.error stays enabled for debugging major issues
     } else {
         console.log('[GAME] Development mode: Debug active.');
     }

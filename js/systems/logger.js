@@ -3,7 +3,7 @@
  * Provides comprehensive, styled battle logs in the console.
  */
 const BattleLogger = {
-    enabled: true, // Can be toggled via DEBUG.BATTLE_LOGS
+    enabled: (typeof DEBUG !== 'undefined') ? DEBUG.BATTLE_LOGS : true,
 
     // --- LOG TYPES ---
     log(msg, type = 'info') {
