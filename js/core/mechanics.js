@@ -69,7 +69,22 @@ const Mechanics = {
 
         if (attacker.status === 'brn' && !isSpecial) A = Math.floor(A * 0.5);
 
-        // 5. THE DAMAGE FORMULA (Refined for better Not-Effective scaling)
+        // 6. BARRIER MODIFIERS (Reflect, Light Screen, Aurora Veil)
+        // Defenses double to halve damage, ignored on crits
+        if (typeof EnvironmentManager !== 'undefined' && typeof Battle !== 'undefined' && Battle && EnvironmentManager.sideConditions) {
+            const defenderSide = (defender === Battle.p) ? 'player' : 'enemy';
+            const conds = EnvironmentManager.sideConditions[defenderSide];
+            if (conds && !isCrit) {
+                if (!isSpecial && (conds.reflect > 0 || conds.auroraVeil > 0)) {
+                    D = D * 2;
+                }
+                if (isSpecial && (conds.lightScreen > 0 || conds.auroraVeil > 0)) {
+                    D = D * 2;
+                }
+            }
+        }
+
+        // 7. THE DAMAGE FORMULA (Refined for better Not-Effective scaling)
         // Variable part: ((2L/5 + 2) * Power * A/D) / 50
         let baseDmg = ((2 * attacker.level / 5 + 2) * move.power * A / D) / 50;
 

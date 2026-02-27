@@ -1020,6 +1020,7 @@ const Editor = {
     // --- EXPORT ---
     exportCode() {
         if (!this.currentAnimName) return;
+        Analytics.trackEvent('editor_export_code', this.currentAnimName);
 
         // Custom stringify to avoid quoted keys and make it look like clean JS
         const stringifyJS = (obj, indent = 4) => {
@@ -1091,6 +1092,7 @@ const Editor = {
     // --- PREVIEW ---
     async playPreview() {
         if (!this.currentAnimName) return;
+        Analytics.trackEvent('editor_play_animation', this.currentAnimName);
         this.stopPreview();
 
         // Apply registry temporarily to AnimFramework

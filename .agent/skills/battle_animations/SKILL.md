@@ -21,6 +21,9 @@ The project uses a **data-driven, registry-based animation system** spread acros
     - `mystic.js`: Psychic, Ghost, Dark, Dragon, and multi-elemental moves.
 - **`BattleAnims`** (`animations.js`) — High-level API the rest of the codebase calls. Delegates to the framework.
 
+> [!IMPORTANT]
+> **Check the Directory First:** Always check `docs/ANIMATION_DIRECTORY.json` before implementing a new animation to avoid duplicates. Since this file is large, **do not read the whole file**. Instead, use the `grep_search` tool to search for the specific elemental type (e.g. `"FIRE": {`) and only read the relevant section. If you add a new animation, you must manually update this JSON file in the appropriate type category.
+
 ### How Move Animations are Triggered
 When a move deals damage, the pipeline automatically checks for a registered animation:
 

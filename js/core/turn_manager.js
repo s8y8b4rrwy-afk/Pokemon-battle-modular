@@ -119,6 +119,7 @@ const TurnManager = {
 
             // 0. Weather Check/Clear (Clears BEFORE damage phase if turns are out)
             await EnvironmentManager.decrementWeather();
+            await EnvironmentManager.decrementSideConditions();
 
             // 1. Weather message ("rages") only if still active
             await EnvironmentManager.displayWeatherEffects();

@@ -229,6 +229,59 @@ const MOVE_DEX = {
             return true;
         }
     },
+    // --- BARRIERS ---
+    'REFLECT': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            const side = user === battle.p ? 'player' : 'enemy';
+            if (battle.sideConditions[side].reflect > 0) {
+                await UI.typeText("But it failed!");
+                return 'FAIL';
+            }
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('reflect', ctx);
+            battle.sideConditions[side].reflect = 5;
+            AudioEngine.playSfx('buff');
+            await UI.typeText(`Reflect raised ${side === 'player' ? "your" : "the enemy's"}\nteam Defense!`);
+            return true;
+        }
+    },
+    'LIGHT SCREEN': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            const side = user === battle.p ? 'player' : 'enemy';
+            if (battle.sideConditions[side].lightScreen > 0) {
+                await UI.typeText("But it failed!");
+                return 'FAIL';
+            }
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('light-screen', ctx);
+            battle.sideConditions[side].lightScreen = 5;
+            AudioEngine.playSfx('buff');
+            await UI.typeText(`Light Screen raised ${side === 'player' ? "your" : "the enemy's"}\nteam Sp. Def!`);
+            return true;
+        }
+    },
+    'AURORA VEIL': {
+        isUnique: true,
+        onHit: async (battle, user, target) => {
+            if (battle.weather.type !== 'hail' && battle.weather.type !== 'snow') {
+                await UI.typeText("But it failed!");
+                return 'FAIL';
+            }
+            const side = user === battle.p ? 'player' : 'enemy';
+            if (battle.sideConditions[side].auroraVeil > 0) {
+                await UI.typeText("But it failed!");
+                return 'FAIL';
+            }
+            const ctx = { attacker: user, defender: target, isPlayerAttacker: user === battle.p };
+            await BattleAnims.playRegistered('aurora-veil', ctx);
+            battle.sideConditions[side].auroraVeil = 5;
+            AudioEngine.playSfx('buff');
+            await UI.typeText(`Aurora Veil raised ${side === 'player' ? "your" : "the enemy's"}\nteam defenses!`);
+            return true;
+        }
+    },
 
     // --- HAZARDS ---
     'SPIKES': {

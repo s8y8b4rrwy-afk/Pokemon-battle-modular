@@ -116,6 +116,8 @@ const CaptureManager = {
             }
 
             await UI.typeText(`Gotcha!\n${enemy.name} was caught!`);
+            Analytics.trackEvent('pokemon_caught', enemy.name);
+
             const scene = document.getElementById('scene');
             if (scene.contains(ball)) scene.removeChild(ball);
 

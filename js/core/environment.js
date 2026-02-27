@@ -1,10 +1,10 @@
 const EnvironmentManager = {
     weather: { type: 'none', turns: 0 },
-    sideConditions: { player: { spikes: 0 }, enemy: { spikes: 0 } },
+    sideConditions: { player: { spikes: 0, reflect: 0, lightScreen: 0, auroraVeil: 0 }, enemy: { spikes: 0, reflect: 0, lightScreen: 0, auroraVeil: 0 } },
 
     reset() {
         this.weather = { type: 'none', turns: 0 };
-        this.sideConditions = { player: { spikes: 0 }, enemy: { spikes: 0 } };
+        this.sideConditions = { player: { spikes: 0, reflect: 0, lightScreen: 0, auroraVeil: 0 }, enemy: { spikes: 0, reflect: 0, lightScreen: 0, auroraVeil: 0 } };
         const scene = document.getElementById('scene');
         if (scene) scene.style.backgroundColor = "";
     },
@@ -66,6 +66,22 @@ const EnvironmentManager = {
             this.weather.turns--;
             if (this.weather.turns <= 0) {
                 await this.setWeather('none');
+            }
+        }
+    },
+
+    async decrementSideConditions() {
+        for (const side of ['player', 'enemy']) {
+            const conds = this.sideConditions[side];
+            for (const key of ['reflect', 'lightScreen', 'auroraVeil']) {
+                if (conds[key] > 0) {
+                    conds[key]--;
+                    if (conds[key] === 0) {
+                        const name = key === 'reflect' ? 'Reflect' : key === 'lightScreen' ? 'Light Screen' : 'Aurora Veil';
+                        const sideName = side === 'player' ? 'Your' : 'The enemy\'s';
+                        await UI.typeText(`${sideName} ${name}\nwore off!`);
+                    }
+                }
             }
         }
     },

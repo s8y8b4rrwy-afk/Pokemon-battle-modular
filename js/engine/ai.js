@@ -262,6 +262,21 @@ const AIHeuristics = {
             score += 40;
         }
 
+        // J. Barriers
+        if (move.name === 'REFLECT' || move.name === 'LIGHT SCREEN' || move.name === 'AURORA VEIL') {
+            const sideConditions = typeof Battle !== 'undefined' && EnvironmentManager ? EnvironmentManager.sideConditions : { enemy: {} };
+            const conds = sideConditions.enemy || {};
+            if (move.name === 'REFLECT' && conds.reflect > 0) return -300;
+            if (move.name === 'LIGHT SCREEN' && conds.lightScreen > 0) return -300;
+            if (move.name === 'AURORA VEIL' && conds.auroraVeil > 0) return -300;
+
+            if (move.name === 'AURORA VEIL') {
+                const weather = typeof EnvironmentManager !== 'undefined' && EnvironmentManager.weather ? EnvironmentManager.weather.type : 'none';
+                if (weather !== 'hail' && weather !== 'snow') return -300;
+            }
+            score += 50;
+        }
+
         return score;
     }
 };
