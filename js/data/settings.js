@@ -1,6 +1,6 @@
 // --- PLAYER SETTINGS ---
 const GLOBAL_SETTINGS = {
-    TEXT_SPEED: 1, // 0 = Normal, 1 = Fast, 2 = Instant
+    TEXT_SPEED: 0, // 0 = Normal, 1 = Fast, 2 = Instant
     BATTLE_ANIMATIONS: true,
     EXP_SHARE: true,
 };
