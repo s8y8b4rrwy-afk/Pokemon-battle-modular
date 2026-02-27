@@ -187,6 +187,7 @@ const Game = {
     },
 
     loadGame() {
+        Analytics.trackOnce('session_start', 'game_session_start');
         Analytics.trackEvent('game_load');
         document.getElementById('continue-screen').classList.add('hidden');
         Battle.resetScene();
@@ -258,6 +259,7 @@ const Game = {
     },
 
     newGame() {
+        Analytics.trackOnce('session_start', 'game_session_start');
         Analytics.trackEvent('new_game_start');
         StorageSystem.wipe();
         this.party = []; this.wins = 0; this.bossesDefeated = 0;
@@ -639,7 +641,7 @@ const Game = {
             UI.updateHUD(p, 'player');
         }
 
-        Analytics.trackEvent('pokemon_level_up', `${p.name} (Lv ${p.level})`);
+        Analytics.trackEvent('pokemon_level_up', p.name);
         await DialogManager.show(p.level - startLvl > 1 ? `${p.name} grew all the way\nto Level ${p.level}!` : `${p.name} grew to\nLevel ${p.level}!`, { lock: true, skipWait: true });
 
         // Show the little box with stat gains

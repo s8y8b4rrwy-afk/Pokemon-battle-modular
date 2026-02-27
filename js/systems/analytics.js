@@ -21,5 +21,16 @@ const Analytics = {
         } catch (e) {
             console.warn('[Analytics] Failed to track event:', e);
         }
+    },
+
+    /**
+     * Track an event only once per session/browser
+     */
+    trackOnce: function (key, name, title = '') {
+        const sessionKey = `analytics_once_${key}`;
+        if (sessionStorage.getItem(sessionKey)) return;
+
+        this.trackEvent(name, title);
+        sessionStorage.setItem(sessionKey, 'true');
     }
 };
