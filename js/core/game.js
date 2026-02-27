@@ -870,7 +870,14 @@ const Game = {
     },
 
     async handleLoss() {
-        Analytics.trackEvent('battle_loss');
+        // Detailed Loss Tracking
+        const enemy = Battle.e;
+        const lossType = (enemy && enemy.isBoss) ? 'battle_loss_boss' : 'battle_loss_wild';
+        const iq = (enemy && enemy.ai) ? (enemy.ai.iq || 0) : 0;
+        const lossDetail = `Wins: ${this.wins} | IQ: ${iq} | vs ${enemy ? enemy.name : 'Unknown'}`;
+
+        Analytics.trackEvent(lossType, lossDetail);
+
         await this.processRogueTurn();
         UI.textEl.classList.remove('full-width');
         if (this.party.some(p => p.currentHp > 0)) {
