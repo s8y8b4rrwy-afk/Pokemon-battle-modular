@@ -1035,3 +1035,23 @@ AnimFramework.register('roar', [
         ]
     }
 ]);
+
+AnimFramework.register('swords-dance', [
+    { type: 'sfx', sound: 'normal' },
+    { type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 300 },
+    {
+        type: 'overlay', target: 'attacker', shape: 'claw',
+        color: '#ffffff', outline: '#000000', width: 40, height: 40,
+        duration: 250, animation: 'slash', count: 3, spread: 30, stagger: 150
+    }
+]);
+
+AnimFramework.register('bulk-up', [
+    { type: 'sfx', sound: 'fighting' },
+    { type: 'spriteMove', target: 'attacker', preset: 'jump', duration: 250 },
+    {
+        type: 'overlay', target: 'attacker', shape: 'fist',
+        color: '#ff4500', outline: '#ffffff', width: 50, height: 50,
+        duration: 600, animation: 'grow'
+    }
+]);

@@ -756,3 +756,42 @@ AnimFramework.register('dragon-breath', [
         ]
     }
 ]);
+
+AnimFramework.register('dragon-dance', [
+    { type: 'sfx', sound: 'dragon' },
+    { type: 'spriteMove', target: 'attacker', preset: 'jump', duration: 300 },
+    {
+        type: 'formation', target: 'attacker', pattern: 'ring',
+        shape: 'sparkle', particleSize: 15, color: '#ff4500', outline: '#000000',
+        duration: 800, stagger: 50
+    }
+]);
+
+AnimFramework.register('calm-mind', [
+    { type: 'sfx', sound: 'psychic' },
+    { type: 'spriteWave', target: 'attacker', intensity: 3, duration: 800, speed: 60 },
+    {
+        type: 'overlay', target: 'attacker', shape: 'spiral',
+        color: '#ff69b4', outline: '#ffffff', width: 60, height: 60,
+        duration: 800, animation: 'grow'
+    }
+]);
+
+AnimFramework.register('nasty-plot', [
+    { type: 'sfx', sound: 'dark' },
+    { type: 'spriteMove', target: 'attacker', preset: 'shake', duration: 400 },
+    {
+        type: 'formation', target: 'attacker', pattern: 'ring',
+        shape: 'skull', particleSize: 18, color: '#000000', outline: '#800080',
+        duration: 800, stagger: 50
+    }
+]);
+
+AnimFramework.register('agility', [
+    { type: 'sfx', sound: 'psychic' },
+    { type: 'spriteMove', target: 'attacker', preset: 'dodge', duration: 150 },
+    { type: 'spriteGhost', target: 'attacker', color: '#ffffff', hold: 50, duration: 300 },
+    { type: 'wait', ms: 100 },
+    { type: 'spriteMove', target: 'attacker', preset: 'dodge', duration: 150 },
+    { type: 'spriteGhost', target: 'attacker', color: '#ffffff', hold: 50, duration: 300 }
+]);
